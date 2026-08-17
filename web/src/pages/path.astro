@@ -1,0 +1,29 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getMainPathLessons } from '../lib/lessons';
+
+const lessons = getMainPathLessons();
+---
+<BaseLayout title="學習路徑" description="GoLearning 主路徑">
+  <h1 class="text-3xl font-bold text-white">主學習路徑</h1>
+  <p class="mt-3 max-w-2xl text-slate-400">
+    建議順序。標示 <span class="text-amber-400">stub</span> 的章節為佔位，可先跳過。
+    完成 P0 後進入 A 卷；併發請認真走完 C 卷。
+  </p>
+  <ol class="mt-10 space-y-3">
+    {lessons.map((l, i) => (
+      <li class="rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-3">
+        <a href={`/lessons/${l.slug}`} class="flex flex-wrap items-baseline justify-between gap-2 hover:text-emerald-300">
+          <span>
+            <span class="mr-2 text-slate-600">{String(i + 1).padStart(2, '0')}</span>
+            <span class="font-medium text-slate-100">{l.lessonId} · {l.title}</span>
+          </span>
+          <span class="text-xs uppercase tracking-wide text-slate-500">
+            {l.volume} · {l.level} · {l.status}
+          </span>
+        </a>
+        <p class="mt-1 pl-8 text-sm text-slate-500">{l.description}</p>
+      </li>
+    ))}
+  </ol>
+</BaseLayout>

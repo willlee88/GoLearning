@@ -1,0 +1,22 @@
+node_modules/
+dist/
+.astro/
+.DS_Store
+*.exe
+*.test
+.idea/
+.vscode/
+web/.env
+**/.env
+demo/arena-mini/server/server
+*.log
+
+# Go
+**/go.sum.bak
+*.out
+coverage.*
+
+# Docker / local artifacts
+golearning-images.tar
+*.tar
+.env

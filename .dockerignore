@@ -1,0 +1,22 @@
+.git
+.grok
+**/.DS_Store
+**/node_modules
+**/dist
+**/.astro
+**/*.log
+**/*.exe
+**/*.test
+web/dist
+.idea
+.vscode
+**/__pycache__
+
+# Not needed in production images
+docs
+scripts
+examples
+samples
+content/_templates
+
+# Do NOT ignore content/**/*.md — Astro build reads lessons from content/

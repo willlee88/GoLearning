@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <title>f08-ws-room</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; background: #0f1419; color: #e8eef7; }
+    input, button { padding: .5rem; margin: .25rem; border-radius: 8px; border: 1px solid #345; background: #1a2332; color: inherit; }
+    button { background: #2b6cb0; border-color: #2b6cb0; cursor: pointer; }
+    #log { white-space: pre-wrap; background: #0a0e14; border: 1px solid #234; border-radius: 8px; min-height: 200px; padding: .75rem; font-family: ui-monospace, monospace; font-size: 13px; }
+  </style>
+</head>
+<body>
+  <h1>f08 · WS Room Lab</h1>
+  <div>
+    <input id="room" value="lobby" />
+    <input id="name" value="player1" />
+    <button id="conn">Connect</button>
+  </div>
+  <div>
+    <input id="msg" style="width:70%" placeholder='{"v":1,"type":"chat","payload":"hi"}' />
+    <button id="send">Send</button>
+    <button id="ping">Ping</button>
+  </div>
+  <div id="log"></div>
+  <script>
+    let ws;
+    const log = (t) => { logEl.textContent += t + '\n'; };
+    const logEl = document.getElementById('log');
+    document.getElementById('conn').onclick = () => {
+      const room = roomEl.value, name = nameEl.value;
+      const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+      ws = new WebSocket(`${proto}://${location.host}/ws?room=${encodeURIComponent(room)}&name=${encodeURIComponent(name)}`);
+      ws.onmessage = (e) => log('← ' + e.data);
+      ws.onopen = () => log('open');
+      ws.onclose = () => log('close');
+    };
+    document.getElementById('send').onclick = () => ws?.send(msgEl.value);
+    document.getElementById('ping').onclick = () => ws?.send(JSON.stringify({v:1,type:'ping'}));
+    const roomEl = document.getElementById('room');
+    const nameEl = document.getElementById('name');
+    const msgEl = document.getElementById('msg');
+  </script>
+</body>
+</html>

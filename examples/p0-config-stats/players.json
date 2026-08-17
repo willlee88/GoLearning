@@ -1,0 +1,8 @@
+{
+  "room_capacity": 4,
+  "players": [
+    {"id": 1, "name": "Ada", "score": 12},
+    {"id": 2, "name": "Lin", "score": 7},
+    {"id": 3, "name": "Mei", "score": 21}
+  ]
+}

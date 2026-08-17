@@ -1,0 +1,78 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getMainPathLessons, getVolumes } from '../lib/lessons';
+
+const pathLessons = getMainPathLessons().slice(0, 8);
+const volumes = getVolumes();
+const readyCount = volumes.flatMap((v) => v.lessons).filter((l) => l.status === 'ready').length;
+const totalCount = volumes.flatMap((v) => v.lessons).length;
+---
+<BaseLayout>
+  <section class="grid gap-10 lg:grid-cols-[1.4fr_1fr]">
+    <div>
+      <p class="mb-3 text-sm font-medium uppercase tracking-widest text-emerald-500/90">Python → Go → Game Server</p>
+      <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl">
+        深刻理解 Go<br />
+        <span class="text-emerald-400">廣覆蓋 · 遊戲後端主軸</span>
+      </h1>
+      <p class="mt-5 max-w-xl text-lg leading-8 text-slate-400">
+        給學過 Python 的人：不是語法速成，而是型別、併發、錯誤哲學與 Server 生命週期。
+        每章對照 Python 舊直覺，並連到遊戲 Server 真實問題。
+      </p>
+      <div class="mt-8 flex flex-wrap gap-3">
+        <a href="/lessons/p0-python-to-go/p0-0-why-game-server" class="rounded-lg bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-slate-950 hover:bg-emerald-400">
+          從 P0.0 開始（為什麼是遊戲 Server）
+        </a>
+        <a href="/path" class="rounded-lg border border-slate-700 px-5 py-2.5 text-sm font-semibold text-slate-200 hover:border-slate-500">
+          看學習路徑
+        </a>
+        <a href="/volumes" class="rounded-lg border border-slate-700 px-5 py-2.5 text-sm font-semibold text-slate-200 hover:border-slate-500">
+          全部卷冊
+        </a>
+      </div>
+      <div class="mt-6 rounded-xl border border-sky-800/60 bg-sky-950/40 px-4 py-3 text-sm text-sky-100">
+        <p class="font-semibold text-sky-300">Docker 兩個埠（不要搞混）</p>
+        <ul class="mt-2 list-disc space-y-1 pl-5 text-sky-100/90">
+          <li><strong>本站 :8088</strong> ← 完整教學網站（你現在這裡）</li>
+          <li><strong>:8080</strong> 只有 Arena Mini 遊戲 Demo（Capstone 實作，不是課程目錄）</li>
+        </ul>
+      </div>
+      <p class="mt-4 text-sm text-slate-500">內容進度：{readyCount} / {totalCount} 篇 ready · Capstone 含碰撞得分局循環</p>
+    </div>
+    <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-400">主路徑精選</h2>
+      <ol class="mt-4 space-y-3">
+        {pathLessons.map((l, i) => (
+          <li>
+            <a href={`/lessons/${l.slug}`} class="group flex gap-3">
+              <span class="mt-0.5 w-6 shrink-0 text-sm text-slate-600 group-hover:text-emerald-500">{i + 1}</span>
+              <span>
+                <span class="block font-medium text-slate-200 group-hover:text-white">{l.lessonId} {l.title}</span>
+                <span class="block text-sm text-slate-500">{l.description}</span>
+              </span>
+            </a>
+          </li>
+        ))}
+      </ol>
+    </div>
+  </section>
+
+  <section class="mt-16">
+    <h2 class="text-2xl font-semibold text-white">卷冊地圖</h2>
+    <p class="mt-2 text-slate-400">廣覆蓋目錄；灰色為尚在撰寫的佔位。</p>
+    <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      {volumes.map((v) => {
+        const ready = v.lessons.filter((l) => l.status === 'ready').length;
+        return (
+          <a href={`/volumes#${v.id}`} class="rounded-xl border border-slate-800 bg-slate-900/40 p-5 hover:border-emerald-800 hover:bg-slate-900">
+            <div class="flex items-start justify-between gap-2">
+              <h3 class="font-semibold text-slate-100">{v.title}</h3>
+              <span class="text-xs text-slate-500">{ready}/{v.lessons.length || '—'}</span>
+            </div>
+            <p class="mt-2 text-sm text-slate-400">{v.blurb}</p>
+          </a>
+        );
+      })}
+    </div>
+  </section>
+</BaseLayout>

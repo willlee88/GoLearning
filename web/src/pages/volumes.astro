@@ -1,0 +1,33 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { getVolumes } from '../lib/lessons';
+
+const volumes = getVolumes();
+---
+<BaseLayout title="卷冊" description="GoLearning 廣覆蓋卷冊索引">
+  <h1 class="text-3xl font-bold text-white">卷冊索引</h1>
+  <p class="mt-3 text-slate-400">當手冊查閱，或依卷循序閱讀。</p>
+
+  <div class="mt-10 space-y-12">
+    {volumes.map((v) => (
+      <section id={v.id}>
+        <h2 class="text-xl font-semibold text-emerald-400">{v.title}</h2>
+        <p class="mt-1 text-sm text-slate-500">{v.blurb}</p>
+        {v.lessons.length === 0 ? (
+          <p class="mt-4 text-sm text-slate-600">尚無章節檔（規劃中）。</p>
+        ) : (
+          <ul class="mt-4 divide-y divide-slate-800 rounded-xl border border-slate-800">
+            {v.lessons.map((l) => (
+              <li>
+                <a href={`/lessons/${l.slug}`} class="flex flex-wrap items-center justify-between gap-2 px-4 py-3 hover:bg-slate-900/80">
+                  <span class="text-slate-200">{l.lessonId} {l.title}</span>
+                  <span class="text-xs text-slate-500">{l.status} · {l.level}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    ))}
+  </div>
+</BaseLayout>

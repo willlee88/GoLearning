@@ -1,0 +1,40 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+const { title = 'GoLearning', description = '給 Python 背景的 Go 深度學習 · 遊戲 Server 主軸' } = Astro.props;
+const fullTitle = title === 'GoLearning' ? title : `${title} · GoLearning`;
+---
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>{fullTitle}</title>
+  </head>
+  <body class="min-h-screen bg-slate-950 text-slate-100 antialiased">
+    <header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20">
+      <div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
+        <a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a>
+        <nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300">
+          <a class="hover:text-white" href="/path">學習路徑</a>
+          <a class="hover:text-white" href="/volumes">卷冊</a>
+          <a class="hover:text-white" href="/search">搜尋</a>
+          <a class="hover:text-white" href="/about">關於</a>
+        </nav>
+      </div>
+    </header>
+    <main class="mx-auto max-w-6xl px-4 py-8">
+      <slot />
+    </main>
+    <footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">
+      GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code>
+    </footer>
+  </body>
+</html>

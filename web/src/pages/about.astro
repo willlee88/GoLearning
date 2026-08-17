@@ -1,0 +1,24 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="關於" description="關於 GoLearning">
+  <h1 class="text-3xl font-bold text-white">關於 GoLearning</h1>
+  <div class="prose-like mt-6 max-w-2xl space-y-4 text-slate-300 leading-7">
+    <p>
+      這是一個本機學習專案：給<strong class="text-slate-100">學過 Python</strong>的人，用<strong class="text-slate-100">廣覆蓋</strong>目錄
+      建立對 Go 的<strong class="text-slate-100">深刻理解</strong>，並以<strong class="text-slate-100">遊戲 Server</strong>為應用收束。
+    </p>
+    <p>
+      課程真相來源在 repo 的 <code class="text-emerald-300">content/</code>；網站為 Astro 前端。
+      可執行範例在 <code class="text-emerald-300">examples/</code>，Capstone 在 <code class="text-emerald-300">demo/arena-mini/</code>。
+    </p>
+    <p>
+      完整規劃見 <code class="text-emerald-300">docs/規劃書.md</code>（v0.2）。
+    </p>
+    <ul class="list-disc space-y-2 pl-6">
+      <li>L1 能用 · L2 機制 · L3 深潛</li>
+      <li>每章 Python 對照與「請丟掉的習慣」</li>
+      <li>遊戲 Server 連結貫穿語言與工程章</li>
+    </ul>
+  </div>
+</BaseLayout>

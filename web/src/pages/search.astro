@@ -1,0 +1,121 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+---
+<BaseLayout title="搜尋" description="搜尋 GoLearning 課程">
+  <h1 class="text-3xl font-bold text-white">搜尋</h1>
+  <p class="mt-2 text-slate-400">以標題、說明、標籤與內文關鍵字篩選章節（前端索引，M1 雛形）。</p>
+
+  <div class="mt-6">
+    <label class="sr-only" for="q">搜尋</label>
+    <input
+      id="q"
+      type="search"
+      placeholder="例如：slice、error、Python、WebSocket、iota…"
+      class="w-full rounded-xl border border-slate-700 bg-slate-900 px-4 py-3 text-slate-100 outline-none ring-emerald-500/40 placeholder:text-slate-600 focus:ring-2"
+      autocomplete="off"
+    />
+  </div>
+
+  <p id="status" class="mt-3 text-sm text-slate-500">載入索引中…</p>
+  <ul id="results" class="mt-6 space-y-3"></ul>
+</BaseLayout>
+
+<script>
+  type Item = {
+    lessonId: string;
+    title: string;
+    description: string;
+    volume: string;
+    status: string;
+    level: string;
+    tags: string[];
+    slug: string;
+    text: string;
+  };
+
+  const qEl = document.getElementById('q') as HTMLInputElement;
+  const statusEl = document.getElementById('status')!;
+  const resultsEl = document.getElementById('results')!;
+  let items: Item[] = [];
+
+  function score(item: Item, terms: string[]): number {
+    if (!terms.length) return 0;
+    const hay = `${item.lessonId} ${item.title} ${item.description} ${item.tags.join(' ')} ${item.volume} ${item.text}`.toLowerCase();
+    let s = 0;
+    for (const t of terms) {
+      if (!hay.includes(t)) return -1;
+      if (item.lessonId.toLowerCase() === t) s += 50;
+      if (item.title.toLowerCase().includes(t)) s += 20;
+      if (item.description.toLowerCase().includes(t)) s += 10;
+      if (item.tags.some((tag) => tag.toLowerCase().includes(t))) s += 8;
+      s += 1;
+    }
+    return s;
+  }
+
+  function render(list: Item[]) {
+    if (!list.length) {
+      resultsEl.innerHTML = '<li class="text-slate-500">沒有符合的章節。</li>';
+      return;
+    }
+    resultsEl.innerHTML = list
+      .map(
+        (l) => `
+      <li class="rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3">
+        <a class="block hover:text-emerald-300" href="/lessons/${l.slug}/">
+          <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <span class="font-medium text-slate-100">${l.lessonId} · ${escapeHtml(l.title)}</span>
+            <span class="text-xs uppercase text-slate-500">${l.volume} · ${l.status}</span>
+          </div>
+          <p class="mt-1 text-sm text-slate-500">${escapeHtml(l.description)}</p>
+        </a>
+      </li>`,
+      )
+      .join('');
+  }
+
+  function escapeHtml(s: string) {
+    return s
+      .replaceAll('&', '&amp;')
+      .replaceAll('<', '&lt;')
+      .replaceAll('>', '&gt;')
+      .replaceAll('"', '&quot;');
+  }
+
+  function search() {
+    const terms = qEl.value
+      .trim()
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(Boolean);
+    if (!terms.length) {
+      statusEl.textContent = `共 ${items.length} 篇 · 輸入關鍵字開始搜尋`;
+      render(items.filter((i) => i.status === 'ready').slice(0, 12));
+      return;
+    }
+    const ranked = items
+      .map((item) => ({ item, s: score(item, terms) }))
+      .filter((x) => x.s >= 0)
+      .sort((a, b) => b.s - a.s)
+      .map((x) => x.item);
+    statusEl.textContent = `找到 ${ranked.length} 篇`;
+    render(ranked.slice(0, 50));
+  }
+
+  const res = await fetch('/search-index.json');
+  const data = await res.json();
+  items = data.items as Item[];
+  statusEl.textContent = `索引已載入 · ${items.length} 篇`;
+
+  const params = new URLSearchParams(location.search);
+  if (params.get('q')) qEl.value = params.get('q') || '';
+  qEl.addEventListener('input', () => {
+    const url = new URL(location.href);
+    if (qEl.value) url.searchParams.set('q', qEl.value);
+    else url.searchParams.delete('q');
+    history.replaceState(null, '', url);
+    search();
+  });
+  qEl.focus();
+  search();
+</script>

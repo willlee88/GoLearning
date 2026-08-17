@@ -1,0 +1,32 @@
+# Production stack — build images once, run on any Docker host.
+#
+#   docker compose up --build -d
+#
+#   ★ 教學網站（主入口）: http://localhost:8088
+#   ★ 遊戲 Demo only    : http://localhost:8080   ← 不是課程站
+#
+# Ports (optional .env):
+#   WEB_PORT=8088
+#   ARENA_PORT=8080
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    image: golearning-web:latest
+    ports:
+      - "${WEB_PORT:-8088}:80"
+    restart: unless-stopped
+
+  arena:
+    build:
+      context: .
+      dockerfile: demo/arena-mini/Dockerfile
+    image: golearning-arena:latest
+    environment:
+      ADDR: ":8080"
+      WEB_DIR: "/web"
+    ports:
+      - "${ARENA_PORT:-8080}:8080"
+    restart: unless-stopped

@@ -1,0 +1,41 @@
+# 主學習路徑（建議順序）
+id: main
+title: 主路徑 · Python 到遊戲 Server
+description: 給學過 Python 的學習者，從心智遷移到 Arena Mini。
+volumes:
+  - id: p0
+    title: P0 · Python → Go 心智遷移
+    required: true
+  - id: a
+    title: A · 語言與資料模型
+    required: true
+  - id: b
+    title: B · 錯誤與 API 設計
+    required: true
+  - id: c
+    title: C · 併發模型
+    required: true
+  - id: d
+    title: D · 模組、測試與品質
+    required: true
+  - id: e
+    title: E · 標準庫廣覆蓋
+    required: false
+  - id: f
+    title: F · 網路
+    required: true
+  - id: g
+    title: G · 序列化與協定
+    required: true
+  - id: h
+    title: H · 遊戲 Server 核心
+    required: true
+  - id: i
+    title: I · 資料與快取
+    required: false
+  - id: j
+    title: J · 觀測、安全、擴展
+    required: true
+  - id: k
+    title: K · Capstone
+    required: true

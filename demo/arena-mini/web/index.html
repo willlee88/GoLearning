@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Arena Mini · M5+</title>
+  <style>
+    :root { font-family: system-ui, sans-serif; color: #e7ecf3; background: #0f1419; }
+    body { max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.35rem; margin-bottom: .25rem; }
+    .hint { color: #8aa; font-size: .9rem; margin: .25rem 0 1rem; }
+    .row { display: flex; gap: .5rem; flex-wrap: wrap; margin: .45rem 0; align-items: center; }
+    input, button { padding: .5rem .75rem; border-radius: 8px; border: 1px solid #334; background: #1a2332; color: inherit; }
+    button { cursor: pointer; background: #2b6cb0; border-color: #2b6cb0; }
+    button.secondary { background: #243044; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    #stage {
+      width: 100%; max-width: 400px; height: 240px; background: #0a0e14;
+      border: 1px solid #243; border-radius: 8px; position: relative; overflow: hidden;
+      touch-action: none;
+    }
+    .dot {
+      position: absolute; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
+      background: #34d399; color: #042; font-size: 10px; line-height: 18px; text-align: center;
+      transform: translate(-50%, -50%); white-space: nowrap; font-weight: 600;
+    }
+    #status { font-family: ui-monospace, monospace; font-size: 12px; color: #9ab; }
+    #scores { font-family: ui-monospace, monospace; font-size: 13px; color: #cbd5e1; margin: .35rem 0; }
+    #banner {
+      display: none; margin: .5rem 0; padding: .6rem .8rem; border-radius: 8px;
+      background: #14532d; color: #bbf7d0; font-weight: 600;
+    }
+    #banner.show { display: block; }
+    #log {
+      background: #0a0e14; border: 1px solid #243; border-radius: 8px; min-height: 120px;
+      max-height: 200px; overflow: auto; padding: .75rem; white-space: pre-wrap;
+      font-family: ui-monospace, monospace; font-size: 12px;
+    }
+    kbd { background: #243; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div id="course-banner" style="margin:0 0 1rem;padding:.85rem 1rem;border-radius:10px;background:#1e3a5f;border:1px solid #3b82f6;line-height:1.5">
+    <strong style="color:#93c5fd">這裡只有 Capstone 遊戲（Arena Mini），不是完整教學站。</strong><br/>
+    <span style="color:#cbd5e1;font-size:.95rem">完整課程（P0～K、學習路徑、搜尋）請開啟：</span>
+    <a id="course-link" href="http://localhost:8088/" style="color:#fde68a;font-weight:700;font-size:1.05rem">http://localhost:8088</a>
+    <span style="color:#94a3b8;font-size:.85rem">（Docker 預設埠）</span>
+  </div>
+  <h1>Arena Mini <span style="color:#6ee7b7">碰撞得分</span></h1>
+  <p class="hint">
+    兩人 Ready → 移動碰撞得分（先到 <strong>3</strong> 分勝）→ Ended 約 3 秒回 Lobby。<br/>
+    權威 Server · 20Hz · <code>input</code> only · <a href="/metrics" style="color:#7dd3fc">/metrics</a>
+  </p>
+  <script>
+    (function () {
+      var a = document.getElementById('course-link');
+      if (!a) return;
+      var host = location.hostname || 'localhost';
+      // Same host, course site on 8088 (docker-compose default WEB_PORT)
+      a.href = location.protocol + '//' + host + ':8088/';
+      a.textContent = a.href;
+    })();
+  </script>
+
+  <div class="row">
+    <input id="room" value="lobby" placeholder="room" />
+    <input id="name" value="player1" placeholder="name" />
+    <button id="connect">連線</button>
+    <button id="disconnect" class="secondary" disabled>斷線</button>
+    <button id="ready" class="secondary" disabled>Ready</button>
+    <button id="rooms" class="secondary">/rooms</button>
+  </div>
+
+  <div class="row">
+    <div id="stage"></div>
+    <div>
+      <div class="row">
+        <button class="secondary pad" data-dx="0" data-dy="-1" disabled>↑</button>
+      </div>
+      <div class="row">
+        <button class="secondary pad" data-dx="-1" data-dy="0" disabled>←</button>
+        <button class="secondary pad" data-dx="0" data-dy="0" disabled>·</button>
+        <button class="secondary pad" data-dx="1" data-dy="0" disabled>→</button>
+      </div>
+      <div class="row">
+        <button class="secondary pad" data-dx="0" data-dy="1" disabled>↓</button>
+      </div>
+      <p class="hint">鍵盤：<kbd>WASD</kbd> / <kbd>方向鍵</kbd></p>
+    </div>
+  </div>
+
+  <div id="banner"></div>
+  <div id="scores">scores: —</div>
+  <div id="status">phase=— tick=—</div>
+  <div id="log"></div>
+
+  <script>
+    let ws;
+    let held = { dx: 0, dy: 0 };
+    const logEl = document.getElementById('log');
+    const stage = document.getElementById('stage');
+    const statusEl = document.getElementById('status');
+    const scoresEl = document.getElementById('scores');
+    const banner = document.getElementById('banner');
+    const dots = new Map();
+    const colors = ['#34d399', '#60a5fa', '#f472b6', '#fbbf24'];
+    const log = (t) => { logEl.textContent += t + '\n'; logEl.scrollTop = logEl.scrollHeight; };
+
+    function setUI(on) {
+      ['disconnect', 'ready'].forEach((id) => document.getElementById(id).disabled = !on);
+      document.querySelectorAll('.pad').forEach((b) => b.disabled = !on);
+    }
+
+    function send(type, payload = '') {
+      if (!ws || ws.readyState !== 1) return;
+      const msg = JSON.stringify({ v: 1, type, payload });
+      ws.send(msg);
+      if (type !== 'input') log('[send] ' + msg);
+    }
+
+    function ensureDot(name, idx) {
+      if (dots.has(name)) return dots.get(name);
+      const el = document.createElement('div');
+      el.className = 'dot';
+      el.style.background = colors[idx % colors.length];
+      stage.appendChild(el);
+      dots.set(name, el);
+      return el;
+    }
+
+    function renderState(payload) {
+      let s;
+      try { s = JSON.parse(payload); } catch { return; }
+      const win = s.winner ? ` winner=${s.winner}` : '';
+      statusEl.textContent = `phase=${s.phase} tick=${s.tick} to_win=${s.score_to_win || 3}${win}`;
+      scoresEl.textContent = 'scores: ' + (s.players || []).map((p) => `${p.name}=${p.score || 0}`).join(' · ');
+
+      if (s.phase === 'ended') {
+        banner.classList.add('show');
+        banner.textContent = s.winner
+          ? `結束！勝者 ${s.winner}（即將回大廳）`
+          : '結束！平手（即將回大廳）';
+      } else {
+        banner.classList.remove('show');
+      }
+
+      const seen = new Set();
+      (s.players || []).forEach((p, i) => {
+        seen.add(p.name);
+        const el = ensureDot(p.name, i);
+        el.style.left = p.x + 'px';
+        el.style.top = p.y + 'px';
+        el.textContent = `${p.name.slice(0, 3)}:${p.score || 0}`;
+        el.title = `${p.name} score=${p.score} ready=${p.ready}`;
+        if (!p.ready && s.phase === 'lobby') el.style.opacity = '0.7';
+        else el.style.opacity = '1';
+      });
+      for (const [name, el] of dots) {
+        if (!seen.has(name)) { el.remove(); dots.delete(name); }
+      }
+    }
+
+    document.getElementById('connect').onclick = () => {
+      const room = document.getElementById('room').value || 'lobby';
+      const name = document.getElementById('name').value || 'anon';
+      const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+      ws = new WebSocket(`${proto}://${location.host}/ws?room=${encodeURIComponent(room)}&name=${encodeURIComponent(name)}`);
+      ws.onopen = () => { log('[open] ' + room + ' as ' + name); setUI(true); };
+      ws.onclose = () => { log('[close]'); setUI(false); };
+      ws.onerror = () => log('[error]');
+      ws.onmessage = (e) => {
+        let m;
+        try { m = JSON.parse(e.data); } catch { log('[recv] ' + e.data); return; }
+        if (m.type === 'state') {
+          renderState(m.payload);
+          return;
+        }
+        log('[recv] ' + e.data);
+      };
+    };
+
+    document.getElementById('disconnect').onclick = () => ws?.close();
+    document.getElementById('ready').onclick = () => send('ready', '1');
+    document.getElementById('rooms').onclick = async () => {
+      log('[http] ' + await (await fetch('/rooms')).text());
+    };
+
+    function setHeld(dx, dy) {
+      held = { dx, dy };
+      send('input', dx + ',' + dy);
+    }
+
+    document.querySelectorAll('.pad').forEach((b) => {
+      const fire = () => setHeld(+b.dataset.dx, +b.dataset.dy);
+      b.addEventListener('mousedown', fire);
+      b.addEventListener('touchstart', (e) => { e.preventDefault(); fire(); });
+    });
+
+    setInterval(() => {
+      if (ws?.readyState === 1 && (held.dx !== 0 || held.dy !== 0)) {
+        send('input', held.dx + ',' + held.dy);
+      }
+    }, 50);
+
+    const keyMap = {
+      ArrowUp: [0, -1], ArrowDown: [0, 1], ArrowLeft: [-1, 0], ArrowRight: [1, 0],
+      w: [0, -1], s: [0, 1], a: [-1, 0], d: [1, 0],
+      W: [0, -1], S: [0, 1], A: [-1, 0], D: [1, 0],
+    };
+    window.addEventListener('keydown', (e) => {
+      const v = keyMap[e.key];
+      if (!v || e.repeat) return;
+      e.preventDefault();
+      setHeld(v[0], v[1]);
+    });
+    window.addEventListener('keyup', (e) => {
+      if (!keyMap[e.key]) return;
+      held = { dx: 0, dy: 0 };
+      send('input', '0,0');
+    });
+  </script>
+</body>
+</html>
