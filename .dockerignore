@@ -18,5 +18,7 @@ scripts
 examples
 samples
 content/_templates
+services/runner/**/*_test.go
 
 # Do NOT ignore content/**/*.md — Astro build reads lessons from content/
+# Do NOT ignore services/runner — needed for runner image

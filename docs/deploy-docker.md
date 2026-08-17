@@ -6,10 +6,13 @@
 
 | 服務 | 預設網址 | 說明 |
 |------|----------|------|
-| **`web`（主入口）** | **http://localhost:8088** | **完整教學站**（P0～K、路徑、搜尋、卷冊） |
-| `arena` | http://localhost:8080 | **只有** Capstone 小遊戲 Arena Mini（容易誤以為是全部） |
+| **`web`（主入口）** | **http://localhost:8088** | **完整教學站**（P0～K、路徑、搜尋、卷冊、**Playground 線上跑 Go**） |
+| `runner` | （不對外） | 透過網站 `/api/run` 執行學員程式 |
+| `arena` | http://localhost:8080 | **只有** Capstone 小遊戲 Arena Mini |
 
-> 若你只看到「Ready / 碰撞 / 分數」，代表開到了 **8080 遊戲**；請改開 **8088 課程站**。
+> 若你只看到「Ready / 碰撞 / 分數」，代表開到了 **8080 遊戲**；請改開 **8088 課程站**。  
+> 線上寫 Go：http://localhost:8088/playground/
+
 
 對方電腦**不必**安裝 Node.js 或 Go。
 

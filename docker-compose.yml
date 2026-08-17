@@ -1,9 +1,9 @@
-# Production stack — build images once, run on any Docker host.
+# Production stack
 #
 #   docker compose up --build -d
 #
-#   ★ 教學網站（主入口）: http://localhost:8088
-#   ★ 遊戲 Demo only    : http://localhost:8080   ← 不是課程站
+#   ★ 教學網站 + 線上 Playground : http://localhost:8088
+#   ★ Arena Mini 遊戲 only       : http://localhost:8080
 #
 # Ports (optional .env):
 #   WEB_PORT=8088
@@ -17,6 +17,25 @@ services:
     image: golearning-web:latest
     ports:
       - "${WEB_PORT:-8088}:80"
+    depends_on:
+      - runner
+    networks:
+      - default
+      - internal
+    restart: unless-stopped
+
+  runner:
+    build:
+      context: .
+      dockerfile: services/runner/Dockerfile
+    image: golearning-runner:latest
+    environment:
+      ADDR: ":8091"
+    # Not published — only nginx /api/run on web
+    mem_limit: 512m
+    cpus: 1.0
+    networks:
+      - internal
     restart: unless-stopped
 
   arena:
@@ -29,4 +48,12 @@ services:
       WEB_DIR: "/web"
     ports:
       - "${ARENA_PORT:-8080}:8080"
+    networks:
+      - default
     restart: unless-stopped
+
+networks:
+  default:
+  # No outbound internet for runner (stdlib-only playground)
+  internal:
+    internal: true

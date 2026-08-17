@@ -53,10 +53,11 @@ docker compose up --build -d
 
 | 服務 | 網址 |
 |------|------|
-| 學習站 | http://localhost:8088 |
-| Arena Mini | http://localhost:8080 |
+| 學習站 + **線上跑 Go** | http://localhost:8088 （Playground：`/playground/`） |
+| Arena Mini 遊戲 | http://localhost:8080 |
 
 - 對方電腦只需 **Docker**，不必裝 Node/Go。  
+- 網站會把 `/api/run` 轉到後端 `runner` 執行 Go 並回傳 stdout/stderr。  
 - 完整說明：[`docs/deploy-docker.md`](docs/deploy-docker.md)  
 - 開發熱重載：`docker compose -f docker-compose.dev.yml up`
 
