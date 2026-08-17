@@ -39,13 +39,13 @@ const next = lesson.next ? getLessonByLessonId(lesson.next) : undefined;
 
   <nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8">
     {prev ? (
-      <a href={`/lessons/${prev.slug}`} class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800">
+      <a href={`/lessons/${prev.slug}/`} class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800">
         <div class="text-xs text-slate-500">上一章</div>
         <div class="text-sm font-medium text-slate-200">{prev.lessonId} {prev.title}</div>
       </a>
     ) : <span />}
     {next ? (
-      <a href={`/lessons/${next.slug}`} class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto">
+      <a href={`/lessons/${next.slug}/`} class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto">
         <div class="text-xs text-slate-500">下一章</div>
         <div class="text-sm font-medium text-slate-200">{next.lessonId} {next.title}</div>
       </a>

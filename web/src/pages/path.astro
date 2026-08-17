@@ -13,7 +13,7 @@ const lessons = getMainPathLessons();
   <ol class="mt-10 space-y-3">
     {lessons.map((l, i) => (
       <li class="rounded-xl border border-slate-800 bg-slate-900/40 px-4 py-3">
-        <a href={`/lessons/${l.slug}`} class="flex flex-wrap items-baseline justify-between gap-2 hover:text-emerald-300">
+        <a href={`/lessons/${l.slug}/`} class="flex flex-wrap items-baseline justify-between gap-2 hover:text-emerald-300">
           <span>
             <span class="mr-2 text-slate-600">{String(i + 1).padStart(2, '0')}</span>
             <span class="font-medium text-slate-100">{l.lessonId} · {l.title}</span>
