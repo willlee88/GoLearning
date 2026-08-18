@@ -1,52 +1,45 @@
-# 無 Docker 部署（純教學站）
+# 無 Docker 部署：靜態 HTML 版
 
-另一台電腦**不能跑 Docker**時，只要部署**靜態教學網站**即可（閱讀課程）。  
-Playground 線上跑 Go、Arena 遊戲需要後端／Docker，靜態站不會包含它們。
+適用：另一台電腦**不能用 Docker**、也不想依賴 GitHub Pages。  
+只要**教學閱讀網站**（不含線上跑 Go、不含 Arena 遊戲）。
 
-## 方式一：GitHub Pages（推薦）
+## 推薦：打成 ZIP 拷過去
 
-推送到 `main` 後，GitHub Actions 會自動建置並發佈。
-
-### 第一次請開啟 Pages
-
-1. 打開 https://github.com/willlee88/GoLearning/settings/pages  
-2. **Source** 選 **GitHub Actions**  
-3. 等 Actions 跑完（或手動跑 workflow「Deploy GitHub Pages」）
-
-### 網址
-
-**https://willlee88.github.io/GoLearning/**
-
-之後每次 `git push` 到 `main` 就會更新網站。對方電腦只需瀏覽器。
-
-## 方式二：本機建置後拷貝 `dist`
-
-在有 Node.js 的電腦：
+在有 Node 的電腦（你的開發機）：
 
 ```powershell
-cd F:\GoLearning\web
-npm install
-npm run build
+cd F:\GoLearning
+powershell -ExecutionPolicy Bypass -File .\scripts\build-static.ps1
 ```
 
-把 `web/dist/` 整包複製到另一台，用任一靜態伺服器開啟，例如：
+會產生：
 
-```powershell
-# 若那台有 Node
-npx --yes serve dist -p 4321
-```
+| 路徑 | 說明 |
+|------|------|
+| `release/GoLearning-static/` | 可直接拷貝的資料夾 |
+| `release/GoLearning-static.zip` | 同上，壓縮包 |
 
-或用 IIS / nginx / 檔案分享軟體提供 `dist` 目錄。  
-不要直接用 `file://` 開（路徑與搜尋索引容易壞）。
+### 在另一台電腦
 
-> 注意：拷貝本機 `npm run build`（未設 `GITHUB_PAGES`）時，站點根路徑是 `/`。  
-> GitHub Pages 建置會設 `GITHUB_PAGES=true`，根路徑是 `/GoLearning/`。
+1. 解壓 `GoLearning-static.zip`  
+2. 雙擊 **`start.bat`**  
+3. 瀏覽器開 **http://127.0.0.1:4321**
 
-## 和 Docker 的對照
+`start.bat` 會用 Python 或 Node 開一個本機靜態伺服器（**不要**直接雙擊 `index.html`，路徑會壞）。
 
-| | GitHub Pages / 靜態 dist | Docker |
-|--|--------------------------|--------|
+若那台完全沒有 Python / Node：把整個資料夾放到 NAS、IIS、或其他靜態網站空間即可。
+
+## 可選：GitHub Pages
+
+若帳號支援 Pages，也可自動發佈（需 Actions 的 `workflow` 權限）。  
+網址形態：`https://<user>.github.io/GoLearning/`  
+見 repo 內 `.github/workflows/pages.yml`（若尚未推上，可手動新增）。
+
+## 和 Docker 差在哪
+
+| | 靜態 HTML ZIP | Docker |
+|--|---------------|--------|
 | 讀課程 | ✅ | ✅ |
-| 線上跑 Go | ❌ | ✅ Playground |
-| Arena 遊戲 | ❌ | ✅ |
-| 對方要裝什麼 | 瀏覽器 | Docker |
+| 線上跑 Go | ❌ | ✅ |
+| Arena | ❌ | ✅ |
+| 對方需求 | 瀏覽器 +（建議）Python/Node 開本地伺服器 | Docker |

@@ -20,3 +20,6 @@ coverage.*
 golearning-images.tar
 *.tar
 .env
+
+# Static HTML release (regenerate with scripts/build-static.ps1)
+release/

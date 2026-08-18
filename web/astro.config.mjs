@@ -2,13 +2,13 @@
 import { defineConfig } from 'astro/config';
 import tailwindcss from '@tailwindcss/vite';
 
-// GitHub Pages project site: https://willlee88.github.io/GoLearning/
-// Local / Docker root deploy: leave GITHUB_PAGES unset → base `/`
+// - default / Docker / portable zip (serve from folder root): base `/`
+// - GITHUB_PAGES=true: base `/GoLearning/`
 const githubPages = process.env.GITHUB_PAGES === 'true';
 
 // https://astro.build/config
 export default defineConfig({
-  site: 'https://willlee88.github.io',
+  site: githubPages ? 'https://willlee88.github.io' : undefined,
   base: githubPages ? '/GoLearning/' : '/',
   trailingSlash: 'always',
   vite: {

@@ -10,14 +10,18 @@
 
 ## 給另一台電腦看教學站（**不用 Docker**）
 
-若對方電腦不能跑 Docker，請用 **GitHub Pages 靜態站**（只要瀏覽器）：
+對方不能跑 Docker 時，打一份**靜態 HTML**拷過去即可：
 
-**https://willlee88.github.io/GoLearning/**
+```powershell
+cd F:\GoLearning
+powershell -ExecutionPolicy Bypass -File .\scripts\build-static.ps1
+```
 
-第一次請到 repo → **Settings → Pages → Source: GitHub Actions** 開啟，等 Actions 建置完成。  
-說明：[`docs/deploy-static.md`](docs/deploy-static.md)
+得到 `release/GoLearning-static.zip` → 拷到另一台 → 解壓 → 雙擊 **`start.bat`** → 開 http://127.0.0.1:4321  
 
-> Pages 只有課程閱讀。線上跑 Go／Arena 遊戲需要 Docker（可選）。
+詳見 [`docs/deploy-static.md`](docs/deploy-static.md)。
+
+> 靜態版只有**課程閱讀**。線上跑 Go／Arena 仍要 Docker（可選）。
 
 ## 快速開始（本機開發）
 
