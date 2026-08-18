@@ -8,14 +8,23 @@
 | 規劃書 | [`docs/規劃書.md`](docs/規劃書.md) |
 | 內容策略 | 廣覆蓋 · L1/L2/L3 分層 · Python 對照 · 遊戲情境 |
 
-## 快速開始
+## 給另一台電腦看教學站（**不用 Docker**）
+
+若對方電腦不能跑 Docker，請用 **GitHub Pages 靜態站**（只要瀏覽器）：
+
+**https://willlee88.github.io/GoLearning/**
+
+第一次請到 repo → **Settings → Pages → Source: GitHub Actions** 開啟，等 Actions 建置完成。  
+說明：[`docs/deploy-static.md`](docs/deploy-static.md)
+
+> Pages 只有課程閱讀。線上跑 Go／Arena 遊戲需要 Docker（可選）。
+
+## 快速開始（本機開發）
 
 ### 前置需求
 
-- **Node.js** ≥ 22.12（已用於學習網站）
-- **Go** ≥ 1.22（執行 `examples/`、`demo/`；尚未安裝可先只看網站）
-
-安裝 Go（Windows）：<https://go.dev/dl/>
+- **Node.js** ≥ 22.12（建置／預覽網站）
+- **Go** ≥ 1.22（可選：跑 examples／demo）
 
 ### 啟動學習網站
 
@@ -25,26 +34,9 @@ npm install
 npm run dev
 ```
 
-瀏覽器開啟終端機顯示的本機網址（通常是 `http://localhost:4321`）。
+瀏覽器開終端機顯示的網址（通常 `http://localhost:4321`）。
 
-### 執行範例（需已安裝 Go）
-
-```powershell
-cd F:\GoLearning\examples\p0-config-stats
-go test ./...
-go run .
-```
-
-### Arena Mini Demo（需 Go）
-
-```powershell
-cd F:\GoLearning\demo\arena-mini\server
-go run .
-# 另一個終端
-# 開啟 demo\arena-mini\web\index.html 或之後由 compose 提供
-```
-
-### Docker 打包部署（給本機或其他電腦）
+### Docker 全套（可選：Playground + Arena）
 
 ```powershell
 cd F:\GoLearning
@@ -53,13 +45,10 @@ docker compose up --build -d
 
 | 服務 | 網址 |
 |------|------|
-| 學習站 + **線上跑 Go** | http://localhost:8088 （Playground：`/playground/`） |
-| Arena Mini 遊戲 | http://localhost:8080 |
+| 學習站 + 線上跑 Go | http://localhost:8088 |
+| Arena Mini | http://localhost:8080 |
 
-- 對方電腦只需 **Docker**，不必裝 Node/Go。  
-- 網站會把 `/api/run` 轉到後端 `runner` 執行 Go 並回傳 stdout/stderr。  
-- 完整說明：[`docs/deploy-docker.md`](docs/deploy-docker.md)  
-- 開發熱重載：`docker compose -f docker-compose.dev.yml up`
+詳見 [`docs/deploy-docker.md`](docs/deploy-docker.md)。
 
 ## 倉庫結構
 

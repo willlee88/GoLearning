@@ -1,9 +1,11 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+
+const base = import.meta.env.BASE_URL;
 ---
 <BaseLayout title="搜尋" description="搜尋 GoLearning 課程">
   <h1 class="text-3xl font-bold text-white">搜尋</h1>
-  <p class="mt-2 text-slate-400">以標題、說明、標籤與內文關鍵字篩選章節（前端索引，M1 雛形）。</p>
+  <p class="mt-2 text-slate-400">以標題、說明、標籤與內文關鍵字篩選章節（前端索引）。</p>
 
   <div class="mt-6">
     <label class="sr-only" for="q">搜尋</label>
@@ -20,7 +22,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
   <ul id="results" class="mt-6 space-y-3"></ul>
 </BaseLayout>
 
-<script>
+<script define:vars={{ base }}>
   type Item = {
     lessonId: string;
     title: string;
@@ -62,7 +64,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
       .map(
         (l) => `
       <li class="rounded-xl border border-slate-800 bg-slate-900/50 px-4 py-3">
-        <a class="block hover:text-emerald-300" href="/lessons/${l.slug}/">
+        <a class="block hover:text-emerald-300" href="${base}lessons/${l.slug}/">
           <div class="flex flex-wrap items-baseline justify-between gap-2">
             <span class="font-medium text-slate-100">${l.lessonId} · ${escapeHtml(l.title)}</span>
             <span class="text-xs uppercase text-slate-500">${l.volume} · ${l.status}</span>
@@ -102,7 +104,7 @@ import BaseLayout from '../layouts/BaseLayout.astro';
     render(ranked.slice(0, 50));
   }
 
-  const res = await fetch('/search-index.json');
+  const res = await fetch(`${base}search-index.json`);
   const data = await res.json();
   items = data.items as Item[];
   statusEl.textContent = `索引已載入 · ${items.length} 篇`;
