@@ -1,0 +1,86 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="延遲、吞吐、丟包與遊戲手感；可靠傳輸不等於即時。"><link rel="icon" type="image/svg+xml" href="/GoLearning/favicon.svg"><title>F1 網路心智模型 · GoLearning</title><link rel="stylesheet" href="/GoLearning/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/GoLearning/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/GoLearning/path/">學習路徑</a><a class="hover:text-white" href="/GoLearning/volumes/">卷冊</a><a class="hover:text-white" href="/GoLearning/playground/">Playground</a><a class="hover:text-white" href="/GoLearning/search/">搜尋</a><a class="hover:text-white" href="/GoLearning/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">F · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">F1 · 網路心智模型</h1><p class="mt-3 text-slate-400">延遲、吞吐、丟包與遊戲手感；可靠傳輸不等於即時。</p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">network</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">game-server</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>網路<strong>不是</strong>「函式呼叫比較慢一點」而已。中間有距離、有路由器、有可能丟包、有人手機切基站。</p>
+<p>你要建立的心智：</p>
+<ul>
+<li><strong>延遲（latency）</strong>：一去一回要多久（常講 RTT）  </li>
+<li><strong>抖動（jitter）</strong>：這次 30ms、下次 80ms，不穩  </li>
+<li><strong>吞吐（throughput）</strong>：單位時間能搬多少資料  </li>
+<li><strong>丟包／重傳</strong>：TCP 會重傳，但你的「即時手感」可能已經過期  </li>
+<li><strong>可靠 ≠ 即時</strong>：TCP 保證送到且有序，卻可能卡在隊頭</li>
+</ul>
+<p>本站實作主軸是 <strong>TCP／WebSocket + 權威伺服器狀態</strong>；UDP 只做概念對照，不要求你先寫一套 UDP 協定。</p>
+<h2>先跟 Python 對一下</h2>
+<p>物理層與協定兩邊一樣。你在 Python 用 <code>asyncio</code> 或 threads 時也要設 timeout；Go 這邊用 <code>context</code>、<code>SetDeadline</code> 把超時講清楚。</p>
+<p>差別比較常出在：<strong>預設 API 很方便就阻塞讀</strong>，新手忘了設 deadline，連線假死時 goroutine／thread 掛一輩子。</p>
+<h2>怎麼寫（先記數字直覺）</h2>
+<table>
+<thead>
+<tr>
+<th>情境</th>
+<th>量級（示意）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>同機 loopback</td>
+<td>&lt; 1ms</td>
+</tr>
+<tr>
+<td>同城 RTT</td>
+<td>數 ms～數十 ms</td>
+</tr>
+<tr>
+<td>跨洲 RTT</td>
+<td>100ms+</td>
+</tr>
+</tbody></table>
+<p>遊戲 tick 若是 20–60Hz（每幀 16–50ms），RTT 會直接吃掉「手感預算」。同機覺得超順，不代表玩家遠端也順。</p>
+<p>記住三句口訣：</p>
+<ol>
+<li><strong>小狀態同步常常是延遲與訊息率問題，不是頻寬跑滿。</strong>  </li>
+<li><strong>沒有 deadline 的 Read，是生產事故候補。</strong>  </li>
+<li><strong>廣播很容易變成流量放大器。</strong></li>
+</ol>
+<h2>為什麼這樣設計／底層在幹嘛</h2>
+<h3>延遲 vs 頻寬</h3>
+<p>傳 200 byte 的狀態，瓶頸多半是「多久能往返／多久能排程送出」，不是「光纖不夠粗」。優化方向：少聊廢話、合併訊息、別每幀全員全量乱打。</p>
+<h3>TCP 隊頭阻塞（Head-of-Line blocking）</h3>
+<p>TCP 保證<strong>有序</strong>。前面一個包丟了在等重傳，後面已經到的資料也會卡著不交給你的應用。對「最新位置最重要、舊位置可丟」的玩法，這是痛點——所以有人用 UDP。但 UDP 要把可靠、順序、擁塞自己補齊，成本很高。教學與很多遊戲類型（回合、休閒即時、權威房間）用 TCP／WS 完全合理。</p>
+<h3>廣播放大</h3>
+<p>50 人同房、每人每 tick 都把全場狀態廣播一遍，粗算會往 <strong>O(N²)</strong> 訊息量長。實務要：興趣管理、只送 delta、降頻、分線程／分房。</p>
+<h3>背壓（backpressure）</h3>
+<p>客戶端讀得慢 → Server 寫入緩衝堆起來 → 記憶體漲或阻塞寫 goroutine。要有<strong>有界佇列</strong>、可丟棄的訊息策略、慢客戶踢除——後面 lab 會碰到「寫鎖／廣播」。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li>Nagle、delayed ACK：小包頻繁時的延遲怪癖。  </li>
+<li>行動網路 NAT：中間盒可能默默丟閒置連線 → 所以要心跳（F7）。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>權威 Server（規則在伺服器算）常被選，不是因為「TCP 最快」，而是<strong>狀態可預期、較好反作弊、瀏覽器能用 WS</strong>。預測與延遲補償是 H 卷以後的進階題；先把連線與協定做對。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li><strong>預設阻塞讀、不設 timeout。</strong>  </li>
+<li><strong>「TCP 不會丟」所以應用層不必重連、不必冪等</strong>——中間盒會斷，重送會變成開兩槍。  </li>
+<li><strong>只在本機測就宣稱同步方案沒問題。</strong></li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>用文字粗算：30Hz、50 人同房、每 tick 對每人廣播 200B 全量，Server <strong>每秒送出</strong>大約多少資料？（提示：先算每 tick 總 bytes，再 ×30。）  </li>
+<li>列出你會為連線設的三種 timeout：握手／讀閒置／寫。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>查你家寬頻標稱的「延遲」數字，跟同城／跨洲量級對照。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>把頻寬升級當延遲解藥</strong>：玩法手感常常不吃這套。  </li>
+<li><strong>全量狀態每 tick 狂廣</strong>：先算流量再寫碼。  </li>
+<li><strong>忽略抖動</strong>：平均 RTT 低但偶發 200ms，玩家照樣罵。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li>TCP 概念：RFC 793（可略讀，建立「可靠位元組流」印象即可）</li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/GoLearning/lessons/f-network/f0-index/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">F0 F 卷導讀 · 網路</div></a><a href="/GoLearning/lessons/f-network/f2-tcp/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">F2 TCP server 與 client</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

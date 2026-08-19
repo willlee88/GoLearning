@@ -1,0 +1,104 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="用 cases 表格 + t.Run 變成肌肉記憶；遊戲狀態機特別吃這套。"><link rel="icon" type="image/svg+xml" href="/GoLearning/favicon.svg"><title>D2 表驅動測試：加案例像填表 · GoLearning</title><link rel="stylesheet" href="/GoLearning/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/GoLearning/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/GoLearning/path/">學習路徑</a><a class="hover:text-white" href="/GoLearning/volumes/">卷冊</a><a class="hover:text-white" href="/GoLearning/playground/">Playground</a><a class="hover:text-white" href="/GoLearning/search/">搜尋</a><a class="hover:text-white" href="/GoLearning/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">D · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">D2 · 表驅動測試：加案例像填表</h1><p class="mt-3 text-slate-400">用 cases 表格 + t.Run 變成肌肉記憶；遊戲狀態機特別吃這套。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/d02-table-test</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">testing</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p><strong>表驅動測試（table-driven tests）</strong> 的精神是：把「輸入 → 期望輸出」列成一張表，迴圈跑；差異只在資料，不在測試骨架。</p>
+<p>好處很實際：</p>
+<ul>
+<li>加案例通常一行（或一個 struct）  </li>
+<li>失敗時有名字（<code>t.Run</code>）好找  </li>
+<li>逼你把行為想成「規格」，而不是「偶然跑過的路徑」</li>
+</ul>
+<p>Go 社群極常用這招。遊戲的相位轉移、輸入校驗、滿房邏輯——簡直是為它量身做的。</p>
+<h2>Python 對照</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>pytest.mark.parametrize</code></td>
+<td><code>for _, tc := range tests { t.Run(...) }</code></td>
+</tr>
+<tr>
+<td>一堆複製貼上的 <code>test_xxx</code></td>
+<td>一張表 + 一個迴圈</td>
+</tr>
+<tr>
+<td>fixture 很大很重</td>
+<td>表驅動偏單元；重依賴再搭配介面注入（B4）</td>
+</tr>
+</tbody></table>
+<h2>怎麼寫</h2>
+<pre class="hljs"><code class="language-go">tests := []<span class="hljs-keyword">struct</span> {
+	name <span class="hljs-type">string</span>
+	in   <span class="hljs-type">int</span>
+	want <span class="hljs-type">int</span>
+}{
+	{<span class="hljs-string">&quot;zero&quot;</span>, <span class="hljs-number">0</span>, <span class="hljs-number">0</span>},
+	{<span class="hljs-string">&quot;pos&quot;</span>, <span class="hljs-number">2</span>, <span class="hljs-number">4</span>},
+}
+<span class="hljs-keyword">for</span> _, tc := <span class="hljs-keyword">range</span> tests {
+	t.Run(tc.name, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(t *testing.T)</span></span> {
+		<span class="hljs-keyword">if</span> got := double(tc.in); got != tc.want {
+			t.Fatalf(<span class="hljs-string">&quot;got %d want %d&quot;</span>, got, tc.want)
+		}
+	})
+}</code></pre><p>重點：</p>
+<ul>
+<li><code>name</code> 寫人話（<code>full room rejects join</code>）  </li>
+<li>失敗訊息包含 got／want  </li>
+<li>錯誤路徑也要入表：<code>wantErr: ErrRoomFull</code> 之類</li>
+</ul>
+<p>範例：<code>examples/d02-table-test</code>。</p>
+<h2>細節</h2>
+<h3>為什麼比「十個 TestXxx」好？</h3>
+<p>複製貼上會漂：有的 asserte 詳細、有的忘記測錯誤、改簽名要改十處。<br>表格把規格集中；review 時眼睛掃資料就行。</p>
+<h3>怎麼測 error？</h3>
+<p>常見欄位：<code>wantErr error</code>，然後：</p>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">if</span> !errors.Is(err, tc.wantErr) {
+	t.Fatalf(<span class="hljs-string">&quot;err=%v want %v&quot;</span>, err, tc.wantErr)
+}</code></pre><p>這跟 B 卷哨兵直接接起來——API 可測性從設計那一刻就開始。</p>
+<h3>子測試與平行</h3>
+<p><code>t.Run</code> 出的子測試可用 <code>t.Parallel()</code>（進階）。<br>一開始先求正確與可讀；真要加速再平行，並注意共享狀態。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li>golden file（大輸出快照）  </li>
+<li><code>cmp.Diff</code> 之類的可讀 diff 工具</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>超適合入表的例子：</p>
+<ul>
+<li><code>Join</code>：空房／滿房／錯誤階段  </li>
+<li><code>Ready</code>：人數不足／重複 Ready  </li>
+<li><code>PushInput</code>：非法方向／非 Playing  </li>
+<li>相位：Lobby→Playing→Ended 合法與非法轉移</li>
+</ul>
+<p>這些測過，重構房間碼才敢下手。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>複製貼上十個 Test 只改數字。  </li>
+<li>只測 happy path。  </li>
+<li>斷言寫 <code>err != nil</code> 就結束——不確認是哪一種錯。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>跑 <code>examples/d02-table-test</code>。  </li>
+<li>加一個會失敗的 case，看失敗訊息；再修到綠。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>幫 <code>examples/b02-room-errors</code> 的 <code>Join</code> 補一張更完整的表（滿房、錯誤階段、成功）。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>案例名都叫 <code>case1</code></strong>：失敗時完全不記得測了什麼。  </li>
+<li><strong>表格裡放會被突變的共享 slice／map</strong>：小心測試互相污染。  </li>
+<li><strong>把整合測試硬塞進表驅動單元測試</strong>：可以，但 setup 太重時考慮拆檔。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://go.dev/wiki/TableDrivenTests">https://go.dev/wiki/TableDrivenTests</a></li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/GoLearning/lessons/d-engineering/d1-modules/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">D1 go.mod：依賴要可重現，不要碰運氣</div></a><a href="/GoLearning/lessons/d-engineering/d3-fuzz/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">D3 Fuzz：亂餵輸入，抓你以為不會發生的事</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

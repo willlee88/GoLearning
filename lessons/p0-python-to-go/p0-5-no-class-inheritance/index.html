@@ -1,0 +1,111 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Go 不靠繼承樹。資料放 struct、行為綁方法、能力用 interface 描述；編譯期檢查你有沒有做到。"><link rel="icon" type="image/svg+xml" href="/GoLearning/favicon.svg"><title>P0.5 沒有 class 繼承？用 struct、方法、介面組合 · GoLearning</title><link rel="stylesheet" href="/GoLearning/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/GoLearning/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/GoLearning/path/">學習路徑</a><a class="hover:text-white" href="/GoLearning/volumes/">卷冊</a><a class="hover:text-white" href="/GoLearning/playground/">Playground</a><a class="hover:text-white" href="/GoLearning/search/">搜尋</a><a class="hover:text-white" href="/GoLearning/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">P0 · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">P0.5 · 沒有 class 繼承？用 struct、方法、介面組合</h1><p class="mt-3 text-slate-400">Go 不靠繼承樹。資料放 struct、行為綁方法、能力用 interface 描述；編譯期檢查你有沒有做到。</p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">python-bridge</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">interfaces</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>Go <strong>沒有</strong> class，也<strong>沒有</strong>那種一層疊一層的繼承樹。</p>
+<p>你改用三件事組合行為：</p>
+<ol>
+<li><strong>struct</strong> — 放資料  </li>
+<li><strong>method（方法）</strong> — 把行為綁在型別上  </li>
+<li><strong>interface（介面）</strong> — 描述「我需要什麼能力」</li>
+</ol>
+<p>型別只要擁有介面要求的方法，就<strong>自動滿足</strong>介面（結構化型別），不必寫 <code>implements</code>。讀完你要能寫出一個小介面、一個實作、一個只依賴介面的函式。</p>
+<h2>先跟 Python 對一下</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>class</code> + 繼承</td>
+<td>struct + 嵌入（embedding）</td>
+</tr>
+<tr>
+<td>duck typing（執行期才知道像不像鴨子）</td>
+<td>方法集滿足 interface（<strong>編譯期</strong>就檢查）</td>
+</tr>
+<tr>
+<td>ABC / Protocol</td>
+<td>interface</td>
+</tr>
+<tr>
+<td><code>self</code></td>
+<td>receiver（接收者：值或指標）</td>
+</tr>
+</tbody></table>
+<p>Python 的鴨子類型很自由，錯了常執行期才爆。Go 想保留「用能力說話」的味道，但把檢查拉到編譯期——少驚喜，也少線上爆炸。</p>
+<h2>怎麼寫（能跑的最小例子）</h2>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">type</span> Player <span class="hljs-keyword">struct</span> {
+	Name <span class="hljs-type">string</span>
+	HP   <span class="hljs-type">int</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p *Player)</span></span> Damage(n <span class="hljs-type">int</span>) {
+	p.HP -= n
+}
+
+<span class="hljs-keyword">type</span> Health <span class="hljs-keyword">interface</span> {
+	Damage(n <span class="hljs-type">int</span>)
+}</code></pre><p>任何有 <code>Damage(int)</code> 方法的型別，都能當成 <code>Health</code> 來用——不用登記、不用繼承。</p>
+<p>再來一個「只依賴介面」的函式：</p>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">type</span> Notifier <span class="hljs-keyword">interface</span> {
+	Notify(msg <span class="hljs-type">string</span>)
+}
+
+<span class="hljs-keyword">type</span> ConsoleNotifier <span class="hljs-keyword">struct</span>{}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(ConsoleNotifier)</span></span> Notify(msg <span class="hljs-type">string</span>) {
+	fmt.Println(msg)
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">Broadcast</span><span class="hljs-params">(n Notifier, msg <span class="hljs-type">string</span>)</span></span> {
+	n.Notify(msg)
+}</code></pre><p>測試時你可以換一個假的 <code>Notifier</code>，不必連真實網路——這就是介面的甜頭。</p>
+<h2>為什麼這樣設計／底層在幹嘛</h2>
+<h3>接受介面，回傳具體型別</h3>
+<p>常見 API 風格：函式<strong>參數</strong>用小介面（我需要什麼能力），<strong>回傳</strong>具體 struct（呼叫者拿到的是清楚的東西）。這樣依賴方向乾淨，也比較好測。</p>
+<h3>小介面比較好組合</h3>
+<p>1～3 個方法的介面，比「上帝介面」好用。介面太大 → 假實作很難寫、每個實作都臃腫、之後改一個方法全家炸。</p>
+<p>寫錯會怎樣？一開始就為每個 struct 先抽介面 → 過度抽象，目錄裡全是只有一個實作的 interface，讀起來更累。等你有<strong>第二個實作</strong>或<strong>測試需要替換</strong>時再抽，通常比較甜。</p>
+<h3>嵌入（embedding）不是繼承 2.0</h3>
+<p>你可以嵌入 struct，外層會「提升」內層的方法，像委派。但它<strong>不是</strong>完整的子型別多型替代方案——要有意識使用，別暗中做成深繼承。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li>介面值裡有「動態型別 + 動態值」；把 <code>nil</code> 指標放進 interface 後，<code>== nil</code> 可能不如你想（後面專章會打臉）。  </li>
+<li>方法集：值接收者 vs 指標接收者，會影響「算不算實作了某個介面」。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>這些都適合作<strong>小介面</strong>，讓規則邏輯可單測、可替換：</p>
+<ul>
+<li><code>Transport</code> — 怎麼送訊息（真實連線 vs 測試假傳輸）  </li>
+<li><code>RoomStore</code> — 房間怎麼存  </li>
+<li><code>Clock</code> — 可測時間（不要在規則裡直接 <code>time.Now()</code> 散落一地）</li>
+</ul>
+<p>規則套件依賴介面，不依賴「某個具體 WebSocket 函式庫」，之後換傳輸或寫單元測試才不會痛。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>一上來設計三層繼承：<code>BaseEntity → MovingEntity → Player</code>。  </li>
+<li>為了「以後可能會擴充」做巨大 base class——以後常常沒來，複雜度先來了。  </li>
+<li>把 interface 當成裝飾用註解，卻不在 API 邊界使用——那就白抽了。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>定義 <code>type Notifier interface { Notify(msg string) }</code>，實作一個 <code>ConsoleNotifier</code>。  </li>
+<li>寫 <code>func Broadcast(n Notifier, msg string)</code>，函式本體只依賴介面。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>用嵌入做 <code>type Admin struct { Player; Level int }</code>，觀察 <code>Player</code> 的方法是否被提升。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>每個 struct 先寫 interface</strong>：過度抽象。等有第二個實作或測試替身再抽。  </li>
+<li><strong>介面方法太多</strong>：假物件寫不完；拆小一點。  </li>
+<li><strong>為了「像 OOP」硬套繼承心智</strong>：Go 的組合路徑不同，硬套會寫得很彆扭。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://go.dev/doc/effective_go#interfaces">https://go.dev/doc/effective_go#interfaces</a></li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/GoLearning/lessons/p0-python-to-go/p0-4-errors-not-exceptions/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">P0.4 錯誤是回傳值，不是例外跳轉</div></a><a href="/GoLearning/lessons/p0-python-to-go/p0-6-concurrency-preview/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">P0.6 併發先建立直覺（詳情在 C 卷）</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

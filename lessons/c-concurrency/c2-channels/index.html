@@ -1,0 +1,118 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="無緩衝是交接、有緩衝是佇列；搞清楚擁有者，才不會對已關閉的 channel 傳送而 panic。"><link rel="icon" type="image/svg+xml" href="/GoLearning/favicon.svg"><title>C2 channel：通訊、同步，以及誰能 close · GoLearning</title><link rel="stylesheet" href="/GoLearning/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/GoLearning/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/GoLearning/path/">學習路徑</a><a class="hover:text-white" href="/GoLearning/volumes/">卷冊</a><a class="hover:text-white" href="/GoLearning/playground/">Playground</a><a class="hover:text-white" href="/GoLearning/search/">搜尋</a><a class="hover:text-white" href="/GoLearning/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">C · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">C2 · channel：通訊、同步，以及誰能 close</h1><p class="mt-3 text-slate-400">無緩衝是交接、有緩衝是佇列；搞清楚擁有者，才不會對已關閉的 channel 傳送而 panic。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/c02-channels</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">channel</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p><strong>Channel</strong> 是 Go 裡很有名的通訊原語（常跟 CSP 風格放在一起談）：用傳遞訊息來同步，而不只是共享記憶體。</p>
+<p>兩種你一定要分清：</p>
+<ul>
+<li><strong>無緩衝</strong> <code>make(chan T)</code>：送與收必須「握手」——一邊等到另一邊，才完成交接  </li>
+<li><strong>有緩衝</strong> <code>make(chan T, N)</code>：中間有佇列；沒滿可先送、沒空可先收</li>
+</ul>
+<p>還有一條鐵律：<strong>誰寫、誰 close，要有清楚擁有者</strong>。對已經關閉的 channel 再傳送 → <strong>panic</strong>。</p>
+<h2>Python 對照</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>queue.Queue</code></td>
+<td>有緩衝 channel 近似（但仍有 close／select 語意）</td>
+</tr>
+<tr>
+<td><code>asyncio.Queue</code></td>
+<td>同上，再加上取消通常靠 context</td>
+</tr>
+<tr>
+<td>條件變數通知</td>
+<td>常用 channel 當訊號（空 struct 訊號很常見）</td>
+</tr>
+<tr>
+<td>多執行緒共享 list＋鎖</td>
+<td>也可以；channel 不是唯一解</td>
+</tr>
+</tbody></table>
+<p>channel 很強，但不是萬靈丹。共享結構 + <code>Mutex</code> 有時更清楚（C5）。選工具看「資料誰擁有」。</p>
+<h2>怎麼寫</h2>
+<pre class="hljs"><code class="language-go">ch := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> <span class="hljs-type">int</span>)      <span class="hljs-comment">// 無緩衝</span>
+ch := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> <span class="hljs-type">int</span>, <span class="hljs-number">16</span>)  <span class="hljs-comment">// 有緩衝</span>
+
+ch &lt;- <span class="hljs-number">1</span>       <span class="hljs-comment">// 送</span>
+v := &lt;-ch     <span class="hljs-comment">// 收</span>
+v, ok := &lt;-ch <span class="hljs-comment">// ok == false：已關閉且空了</span>
+
+<span class="hljs-built_in">close</span>(ch)</code></pre><p><code>ok == false</code> 只代表「關閉且讀完」，不要跟「讀到零值」搞混——零值也可能是合法資料，所以需要 <code>ok</code> 或明確協定。</p>
+<p>範例：<code>examples/c02-channels</code>。</p>
+<h2>細節</h2>
+<h3>為什麼無緩衝叫「同步交接」？</h3>
+<p>因為沒有中間盒子可暫放。送方卡到收方出現（或反向）。<br>這很好用在：確保對方「真的拿到了」才繼續；或拿 channel 當事件通知。</p>
+<p>有緩衝則像有限長度的佇列：解耦速度，但<strong>緩衝大小就是你願意積壓多少</strong>。無界心智很危險（C8）。</p>
+<h3>close 的規則（為什麼容易 panic）</h3>
+<ul>
+<li><strong>只由傳送側（或約定的唯一擁有者）close</strong>  </li>
+<li>關閉後：還可以繼續接收剩餘值；收完後 <code>ok=false</code>  </li>
+<li><strong>對已關閉 channel 傳送 → panic</strong>  </li>
+<li>重複 close → panic  </li>
+<li>接收關閉且空的 channel → 立刻拿到零值 + <code>ok=false</code>（不阻塞）</li>
+</ul>
+<p>實務上常「生產者負責 close」，消費者用 <code>for v := range ch</code> 讀到關閉為止。</p>
+<h3><code>nil</code> channel 的怪癖（超有用）</h3>
+<p>在 <strong>nil channel</strong> 上送或收會<strong>永遠阻塞</strong>。<br>在 <code>select</code> 裡，把某個 case 的 channel 設成 nil，等於<strong>暫時禁用那條分支</strong>——這是進階技巧，房間狀態機有時會用到。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li>規格裡 channel 的 happens-before：送入被接收，同步記憶體可見性。  </li>
+<li>方向限制：<code>chan&lt;- T</code> 只能送、<code>&lt;-chan T</code> 只能收，適合函式簽名表達擁有權。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<table>
+<thead>
+<tr>
+<th>用途</th>
+<th>常見做法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>玩家輸入</td>
+<td>有界 <code>chan Command</code></td>
+</tr>
+<tr>
+<td>房間事件</td>
+<td>room 擁有的 inbox，只有 room loop 讀</td>
+</tr>
+<tr>
+<td>關房</td>
+<td>close inbox，或改用 context cancel（C4）</td>
+</tr>
+<tr>
+<td>廣播任務</td>
+<td>小心：別對每個 peer 無界塞</td>
+</tr>
+</tbody></table>
+<p>原則：<strong>房間狀態由單一 goroutine 擁有</strong>時，外面只准「丟訊息進 inbox」，不准大家一起改 map。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>好幾個地方都能 <code>close</code>——最後一定有人踩雷。  </li>
+<li>無緩衝 + 狂 <code>go</code> 送，或超大／「先開一百萬」當無界佇列。  </li>
+<li>「全部同步都改成 channel」——有時一把鎖更可读。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>跑 <code>examples/c02-channels</code>。  </li>
+<li>單獨寫個小程式：對已關閉 channel 傳送，親眼看 panic。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>用 <code>for v := range ch</code> 改寫消費者；確認生產者結束時有 close。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>死人發送／沒人接收</strong>：goroutine 洩漏（C1）。  </li>
+<li><strong>close 後還有人送</strong>：panic；用擁有者規則＋碼審避免。  </li>
+<li><strong>用緩衝大小「賭」不會滿</strong>：滿了還是會阻塞——要麼背壓策略，要麼別裝死（C8）。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://go.dev/ref/spec#Channel_types">https://go.dev/ref/spec#Channel_types</a></li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/GoLearning/lessons/c-concurrency/c1-goroutines/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">C1 goroutine：開得起，也要關得了</div></a><a href="/GoLearning/lessons/c-concurrency/c3-select/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">C3 select：同時等很多路，含超時</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

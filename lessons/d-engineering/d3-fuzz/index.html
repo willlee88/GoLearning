@@ -1,0 +1,91 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Go 內建 fuzz：給種子、自動長出怪字串，專治封包解析與邊界假設。"><link rel="icon" type="image/svg+xml" href="/GoLearning/favicon.svg"><title>D3 Fuzz：亂餵輸入，抓你以為不會發生的事 · GoLearning</title><link rel="stylesheet" href="/GoLearning/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/GoLearning/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/GoLearning/path/">學習路徑</a><a class="hover:text-white" href="/GoLearning/volumes/">卷冊</a><a class="hover:text-white" href="/GoLearning/playground/">Playground</a><a class="hover:text-white" href="/GoLearning/search/">搜尋</a><a class="hover:text-white" href="/GoLearning/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">D · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">D3 · Fuzz：亂餵輸入，抓你以為不會發生的事</h1><p class="mt-3 text-slate-400">Go 內建 fuzz：給種子、自動長出怪字串，專治封包解析與邊界假設。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/d03-fuzz</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">fuzz</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>單元測試很會測「你想得到的案例」。<br><strong>Fuzz（模糊測試）</strong> 則是：引擎自動長出大量輸入，專找「我以為不可能」的崩潰與錯誤假設。</p>
+<p>對遊戲 Server 超對味的目標：</p>
+<ul>
+<li>解析玩家輸入字串  </li>
+<li>JSON envelope  </li>
+<li>長度／符號／奇怪 Unicode</li>
+</ul>
+<p>Go 1.18+ 工具鏈內建 fuzz，不必先上很重的框架。目標常常是：<strong>不要 panic、不要無限迴圈、錯誤要乾淨</strong>。</p>
+<h2>Python 對照</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Hypothesis 等庫</td>
+<td><code>testing.F</code>／<code>FuzzXxx</code> 內建</td>
+</tr>
+<tr>
+<td>手動想邊界案例</td>
+<td>種子（seed）+ 引擎突變</td>
+</tr>
+<tr>
+<td>多半抓例外</td>
+<td>抓 panic、錯誤不變量、錯誤的「成功」</td>
+</tr>
+</tbody></table>
+<h2>怎麼寫</h2>
+<pre class="hljs"><code class="language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">FuzzParse</span><span class="hljs-params">(f *testing.F)</span></span> {
+	f.Add(<span class="hljs-string">&quot;1,0&quot;</span>) <span class="hljs-comment">// 種子：合理例子先放</span>
+	f.Fuzz(<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(t *testing.T, s <span class="hljs-type">string</span>)</span></span> {
+		_, _, _ = parseInput(s) <span class="hljs-comment">// 重點：不該 panic</span>
+	})
+}</code></pre><p>跑一小段時間：</p>
+<pre class="hljs"><code class="language-bash">go <span class="hljs-built_in">test</span> -fuzz=FuzzParse -fuzztime=5s</code></pre><p>範例：<code>examples/d03-fuzz</code>。</p>
+<h2>細節</h2>
+<h3>種子為什麼重要？</h3>
+<p>引擎從種子附近突變，比較容易碰到「像真的、但又怪」的輸入。<br>只丟空測試、不給種子，也能跑，但效率常較差。把真實封包樣例當種子很賺。</p>
+<h3>你在断言什麼？</h3>
+<p>常見不變量：</p>
+<ul>
+<li>任何輸入都<strong>不 panic</strong>  </li>
+<li>失敗就回 error，不要半改全域狀態  </li>
+<li>若回成功，輸出必須滿足範圍（例如 dx∈{-1,0,1}）</li>
+</ul>
+<p>「解析失敗」本身往往是 OK——客戶端本來就會亂送。可怕的是解析器炸掉整服（接 B3 的教訓）。</p>
+<h3>失敗會留下 corpus</h3>
+<p>Fuzz 找到的問題輸入可被保存，之後當成回歸案例——這點非常香。修好後再跑，應維持綠。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li>多參數 fuzz、自訂類型  </li>
+<li>與 CI 的時間預算（例如 PR 跑 15s、夜跑更久）</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<ul>
+<li><code>dx,dy</code> 字串  </li>
+<li>JSON envelope 的 type／payload  </li>
+<li>ticket／token 字串</li>
+</ul>
+<p>凡是「從網路線進來的位元組」，都值得問一句：fuzz 過沒？</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>只測 happy path。  </li>
+<li>用 panic 表示「壞輸入」。  </li>
+<li>以為「協定寫了客戶端就不會亂送」。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>在 <code>examples/d03-fuzz</code> 跑大約 5 秒 fuzz。  </li>
+<li>若有失敗輸入，讀懂它、修好、再跑。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>幫解析函式加不變量：成功時座標必在合法集合；用 fuzz 驗證。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>Fuzz 函式裡用到外部隨機／時間</strong>：難重現；保持純。  </li>
+<li><strong>把 fuzz 當效能測試</strong>：它不是 bench；目的是找錯。  </li>
+<li><strong>忽略留下的失敗語料</strong>：修 bug 時把那筆變成固定測試。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://go.dev/doc/fuzz/">https://go.dev/doc/fuzz/</a></li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/GoLearning/lessons/d-engineering/d2-table-tests/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">D2 表驅動測試：加案例像填表</div></a><a href="/GoLearning/lessons/d-engineering/d4-bench-pprof/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">D4 Benchmark 與 pprof：先測量，再談優化</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

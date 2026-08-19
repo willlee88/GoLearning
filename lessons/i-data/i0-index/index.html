@@ -1,0 +1,105 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="記憶體、Redis、資料庫各管什麼；為什麼 tick 熱路徑絕對不該狂寫庫。"><link rel="icon" type="image/svg+xml" href="/GoLearning/favicon.svg"><title>I0 I 卷導讀：資料放哪裡，比怎麼寫 SQL 更重要 · GoLearning</title><link rel="stylesheet" href="/GoLearning/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/GoLearning/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/GoLearning/path/">學習路徑</a><a class="hover:text-white" href="/GoLearning/volumes/">卷冊</a><a class="hover:text-white" href="/GoLearning/playground/">Playground</a><a class="hover:text-white" href="/GoLearning/search/">搜尋</a><a class="hover:text-white" href="/GoLearning/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">I · L1 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">I0 · I 卷導讀：資料放哪裡，比怎麼寫 SQL 更重要</h1><p class="mt-3 text-slate-400">記憶體、Redis、資料庫各管什麼；為什麼 tick 熱路徑絕對不該狂寫庫。</p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">data</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>H 卷把「一局怎麼跑」講清楚了：Session、Room、Tick、權威狀態。<br>I 卷要回答另一個同樣致命的問題：<strong>這些狀態，哪些只活在記憶體、哪些進快取、哪些一定要進資料庫？</strong></p>
+<p>遊戲 Server 跟一般 CRUD 網站不一樣。網頁後台可以「每個請求讀寫一次 DB」；對局迴圈若每 tick（例如 20Hz）都打 Postgres，你很快會發現：</p>
+<ul>
+<li>延遲抖到玩家覺得「頓」  </li>
+<li>連線池被打爆  </li>
+<li>磁碟 I/O 成為瓶頸  </li>
+<li>一重啟，半途寫入還可能留下半殘資料</li>
+</ul>
+<p>所以這卷的核心心智不是「學會 ORM」，而是 <strong>分層</strong>：熱的放記憶體、跨進程可丟一點的放 Redis、必須活過重啟／關服的才進 DB，而且寫入時機要卡在<strong>事件邊界</strong>，不是卡在 tick。</p>
+<p>讀完 I 卷，你要能指著 Arena Mini（或你自己的房間）說：座標為什麼不落庫、對局結果什麼時候寫、排行榜為什麼適合 Redis、錢包為什麼不能只信快取。</p>
+<h2>先建立分層地圖</h2>
+<table>
+<thead>
+<tr>
+<th>層</th>
+<th>例子</th>
+<th>延遲／一致性</th>
+<th>進程掛了會怎樣</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>記憶體（Room）</td>
+<td>座標、血量、tick、準備狀態</td>
+<td>最快；權威就在這</td>
+<td><strong>沒了</strong>（除非你先 flush）</td>
+</tr>
+<tr>
+<td>快取（Redis 等）</td>
+<td>在線、排行榜、pubsub、短 TTL session</td>
+<td>快，可跨進程</td>
+<td>視持久化設定；<strong>別當唯一真相</strong></td>
+</tr>
+<tr>
+<td>資料庫</td>
+<td>帳號、庫存、購買、賽季結算</td>
+<td>慢但持久</td>
+<td>還在（交易做對的前提下）</td>
+</tr>
+</tbody></table>
+<p>一句口訣：<strong>不是什麼都寫 DB。Tick 熱路徑只碰記憶體。</strong></p>
+<p>生活比喻：對局像球賽進行中的記分板——你不會每秒把黑板數字刻進石碑；終場、換邊、發獎才正式入冊。Redis 比較像「場邊大螢幕／廣播」，方便很多看台一起看，但不保證離線的人補得到每一句廣播。</p>
+<h2>本卷地圖</h2>
+<table>
+<thead>
+<tr>
+<th>章</th>
+<th>主題</th>
+<th>你會練到什麼</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>I1</td>
+<td>持久化邊界</td>
+<td>熱／冷路徑；什麼事件才該寫</td>
+</tr>
+<tr>
+<td>I2</td>
+<td><code>database/sql</code> 模式</td>
+<td>連線池、context、Repo 介面</td>
+</tr>
+<tr>
+<td>I3</td>
+<td>Redis 用途地圖</td>
+<td>presence、ZSET、pubsub、鎖——何時該上</td>
+</tr>
+<tr>
+<td>I4</td>
+<td>快取一致性直覺</td>
+<td>旁路快取、TTL、可接受的「短暫錯」</td>
+</tr>
+<tr>
+<td>I5</td>
+<td>背景任務與結算</td>
+<td>有界佇列、worker、至少一次與冪等</td>
+</tr>
+</tbody></table>
+<p>I2、I5 有能跑的範例（<code>examples/i02-sql-memory</code>、<code>examples/i05-worker</code>）。其餘章偏設計判斷——遊戲後端很多災難來自「技術選錯層」，不是語法不會。</p>
+<h2>遊戲 Server 會用在哪</h2>
+<p>對 Arena Mini 這種教學局：</p>
+<ul>
+<li><strong>進行中座標／輸入緩衝</strong>：Room 記憶體，跟 tick 走  </li>
+<li><strong>對局結束結果</strong>：事件邊界寫出（log、之後可接 DB／佇列）  </li>
+<li><strong>帳號資產</strong>（若你之後加商店）：DB 交易，絕不是每幀更新</li>
+</ul>
+<p>正式專案常再加 Redis：多 Gateway 要查「這人在哪個房間」、跨服排行榜、短 TTL 斷線重連票。單機 demo <strong>可以不裝 Redis</strong>；心智模型要先有，擴展時才不會把所有東西塞進一個 Postgres 表格硬撐。</p>
+<h2>動手練習</h2>
+<p>讀完整卷前，先用這題自我測驗（讀完 I1～I5 再對答案也行）：</p>
+<ol>
+<li>Arena Mini（或你腦中的 1v1 房間）列出至少 5 種狀態。  </li>
+<li>各標成「記憶體／Redis／DB」。  </li>
+<li>特別寫一句：<strong>為什麼玩家座標不該每 tick 寫資料庫。</strong></li>
+</ol>
+<p>答得出「因為延遲、負載、權威在 Room、崩潰語意可接受／不可接受要分開想」——這卷就對了。</p>
+<h2>常見坑</h2>
+<ul>
+<li><strong>一看到「要存檔」就每幀寫庫</strong>：熱路徑會先死。  </li>
+<li><strong>把 Redis 當永久金庫</strong>：重啟、淘汰、叢集故障時，錢與庫存會哭。  </li>
+<li><strong>沒分「可丟的進行中局」跟「不可丟的資產」</strong>：結算語意全混在一起，之後很難補。  </li>
+<li><strong>Room 物件直接握著 <code>*sql.DB</code> 在 tick 裡 Query</strong>：邊界錯了；I1、I2 會反复打這點。</li>
+</ul>
+<h2>下一章</h2>
+<p>從 <strong>I1 持久化邊界</strong> 開始：先決定「何時寫」，再談「用什麼 API 寫」。</p>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/GoLearning/lessons/h-game-server/h10-arena-lab/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">H10 Lab：Arena Mini 權威對戰檢查點</div></a><a href="/GoLearning/lessons/i-data/i1-persistence-boundary/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">I1 持久化邊界：什麼時候才該寫進硬碟</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="client 下指令；server 廣播權威結果。"><link rel="icon" type="image/svg+xml" href="/GoLearning/favicon.svg"><title>G2 命令與事件分離 · GoLearning</title><link rel="stylesheet" href="/GoLearning/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/GoLearning/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/GoLearning/path/">學習路徑</a><a class="hover:text-white" href="/GoLearning/volumes/">卷冊</a><a class="hover:text-white" href="/GoLearning/playground/">Playground</a><a class="hover:text-white" href="/GoLearning/search/">搜尋</a><a class="hover:text-white" href="/GoLearning/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">G · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">G2 · 命令與事件分離</h1><p class="mt-3 text-slate-400">client 下指令；server 廣播權威結果。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/g01-envelope</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">protocol</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">game-server</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>這章是遊戲網路裡最重要的心智之一：</p>
+<ul>
+<li><strong>命令（Command）</strong>：客戶端表達<strong>意圖</strong>——「我想往左」「我點準備」  </li>
+<li><strong>事件／狀態（Event／State）</strong>：伺服器宣布<strong>發生了什麼</strong>——「權威快照長這樣」「某人加入了」</li>
+</ul>
+<p>千萬不要讓客戶端直接廣播「我的 HP=999」。正確流程是：</p>
+<pre class="hljs"><code class="language-text">Client → command
+Server → 驗證 → 修改權威狀態 → 廣播 event/state</code></pre><p>這叫<strong>權威伺服器（authoritative server）</strong>：規則在 server，客戶端顯示結果。</p>
+<h2>先跟 Python 對一下</h2>
+<p>若你聽過 <strong>CQRS</strong>（命令與查詢責任分離），這裡是超輕量版：命令進、狀態出。Python 遊戲後端一樣該這麼做；Go 只是用型別與 <code>room.Apply(cmd)</code> 把邊界畫得更清楚，方便單元測試。</p>
+<p>「客戶端算完再告訴伺服器存檔」在單機或信任環境可以，<strong>多人對戰不行</strong>。</p>
+<h2>怎麼寫（訊息形狀示意）</h2>
+<pre class="hljs"><code class="language-text">Client → { &quot;v&quot;:1, &quot;type&quot;:&quot;move&quot;, &quot;payload&quot;:{&quot;dx&quot;:-1, &quot;dy&quot;:0} }
+Server → validate → apply
+Server → { &quot;v&quot;:1, &quot;type&quot;:&quot;state&quot;, &quot;payload&quot;:{&quot;players&quot;:[...]} }  // 廣播</code></pre><p>系統事件也可以分開 type，例如 <code>join</code>／<code>leave</code>／<code>phase</code>，避免全塞進一個超大 <code>state</code>（看複雜度取捨）。</p>
+<p>程式內（概念）：</p>
+<pre class="hljs"><code class="language-go">events, err := room.Apply(cmd)
+<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> {
+	<span class="hljs-comment">// 回 error 給該玩家，或忽略非法命令</span>
+	<span class="hljs-keyword">return</span>
+}
+broadcast(events) <span class="hljs-comment">// 或定期廣播全量 state</span></code></pre><h2>為什麼這樣設計／底層在幹嘛</h2>
+<ol>
+<li><p><strong>反作弊與一致性</strong><br>所有人看到的世界以 server 為準。客戶端可以做預測（先動起來），但以 server 校正為準——細節在 H 卷。</p>
+</li>
+<li><p><strong>命令應可驗證</strong><br><code>dx</code> 只能 -1..1、人必須活著、必須在對的 phase。驗證失敗 ≠ 伺服器崩潰。</p>
+</li>
+<li><p><strong>冪等與序號</strong><br>網路會重送。同一則「開火」處理兩次就爆。可帶 <code>cmd_id</code>／序號，或讓狀態轉移天然冪等。</p>
+</li>
+<li><p><strong>全量 state vs delta</strong><br>全量好懂、好重連；delta 省流量、複雜。教學先全量，優化以後再說。</p>
+</li>
+<li><p><strong>測試友善</strong><br><code>Apply</code> 若是純邏輯（不碰網路），可用表格測試餵命令、断言狀態——這是 H 卷房間 FSM 的伏筆。</p>
+</li>
+</ol>
+<h2>遊戲 Server 會用在哪</h2>
+<p>Arena Mini：</p>
+<ul>
+<li>命令：移動、（之後）準備、開火…  </li>
+<li>事件／狀態：位置快照、得分、階段變更、系統公告</li>
+</ul>
+<p><code>room.Apply(cmd) (events, error)</code> 這種形狀，後面會一直出現。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li><strong>客戶端算完結果，只通知 server「存檔／轉發」。</strong>  </li>
+<li><strong>聊天、移動、系統訊息混成一條無結構字串。</strong>  </li>
+<li><strong>廣播「某玩家說他自己的狀態」而不經 server 認可。</strong></li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>列出 Arena Mini（或 f08）目前哪些訊息是命令、哪些是事件／狀態。  </li>
+<li>設計一則 <code>ready</code> 命令，以及狀態裡的 <code>phase</code> 欄位（紙上 JSON 即可）。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>想像重送同一則 <code>move</code>：你的 <code>Apply</code> 會發生什麼？要不要序號？</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>把 <code>state</code> 當雙向聊天</strong>：客戶端不該發權威 state。  </li>
+<li><strong>驗證只做在前端</strong>：前端檢查是體驗，後端檢查才是安全。  </li>
+<li><strong>錯誤時沉默</strong>：非法命令至少 log；必要時回 <code>type=error</code> 讓客戶端 UI 有反應。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li>搜尋「authoritative game server」任一概述文  </li>
+<li>範例信封：<code>examples/g01-envelope</code></li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/GoLearning/lessons/g-protocol/g1-json-envelope/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">G1 JSON 信封實務</div></a><a href="/GoLearning/lessons/g-protocol/g3-versioning/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">G3 版本化與相容策略</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

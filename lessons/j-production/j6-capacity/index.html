@@ -1,0 +1,152 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="用粗估公式感受頻寬與 CPU；搞懂全量互相廣播為何接近 O(N²)，以及可以怎麼降流量。"><link rel="icon" type="image/svg+xml" href="/GoLearning/favicon.svg"><title>J6 容量與廣播放大：人一多，流量不是線性的 · GoLearning</title><link rel="stylesheet" href="/GoLearning/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/GoLearning/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/GoLearning/path/">學習路徑</a><a class="hover:text-white" href="/GoLearning/volumes/">卷冊</a><a class="hover:text-white" href="/GoLearning/playground/">Playground</a><a class="hover:text-white" href="/GoLearning/search/">搜尋</a><a class="hover:text-white" href="/GoLearning/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">J · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">J6 · 容量與廣播放大：人一多，流量不是線性的</h1><p class="mt-3 text-slate-400">用粗估公式感受頻寬與 CPU；搞懂全量互相廣播為何接近 O(N²)，以及可以怎麼降流量。</p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">capacity</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>壓測會告訴你「炸了」；容量思考告訴你「<strong>大概為什麼會炸、多快會炸</strong>」。</p>
+<p>遊戲房裡最常見的隱藏殺手是 <strong>廣播放大</strong>：</p>
+<ul>
+<li>1 個人動一下，若你要讓房裡 N 個人都看到完整快照  </li>
+<li>每 tick 都做一次  </li>
+<li>人數上升時，出站流量與編碼 CPU 會衝很快</li>
+</ul>
+<p>讀完你要能：</p>
+<ol>
+<li>用一條粗估公式算「每房出站大概多少」  </li>
+<li>解釋為什麼「全量互相廣播」在人數上升時很痛  </li>
+<li>說出至少一個降流量手段（delta、降頻、興趣管理……）</li>
+</ol>
+<h2>Python 對照</h2>
+<table>
+<thead>
+<tr>
+<th>觀點</th>
+<th>說明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>公式與語言無關</td>
+<td>Python／Go 都會被架構打臉</td>
+</tr>
+<tr>
+<td>慢往往不在「語言」</td>
+<td>JSON 編碼、鎖、廣播次數、記憶體拷貝才是常客</td>
+</tr>
+<tr>
+<td>「先上線再看」</td>
+<td>兩邊都常見；人一多就後悔</td>
+</tr>
+</tbody></table>
+<p>口訣：<strong>語言很少是第一瓶頸，狀態同步策略常常是。</strong></p>
+<h2>怎麼寫（先算，再優化）</h2>
+<p>粗估出站：</p>
+<pre class="hljs"><code class="language-text">出站 ≈ 房間數 × 每房人數 × 每 tick 快照大小 × tick Hz</code></pre><p>若「每個收件人都收到一份完整快照」，而快照裡又包含所有人狀態，人數為 N 時，常會看到近似：</p>
+<pre class="hljs"><code class="language-text">每 tick 出站工作量 ≈ N（收件人）× 快照大小(隨 N 變大)</code></pre><p>也就是隨 N 變差得比線性更兇——你常聽到的 <strong>O(N²)</strong> 殺傷力直覺。</p>
+<h3>小例子（示意）</h3>
+<p>假設：</p>
+<ul>
+<li>4 人房  </li>
+<li>每份 state 約 200 bytes（先當壓縮／二進位後的理想值；JSON 通常更大）  </li>
+<li>20Hz tick</li>
+</ul>
+<p>每房出站大約：</p>
+<pre class="hljs"><code class="language-text">4 × 200 × 20 = 16_000 bytes/s ≈ 16KB/s</code></pre><p>看起來很小。換成 <strong>50 人同房</strong>、同樣 200B、20Hz：</p>
+<pre class="hljs"><code class="language-text">50 × 200 × 20 = 200_000 bytes/s ≈ 200KB/s</code></pre><p>若快照大小其實隨人數變長（每人多一段 JSON），例如平均變 2KB：</p>
+<pre class="hljs"><code class="language-text">50 × 2000 × 20 ≈ 2MB/s</code></pre><p>還只是「一個房」。再乘房間數、再加 TCP／WS 開銷、再加 CPU 編碼——你就知道為什麼要先算。</p>
+<p>（數字是示意，重點是<strong>數量級與曲線</strong>，不是精確會計。）</p>
+<h2>為什麼這樣設計／底層在幹嘛</h2>
+<h3>為什麼是「放大」而不是「線性」？</h3>
+<p>因為成本常同時被兩件事推高：</p>
+<ol>
+<li><strong>收件人變多</strong>：同一份世界，要寫出更多次 socket  </li>
+<li><strong>負載變大</strong>：快照含更多玩家／物件，編碼與記憶體配置變貴</li>
+</ol>
+<p>兩者疊加，體感就像 N²。H7 狀態同步若採「每次全量 state」，教學好懂，但人一多先痛。</p>
+<h3>CPU 常死在哪？</h3>
+<ul>
+<li>JSON 編解碼（方便但偏貴）  </li>
+<li>每次廣播 <code>make</code> 新 buffer、字串拼接  </li>
+<li><strong>持鎖做網路送出</strong>：別人進房／input 都在等這把鎖——大忌；常見作法是先在鎖內拷貝要送的資料，鎖外再送  </li>
+<li>過多 goroutine 或無界佇列（C8 背壓）把排程拖垮</li>
+</ul>
+<h3>GOMAXPROCS 與多核</h3>
+<p>Go 預設會用多核，但：</p>
+<ul>
+<li>單房單一 tick goroutine 仍可能把「邏輯」綁在一條熱路徑  </li>
+<li>廣播可以用有限 worker，但別幻想「加核就能線性救 N² 協定」</li>
+</ul>
+<p>先優化協議與資料量，再談機器規格。</p>
+<h3>降流量的常見方向</h3>
+<table>
+<thead>
+<tr>
+<th>手段</th>
+<th>人話</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Delta／增量同步</td>
+<td>只送改變的部分，不是整包 state</td>
+</tr>
+<tr>
+<td>降頻</td>
+<td>遠景、觀戰、非關鍵物件少送幾次</td>
+</tr>
+<tr>
+<td>興趣管理（AOI）</td>
+<td>只送你附近／你看得到的實體</td>
+</tr>
+<tr>
+<td>二進位協定</td>
+<td>同樣資訊更小（如 Protobuf，見 K 卷延伸）</td>
+</tr>
+<tr>
+<td>房間人數上限</td>
+<td>最簡單的產品向保险丝</td>
+</tr>
+</tbody></table>
+<p>沒有銀彈：你要在「手感」與「成本」之間取捨。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li>優先級頻道（移動 vs 聊天）  </li>
+<li>客戶端預測與和解對頻寬的影響  </li>
+<li>壓縮演算法選型</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>Arena Mini 教學採全量 state，方便你在 load-client 下<strong>用身體感受曲線</strong>。<br>觀察建議：</p>
+<ol>
+<li>固定 Hz，把同房人數拉高，看 <code>messages_out</code> 與 CPU  </li>
+<li>對照你用公式估的數量級，是否「同方向」  </li>
+<li>想一件你願意做的降流量改動（即使只寫在紙上）</li>
+</ol>
+<p>之後真要做大房間或大世界，J6 這條公式會一再出現。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>「先上線再看」完全無容量圖。  </li>
+<li>複製 AAA 大世界架構，實際只有 10 人房。  </li>
+<li>以為換成 Go 就自動比 Python 撐十倍——協定不變，放大還在。  </li>
+<li>持鎖廣播到網路。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>估算：50 人同房、20Hz、每份快照 200B 的出站（先用線性公式）；再假設快照變成 2KB，重算一次。  </li>
+<li>提出一個降流量手段，並寫一句「它犧牲了什麼手感／複雜度」。  </li>
+<li>（建議）對 Arena Mini 跑一輪 load-client，把 <code>messages_out</code> 變化跟你的估算對照看。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>若 tick 從 20Hz 降到 10Hz，出站怎麼變？對操作手感可能有什麼影響？  </li>
+<li>讀 H7，用自己的話對照「全量 vs 增量」。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>只算頻寬、不算 CPU</strong>：很小的封包也可能因為編碼與 syscall 次數把 CPU 吃滿。  </li>
+<li><strong>用尖峰當平均</strong>：活動瞬間進房、大範圍技能，曲線會刺。  </li>
+<li><strong>優化錯層</strong>：還沒量就先上微服務；其實單房協定改一下就夠。  </li>
+<li><strong>忽略多房總和</strong>：每房都「還好」，乘上 500 房就不還好。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li>H7 狀態同步  </li>
+<li>J4 壓測、J8 lab  </li>
+<li>D4 pprof（驗證你的瓶頸猜測）</li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/GoLearning/lessons/j-production/j5-security/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">J5 安全基線：客戶端說的話，預設都不可信</div></a><a href="/GoLearning/lessons/j-production/j7-scaleout/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">J7 水平擴展提醒：有狀態房間不能亂 round-robin</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

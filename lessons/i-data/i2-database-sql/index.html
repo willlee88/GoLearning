@@ -1,0 +1,154 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="標準庫資料庫介面怎麼用；為什麼不要每個請求 Open 一次；Room 熱路徑為什麼不該直接握 DB。"><link rel="icon" type="image/svg+xml" href="/GoLearning/favicon.svg"><title>I2 database/sql：連線池、context，還有 Repo 這層皮 · GoLearning</title><link rel="stylesheet" href="/GoLearning/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/GoLearning/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/GoLearning/path/">學習路徑</a><a class="hover:text-white" href="/GoLearning/volumes/">卷冊</a><a class="hover:text-white" href="/GoLearning/playground/">Playground</a><a class="hover:text-white" href="/GoLearning/search/">搜尋</a><a class="hover:text-white" href="/GoLearning/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">I · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">I2 · database/sql：連線池、context，還有 Repo 這層皮</h1><p class="mt-3 text-slate-400">標準庫資料庫介面怎麼用；為什麼不要每個請求 Open 一次；Room 熱路徑為什麼不該直接握 DB。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/i02-sql-memory</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">sql</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>Go 標準庫的 <strong><code>database/sql</code></strong> 是一層「跟具體資料庫無關」的介面：你透過驅動（driver）連 Postgres、MySQL、SQLite……但業務碼多半只看到 <code>*sql.DB</code>、<code>QueryContext</code>、<code>ExecContext</code>。</p>
+<p>重點先建立正確形狀：</p>
+<ul>
+<li><code>*sql.DB</code> 代表的是 <strong>連線池</strong>（pool），不是「一條連線用完就丟」  </li>
+<li>查詢要帶 <strong><code>context</code></strong>（上下文）：逾時、取消才能從上層一路傳下來  </li>
+<li>遊戲碼裡常再包一層 <strong>Repository（倉庫）介面</strong>，讓 Room／服務依賴「能存玩家」，而不是依賴「正在用哪家 SQL」</li>
+</ul>
+<p>本站範例 <code>examples/i02-sql-memory</code> 用<strong>記憶體 map</strong> 實作同一個 <code>PlayerRepo</code> 介面——這樣你不用先裝 Postgres 也能練「邊界長怎樣」。以後換真 SQL，是換實作，不是改遍 Room。</p>
+<h2>先跟 Python 對一下</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>SQLAlchemy <code>Session</code></td>
+<td><code>*sql.DB</code> + 你自己寫的 SQL／輕量包</td>
+</tr>
+<tr>
+<td><code>with engine.connect() as conn:</code></td>
+<td><code>QueryContext</code>／<code>ExecContext</code> + <code>defer rows.Close()</code></td>
+</tr>
+<tr>
+<td><code>session.query(User).get(id)</code></td>
+<td><code>QueryRowContext</code> + <code>Scan</code>，或封在 Repo 裡</td>
+</tr>
+<tr>
+<td>依賴注入一個 <code>Session</code> factory</td>
+<td>注入 <code>PlayerRepo</code> 介面（測試塞 memory）</td>
+</tr>
+</tbody></table>
+<p>Go 生態也有 ORM／程式碼產生器，但教材先把標準庫與介面邊界講清楚：你會比較知道 ORM「幫你藏了什麼」。</p>
+<h2>怎麼寫</h2>
+<h3>1. 先定倉庫介面（port）</h3>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">type</span> PlayerRepo <span class="hljs-keyword">interface</span> {
+	Upsert(ctx context.Context, p Player) <span class="hljs-type">error</span>
+	Get(ctx context.Context, id <span class="hljs-type">string</span>) (Player, <span class="hljs-type">error</span>)
+}</code></pre><p>誰要存檔就依賴這個介面。Room <strong>不需要</strong>知道後面是 map 還是 Postgres。</p>
+<h3>2. 記憶體實作（本站範例）</h3>
+<p><code>examples/i02-sql-memory</code> 大致是：</p>
+<ul>
+<li><code>MemoryRepo</code> 內含 <code>sync.RWMutex</code> + <code>map[string]Player</code>  </li>
+<li><code>Upsert</code>／<code>Get</code> 先看 <code>ctx.Err()</code>，取消了就別做  </li>
+<li><code>Get</code> 找不到回 <code>ErrNotFound</code>（哨兵錯誤，方便 <code>errors.Is</code>）</li>
+</ul>
+<p>你在範例目錄跑測試即可驗證行為；之後若加 <code>ListByScore</code>，一樣先改介面再改實作。</p>
+<h3>3. 真的接上 <code>database/sql</code> 時長怎樣（概念）</h3>
+<pre class="hljs"><code class="language-go">db, err := sql.Open(<span class="hljs-string">&quot;pgx&quot;</span>, dsn) <span class="hljs-comment">// 驅動名依你選的套件</span>
+<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> {
+	<span class="hljs-keyword">return</span> err
+}
+db.SetMaxOpenConns(<span class="hljs-number">20</span>)
+db.SetMaxIdleConns(<span class="hljs-number">5</span>)
+db.SetConnMaxLifetime(time.Hour)
+
+ctx, cancel := context.WithTimeout(parent, <span class="hljs-number">3</span>*time.Second)
+<span class="hljs-keyword">defer</span> cancel()
+
+_, err = db.ExecContext(ctx,
+	<span class="hljs-string">`INSERT INTO players (id, name, score) VALUES ($1, $2, $3)
+	 ON CONFLICT (id) DO UPDATE SET name = $2, score = $3`</span>,
+	p.ID, p.Name, p.Score,
+)</code></pre><p>佔位符寫法依驅動而異（Postgres 常用 <code>$1</code>，有的用 <code>?</code>）。<strong>不要</strong>用字串拼接把玩家輸入黏進 SQL。</p>
+<p>查多列時：</p>
+<pre class="hljs"><code class="language-go">rows, err := db.QueryContext(ctx, <span class="hljs-string">`SELECT id, name, score FROM players WHERE score &gt;= $1`</span>, min)
+<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> {
+	<span class="hljs-keyword">return</span> err
+}
+<span class="hljs-keyword">defer</span> rows.Close()
+
+<span class="hljs-keyword">for</span> rows.Next() {
+	<span class="hljs-keyword">var</span> p Player
+	<span class="hljs-keyword">if</span> err := rows.Scan(&amp;p.ID, &amp;p.Name, &amp;p.Score); err != <span class="hljs-literal">nil</span> {
+		<span class="hljs-keyword">return</span> err
+	}
+	<span class="hljs-comment">// ...</span>
+}
+<span class="hljs-keyword">return</span> rows.Err() <span class="hljs-comment">// 別忘了迴圈後的錯誤</span></code></pre><h2>為什麼這樣設計</h2>
+<h3>為什麼 <code>*sql.DB</code> 要長期共用？</h3>
+<p><code>sql.Open</code> 之後，DB 物件會幫你管一池連線。每個 HTTP 請求或每個 tick 都 <code>Open</code>／<code>Close</code> 一次，等於不斷建連、拆連，又慢又容易把資料庫端的連線數打滿。</p>
+<p>實務：<strong>行程啟動時 Open 一次</strong>（或經由組態建構），注入到 Repo／服務，關服時再 <code>Close</code>。</p>
+<h3>為什麼要 <code>XxxContext</code>？</h3>
+<p>遊戲與 API 都有逾時：客戶端斷了、閘道取消了、結算不能卡 30 秒。<br><code>context</code> 取消時，驅動有機會中止等待中的查詢，連線回池，上層才能快速失敗而不是空等。</p>
+<p>I1 說的「冷路徑」仍然要有截止時間——慢查詢拖住 worker，佇列一樣會堆起來。</p>
+<h3>為什麼教學先用 memory Repo？</h3>
+<ul>
+<li>你能先把「介面、錯誤、concurrency（若多 goroutine 碰同一 store）」練完  </li>
+<li>CI／新手環境不必先裝 DB  </li>
+<li>真 SQL 的掃描、null、migrate 可以下一層再加，不阻塞心智模型</li>
+</ul>
+<p>等你要接真庫時，再為同一個介面寫 <code>PostgresRepo</code> 即可。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li>資料庫 schema 變更用 migrate 工具，跟應用版本一起發版。  </li>
+<li><code>database/sql</code> 的 <code>NullString</code> 等型別處理 SQL <code>NULL</code>。  </li>
+<li>事務：<code>db.BeginTx(ctx, opts)</code>，買道具這類「扣款＋入袋」要在同一交易。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<table>
+<thead>
+<tr>
+<th>資料</th>
+<th>建議</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>帳號、庫存、賽季結算</td>
+<td>Repo → SQL（冷路徑／worker）</td>
+</tr>
+<tr>
+<td>進行中 Room 狀態</td>
+<td>記憶體；<strong>不要</strong>讓 Room 在 tick 持有並呼叫 <code>*sql.DB</code></td>
+</tr>
+<tr>
+<td>測試</td>
+<td>塞 <code>MemoryRepo</code>，測規則不測 SQL 方言</td>
+</tr>
+</tbody></table>
+<p>HTTP 後台（商城、營運工具）可以直接在 handler 調 Repo；對局迴圈則維持 I1 的事件邊界。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li><strong>字串拼接 SQL</strong>（SQL 注入）——參數佔位符是底線。  </li>
+<li><strong>忽略 <code>rows.Close()</code>／<code>rows.Err()</code></strong>——洩漏連線或吞掉迭代錯誤。  </li>
+<li><strong>每個請求 <code>sql.Open</code></strong>——池的意義被你廢掉。  </li>
+<li><strong>把 ORM session 綁進 Room 模擬物件</strong>——熱路徑一卡，整房一起卡。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>跑通 <code>examples/i02-sql-memory</code>（看 <code>go.mod</code> 所在目錄，執行套件測試）。  </li>
+<li>為 repo 加 <code>ListByScore(ctx, min int) ([]Player, error)</code>（或同等語意），補測試。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>同一介面再寫一個「故意超時」的假實作：<code>ctx</code> 取消時 <code>Upsert</code> 立刻回錯，確認呼叫端有處理。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong><code>Scan</code> 欄位順序／型別對不上</strong>：執行期才爆；測試要覆蓋。  </li>
+<li><strong>查完不 <code>Close</code> rows</strong>：高併發下池被借光，看起來像「DB 掛了」。  </li>
+<li><strong>把連線池參數設無限大</strong>：資料庫先被連線數打掛，應用還以為自己很猛。  </li>
+<li><strong>在 tick 裡同步 <code>QueryContext</code>「先做著」</strong>：I1 白念了。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://go.dev/doc/database/">https://go.dev/doc/database/</a></li>
+</ul>
+<h2>下一章</h2>
+<p>SQL 解決「持久且可查」；接下來 Redis 解決「跨進程、要快、可帶 TTL」——但用途地圖要比「全部塞進去」精細得多。</p>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/GoLearning/lessons/i-data/i1-persistence-boundary/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">I1 持久化邊界：什麼時候才該寫進硬碟</div></a><a href="/GoLearning/lessons/i-data/i3-redis-map/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">I3 Redis 用途地圖：該上的時候再上</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

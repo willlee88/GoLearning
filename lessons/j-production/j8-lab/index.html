@@ -1,0 +1,132 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="把 metrics、優雅關閉、load-client 串成一套操作：看數字、加壓、Ctrl+C，留下你對瓶頸的第一個判斷。"><link rel="icon" type="image/svg+xml" href="/GoLearning/favicon.svg"><title>J8 Lab：關得乾淨，再壓一下 · GoLearning</title><link rel="stylesheet" href="/GoLearning/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/GoLearning/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/GoLearning/path/">學習路徑</a><a class="hover:text-white" href="/GoLearning/volumes/">卷冊</a><a class="hover:text-white" href="/GoLearning/playground/">Playground</a><a class="hover:text-white" href="/GoLearning/search/">搜尋</a><a class="hover:text-white" href="/GoLearning/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">J · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">J8 · Lab：關得乾淨，再壓一下</h1><p class="mt-3 text-slate-400">把 metrics、優雅關閉、load-client 串成一套操作：看數字、加壓、Ctrl+C，留下你對瓶頸的第一個判斷。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/j04-load-client</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">lab</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">production</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>前面 J1～J7 是零件；這章是 <strong>把操作練順</strong>。</p>
+<p>你要親手走完一輪：</p>
+<ol>
+<li>啟動 Arena Mini  </li>
+<li>看 <code>/healthz</code>、<code>/metrics</code>  </li>
+<li>用假 client 加壓  </li>
+<li><code>Ctrl+C</code> 看優雅關閉  </li>
+<li>（選）自己加掛 pprof 或做一個小改進</li>
+</ol>
+<p>做完之後，J 卷的檢查點才算「身體會」，不是「眼睛看過」。</p>
+<h2>Python 對照</h2>
+<p>像你在 Web 專案收尾時會做的：health check、metrics 頁、壓一下、看 graceful shutdown 日誌。<br>遊戲版多了長連線與房間 tick——關服時特別要確認迴圈有停。</p>
+<h2>怎麼寫（操作步驟）</h2>
+<h3>1. 啟動 Server</h3>
+<pre class="hljs"><code><span class="hljs-built_in">cd</span> F:\GoLearning\demo\arena-mini\server
+go mod tidy
+go <span class="hljs-built_in">test</span> ./...
+go run ./cmd/server</code></pre><p>看到 listening 日誌後：</p>
+<ul>
+<li>遊戲頁：<a target="_blank" rel="noopener noreferrer" href="http://localhost:8080/">http://localhost:8080/</a>  </li>
+<li>健康：<a target="_blank" rel="noopener noreferrer" href="http://localhost:8080/healthz">http://localhost:8080/healthz</a>  </li>
+<li>指標：<a target="_blank" rel="noopener noreferrer" href="http://localhost:8080/metrics">http://localhost:8080/metrics</a></li>
+</ul>
+<p>先記下一份「安靜時」的 metrics（connections／rooms 大概多少）。</p>
+<h3>2. 手動玩一下（30 秒）</h3>
+<p>兩個瀏覽器（或兩個分頁）同 room、不同 name，Ready 後動一下。<br>再看 <code>/metrics</code>：<code>connections</code>、<code>messages_in</code>、<code>messages_out</code>、<code>inputs_applied</code> 應有變化。</p>
+<h3>3. 加壓</h3>
+<p>另開終端：</p>
+<pre class="hljs"><code>cd F:\GoLearning\examples\j04-load-client
+<span class="hljs-keyword">go</span> run . -addr http:<span class="hljs-comment">//127.0.0.1:8080 -n 30 -seconds 15 -room load</span></code></pre><p>壓的過程中重新整理 <code>/metrics</code>（或 curl），觀察：</p>
+<ul>
+<li><code>connections</code> 是否上去  </li>
+<li><code>messages_*</code> 是否暴衝  </li>
+<li>Server 終端 CPU 風扇／工作管理員體感</li>
+</ul>
+<p>壓完看 client 印出的 <code>clients_ok</code>／<code>fail</code>。</p>
+<p>可再試一輪 <code>-n 50</code>（機器吃力就降），練習「漸進」而不是一步到位。</p>
+<h3>4. 優雅關閉</h3>
+<p>回到 Server 終端，<code>Ctrl+C</code>。</p>
+<p>預期（對照 J3／<code>main.go</code>）：</p>
+<ol>
+<li>日誌出現 shutdown signal 一類訊息  </li>
+<li>hub／房間迴圈先停  </li>
+<li>HTTP <code>Shutdown</code>  </li>
+<li><code>bye</code>  </li>
+<li>行程結束（理想上乾淨離開）</li>
+</ol>
+<p>若還有瀏覽器掛著，應感到連線結束，而不是半吊子一直轉。</p>
+<h3>5.（選）pprof</h3>
+<p>若你已熟悉 D4，可自行在 Server 加掛 pprof（注意：<strong>別把開放的 pprof 暴露在公網</strong>）。<br>本機壓測時抓 CPU profile，驗證你在 J4／J6 的瓶頸猜測。</p>
+<h2>為什麼要整套做一遍</h2>
+<p>分開讀章節時，你以為自己會了。<br>一連操作才會碰到真實摩擦：</p>
+<ul>
+<li>開錯目錄、addr 填錯  </li>
+<li>metrics 看錯時點（壓測前就刷新了）  </li>
+<li>關服順序與日誌對不上想像  </li>
+<li>假人失敗其實是 Server 沒起來</li>
+</ul>
+<p>這些摩擦正是上線值班的縮小版。</p>
+<h2>遊戲 Server 會用在哪</h2>
+<p>把這套步驟當成你日後任何小專案的「最小上線儀式」：</p>
+<table>
+<thead>
+<tr>
+<th>步驟</th>
+<th>問題</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>healthz</td>
+<td>進程活著嗎？</td>
+</tr>
+<tr>
+<td>metrics</td>
+<td>現在負荷怎樣？</td>
+</tr>
+<tr>
+<td>load-client</td>
+<td>臨界點大概在哪？</td>
+</tr>
+<tr>
+<td>Ctrl+C</td>
+<td>關得乾不乾淨？</td>
+</tr>
+</tbody></table>
+<p>K 卷自評也會勾這些項。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>Lab 用眼睛掃過指令就算完成。  </li>
+<li>只壓測不看 metrics。  </li>
+<li>關服直接關終端視窗，不看日誌順序。  </li>
+<li>一次改五個優化，卻說不出哪個有效。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>完整跑完：啟動 → metrics → load-client → Ctrl+C。  </li>
+<li>截一段（或複製）壓測中的 metrics JSON，保存下來。  </li>
+<li>寫下你觀察到的<strong>第一個瓶頸猜測</strong>（一句話即可，例如「同房廣播讓 messages_out 比 in 兇太多」）。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>為 input 加每秒速率限制（呼應 J5），再用 load-client 看行為變化。  </li>
+<li>對局 <code>ended</code> 時丟一筆結算到背景 worker（呼應 I5）。  </li>
+<li>反覆「啟動→壓→關」三次，留意是否有 goroutine／房間數洩漏跡象（connections／rooms 關完後是否回到安靜基線）。</li>
+</ol>
+<h2>檢查清單（勾給自己看）</h2>
+<ul>
+<li><input disabled="" type="checkbox"> SIGINT 後進程有明確結束（不是卡死）  </li>
+<li><input disabled="" type="checkbox"> metrics 能反映連線與訊息變化  </li>
+<li><input disabled="" type="checkbox"> 關閉後 tick／房間迴圈有停（日誌或行為上可觀察）  </li>
+<li><input disabled="" type="checkbox"> 壓測有記下數字與瓶頸猜測  </li>
+<li><input disabled="" type="checkbox"> （選）沒有明顯「越開關 metrics 基線越高」的洩漏感</li>
+</ul>
+<h2>常見坑</h2>
+<ul>
+<li><strong>在錯的 <code>server</code> 目錄跑</strong>：請 <code>cd</code> 到 <code>demo/arena-mini/server</code>。  </li>
+<li><strong>load-client 的 <code>-addr</code> 要用 HTTP base</strong>：例如 <code>http://127.0.0.1:8080</code>（見範例與 Arena Mini README）。  </li>
+<li><strong>壓測時開太多瀏覽器分頁</strong>：自己也佔連線，數字會難讀。  </li>
+<li><strong>還沒看安靜基線就加壓</strong>：失去對照，看不出變化。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li><code>demo/arena-mini/README.md</code>  </li>
+<li><code>examples/j04-load-client</code>  </li>
+<li>J1～J7 任一章覺得虛的，回頭補那一塊即可</li>
+</ul>
+<h2>往 K 卷</h2>
+<p>J 卷到這裡收工。<br>K 卷是整條主路徑的<strong>複習地圖、自評清單與延伸任務</strong>——把「學過」變成「交得出作品」。</p>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/GoLearning/lessons/j-production/j7-scaleout/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">J7 水平擴展提醒：有狀態房間不能亂 round-robin</div></a><a href="/GoLearning/lessons/k-capstone/k0-index/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">K0 K 卷導讀：收束——你走到哪了，下一步去哪</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

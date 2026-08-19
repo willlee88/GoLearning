@@ -1,0 +1,103 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="不灌新理論：用複習地圖把主路徑串起來，再進自評清單與延伸任務，把理解變成作品。"><link rel="icon" type="image/svg+xml" href="/GoLearning/favicon.svg"><title>K0 K 卷導讀：收束——你走到哪了，下一步去哪 · GoLearning</title><link rel="stylesheet" href="/GoLearning/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/GoLearning/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/GoLearning/path/">學習路徑</a><a class="hover:text-white" href="/GoLearning/volumes/">卷冊</a><a class="hover:text-white" href="/GoLearning/playground/">Playground</a><a class="hover:text-white" href="/GoLearning/search/">搜尋</a><a class="hover:text-white" href="/GoLearning/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">K · L1 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">K0 · K 卷導讀：收束——你走到哪了，下一步去哪</h1><p class="mt-3 text-slate-400">不灌新理論：用複習地圖把主路徑串起來，再進自評清單與延伸任務，把理解變成作品。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">demo/arena-mini</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">capstone</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>若你一路從 P0 走到 J8，你已經不是「只會印 Hello」的狀態了。<br>你手上有一條完整主路徑：</p>
+<ul>
+<li>用 Go 的方式想型別、錯誤、套件  </li>
+<li>用併發把連線與房間跑起來，並知道 race 可怕  </li>
+<li>用網路與協定把客戶端／Server 接上  </li>
+<li>用權威 tick 做可玩的小對局  </li>
+<li>用日誌、metrics、關閉與壓測讓服務可操作</li>
+</ul>
+<p><strong>K 卷不灌新大理論。</strong><br>這卷要幫你：<strong>收束、自評、選一塊做成作品集。</strong></p>
+<p>讀完 K0，你要知道該回顧哪些章；下一章 K1 給你可勾的清單與延伸任務說明。</p>
+<h2>Python 對照</h2>
+<p>像你學完一套 Django／FastAPI 教程之後的「總複習 + 自己做個專案」階段：<br>不是再塞第十個套件，而是問「我真的能獨立做一個小後端嗎？」</p>
+<p>Go 這邊的錨點就是 <strong>Arena Mini</strong>（<code>demo/arena-mini</code>）：規則不大，但主路徑概念都壓進去了。</p>
+<h2>建議複習地圖</h2>
+<p>時間有限就按這個順序「掃」，覺得虛的再深讀：</p>
+<table>
+<thead>
+<tr>
+<th>順序</th>
+<th>回去哪</th>
+<th>你要能回答</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>P0 心智差異</td>
+<td>為什麼遊戲後端常選 Go？錯誤／併發跟 Python 差在哪？</td>
+</tr>
+<tr>
+<td>2</td>
+<td>A 卷基礎</td>
+<td>module、slice／map、指標、介面——寫小程式不卡死</td>
+</tr>
+<tr>
+<td>3</td>
+<td>B 卷錯誤</td>
+<td><code>error</code>、<code>errors.Is</code>、wrap；別用例外心智硬套</td>
+</tr>
+<tr>
+<td>4</td>
+<td>C 卷併發</td>
+<td>goroutine 生命週期、channel、context、Mutex；<strong>能看懂 <code>-race</code></strong></td>
+</tr>
+<tr>
+<td>5</td>
+<td>F／G 網路與信封</td>
+<td>TCP／HTTP／WS 心智；JSON 信封怎麼演進</td>
+</tr>
+<tr>
+<td>6</td>
+<td>H 權威 tick</td>
+<td>房間狀態機、input≠狀態、20Hz 在幹嘛</td>
+</tr>
+<tr>
+<td>7</td>
+<td>I 資料邊界</td>
+<td>什麼進記憶體、什麼進 DB、背景結算</td>
+</tr>
+<tr>
+<td>8</td>
+<td>J 關閉與 metrics</td>
+<td>能關、能看、能壓、能守</td>
+</tr>
+</tbody></table>
+<p>實作錨點：</p>
+<pre class="hljs"><code><span class="hljs-built_in">cd</span> F:\GoLearning\demo\arena-mini\server
+go <span class="hljs-built_in">test</span> ./...
+go run ./cmd/server</code></pre><p>再配 J8 的 load-client 走一輪，記憶會牢很多。</p>
+<h2>怎麼使用 K 卷</h2>
+<ol>
+<li>用上面地圖快速自問，卡關就回對應章。  </li>
+<li>打開 K1，把清單逐項勾。  </li>
+<li>從延伸任務挑 <strong>一個</strong> 做完（比挑五個都做一半有用）。</li>
+</ol>
+<h2>遊戲 Server 會用在哪</h2>
+<p>Capstone 的意思是：你能把「課」收成「可展示的後端行為」。<br>例如錄一段：雙人進房 → 碰撞得分 → 結束回大廳 → <code>/metrics</code> → Ctrl+C 關乾淨。<br>這段影片或 README，比空口說「我學過 Go」有力。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>複習時從頭精讀每一字——會累死；用問題導向。  </li>
+<li>自評全勾但從來沒跑過 Arena Mini。  </li>
+<li>延伸任務一次開太多，最後交不出來。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>依複習地圖，標出你最不熟的兩塊。  </li>
+<li>確認本機能啟動 Arena Mini，打開遊戲頁與 <code>/metrics</code>。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>用一頁紙畫：Client → Hub／Room → tick → state 廣播；旁註 metrics 與 shutdown 插在哪。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>以為 K 卷會教全新架構</strong>：不會；這裡是收束。  </li>
+<li><strong>跳過 J8 直接勾 J 相關清單</strong>：操作手感會假。  </li>
+<li><strong>只讀不跑</strong>：Go 的手感建立在 <code>go run</code>／<code>go test</code> 上。</li>
+</ul>
+<h2>下一章</h2>
+<p>K1：自評清單（含每項在檢查什麼）與延伸任務說明。</p>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/GoLearning/lessons/j-production/j8-lab/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">J8 Lab：關得乾淨，再壓一下</div></a><a href="/GoLearning/lessons/k-capstone/k1-checklist/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">K1 自評清單與延伸任務：勾得下去，才算真的會</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

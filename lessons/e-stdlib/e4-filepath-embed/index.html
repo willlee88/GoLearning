@@ -1,0 +1,122 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="路徑可攜；把靜態檔編進 binary。"><link rel="icon" type="image/svg+xml" href="/GoLearning/favicon.svg"><title>E4 filepath 與 embed 概念 · GoLearning</title><link rel="stylesheet" href="/GoLearning/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/GoLearning/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/GoLearning/path/">學習路徑</a><a class="hover:text-white" href="/GoLearning/volumes/">卷冊</a><a class="hover:text-white" href="/GoLearning/playground/">Playground</a><a class="hover:text-white" href="/GoLearning/search/">搜尋</a><a class="hover:text-white" href="/GoLearning/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">E · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">E4 · filepath 與 embed 概念</h1><p class="mt-3 text-slate-400">路徑可攜；把靜態檔編進 binary。</p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">filepath</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">embed</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>兩個很實際的問題：</p>
+<ol>
+<li><strong>路徑</strong>：Windows 是 <code>\ </code>，Linux／macOS 是 <code>/</code>。字串硬拼很容易在某一邊炸掉。  </li>
+<li><strong>靜態檔</strong>：前端小頁、<code>index.html</code>、設定範本——能不能<strong>打進同一顆執行檔</strong>，部署時少搬一個資料夾？</li>
+</ol>
+<p>答案分別是：</p>
+<ul>
+<li>作業系統路徑用 <strong><code>path/filepath</code></strong>  </li>
+<li>URL 路徑（web path）用 <strong><code>path</code></strong>（正斜線語意）  </li>
+<li>把檔案編進 binary 用 <strong><code>embed</code></strong>（Go 1.16+）</li>
+</ul>
+<h2>先跟 Python 對一下</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+<th>注意</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>pathlib</code> / <code>os.path</code></td>
+<td><code>path/filepath</code></td>
+<td><code>Join</code>、<code>Clean</code>、分隔符依 OS</td>
+</tr>
+<tr>
+<td><code>urllib.parse</code> 的 path</td>
+<td><code>path</code> 套件</td>
+<td>給 URL 用，不是給本機磁碟</td>
+</tr>
+<tr>
+<td>把靜態檔跟程式一起打包（各種土法）</td>
+<td><code>//go:embed</code></td>
+<td>編譯期嵌進去</td>
+</tr>
+<tr>
+<td><code>importlib.resources</code></td>
+<td><code>embed.FS</code></td>
+<td>執行期用檔案系統介面讀</td>
+</tr>
+</tbody></table>
+<h2>怎麼寫（能跑的最小例子）</h2>
+<h3>可攜路徑</h3>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">import</span> <span class="hljs-string">&quot;path/filepath&quot;</span>
+
+p := filepath.Join(<span class="hljs-string">&quot;web&quot;</span>, <span class="hljs-string">&quot;index.html&quot;</span>) <span class="hljs-comment">// Windows / Unix 都會用對的分隔符</span>
+abs, err := filepath.Abs(p)
+clean := filepath.Clean(userInputPath)  <span class="hljs-comment">// 去掉多餘的 . / ..</span></code></pre><p><strong>不要</strong>自己 <code>&quot;web&quot; + &quot;/&quot; + name</code> 拼磁碟路徑——在 Windows 上又醜又容易錯。<br>反過來說：組 <strong>URL</strong>（例如 <code>/static/</code> + 檔名）才用 <code>path.Join</code>。</p>
+<h3>embed：把資料夾嵌進程式</h3>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">package</span> main
+
+<span class="hljs-keyword">import</span> (
+	<span class="hljs-string">&quot;embed&quot;</span>
+	<span class="hljs-string">&quot;io/fs&quot;</span>
+	<span class="hljs-string">&quot;net/http&quot;</span>
+)
+
+<span class="hljs-comment">//go:embed web/*</span>
+<span class="hljs-keyword">var</span> webFS embed.FS
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> {
+	<span class="hljs-comment">// 直接當 HTTP 靜態檔服務（示意）</span>
+	sub, _ := fs.Sub(webFS, <span class="hljs-string">&quot;web&quot;</span>)
+	http.Handle(<span class="hljs-string">&quot;/&quot;</span>, http.FileServer(http.FS(sub)))
+	_ = http.ListenAndServe(<span class="hljs-string">&quot;:8080&quot;</span>, <span class="hljs-literal">nil</span>)
+}</code></pre><p>重點：</p>
+<ul>
+<li>註解 <strong><code>//go:embed</code></strong> 必須緊挨變數，且套件要 <code>import &quot;embed&quot;</code>（即使只為了副作用／型別）。  </li>
+<li>可 embed 單一檔、多檔、或目錄 pattern。  </li>
+<li>得到的是編譯進 binary 的唯讀樹；部署常常變成「丟一個 <code>.exe</code> 就能跑」。</li>
+</ul>
+<h2>為什麼這樣設計／底層在幹嘛</h2>
+<ol>
+<li><p><strong><code>filepath</code> vs <code>path</code></strong><br>磁碟路徑會碰到磁碟機代號、分隔符、大小寫規則；URL path 語意不同。混用是經典 bug 來源。</p>
+</li>
+<li><p><strong><code>Clean</code>／<code>Join</code> 防目錄逃逸還不夠</strong><br>若路徑來自使用者，光 <code>Clean</code> 不夠當安全邊界；靜態檔服務還要確保解析後仍落在允許的根目錄內（<code>filepath.Rel</code> 檢查等）。教學 demo 可以先覺察這件事。</p>
+</li>
+<li><p><strong><code>embed</code> 換來的是部署簡單，不是「熱更新前端」</strong><br>改 HTML 要重新編譯。開發期常：用 <code>WEB_DIR</code> 指到本機資料夾；發佈再 embed。兩種模式可以並存。</p>
+</li>
+<li><p><strong>binary 會變大</strong><br>嵌一整個 <code>node_modules</code> 產物要想清楚；只嵌需要的 <code>web/</code> 建置結果。</p>
+</li>
+</ol>
+<h2>遊戲 Server 會用在哪</h2>
+<ul>
+<li>Arena Mini 現在多半用目錄伺服靜態頁；你可以<strong>選做</strong>改成 embed，變成單檔 demo。  </li>
+<li>關卡設定、預設暱稱列表、小圖示，都能 embed。  </li>
+<li>日誌路徑、資料目錄仍應用 <code>filepath</code> 處理，方便 Windows 開發者。</li>
+</ul>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li><strong>字串 <code>+ &quot;\\&quot;</code> 或 <code>+ &quot;/&quot;</code> 拼本機路徑</strong>。  </li>
+<li><strong>假設所有人的工作目錄都跟你一樣</strong>——重要檔案用相對「可設定的根」或 embed。  </li>
+<li><strong>把祕密設定檔 embed 進公開發佈的 binary</strong>——有人會直接字串搜出來。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>讀官方 <code>embed</code> 套件文件的範例，看懂 <code>//go:embed</code>。  </li>
+<li>用口語解釋：為什麼 <code>&quot;dir&quot; + &quot;/&quot; + file</code> 在 Windows 上是壞習慣。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>寫一支小程式 embed 一個 <code>hello.txt</code> 並印出內容。  </li>
+<li>思考 Arena 的 <code>web/</code> 改 embed 時，<code>WEB_DIR</code> 還要不要留作開發開關。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong><code>go:embed</code> 放錯位置</strong>：不能在函式裡；要套件層變數。  </li>
+<li><strong>pattern 配不到檔</strong>：編譯失敗或嵌到空的——檢查路徑相對 package 目錄。  </li>
+<li><strong>用 <code>filepath</code> 去處理 URL</strong>：反了。  </li>
+<li><strong>embed 後還用錯的工作目錄去 <code>os.Open(&quot;web/...&quot;)</code></strong>：嵌進去的要用 <code>embed.FS</code>／<code>fs.FS</code> 開。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://pkg.go.dev/path/filepath">https://pkg.go.dev/path/filepath</a>  </li>
+<li><a target="_blank" rel="noopener noreferrer" href="https://pkg.go.dev/embed">https://pkg.go.dev/embed</a></li>
+</ul>
+<h2>接回主路徑</h2>
+<p>下一站可以繼續 <strong>E5（JSON）</strong>，或若你趕網路主線 → <strong>F0</strong>。</p>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/GoLearning/lessons/e-stdlib/e3-config/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">E3 flag 與環境變數設定</div></a><a href="/GoLearning/lessons/e-stdlib/e5-json/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">E5 encoding/json 實務</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

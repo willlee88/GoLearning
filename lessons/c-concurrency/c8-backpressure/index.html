@@ -1,0 +1,112 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="生產者快、消費者慢時怎麼辦：阻塞、拒絕、丟棄、斷線——別讓無界 channel 變成延遲的 OOM。"><link rel="icon" type="image/svg+xml" href="/GoLearning/favicon.svg"><title>C8 背壓：佇列有界，壓力要回得去 · GoLearning</title><link rel="stylesheet" href="/GoLearning/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/GoLearning/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/GoLearning/path/">學習路徑</a><a class="hover:text-white" href="/GoLearning/volumes/">卷冊</a><a class="hover:text-white" href="/GoLearning/playground/">Playground</a><a class="hover:text-white" href="/GoLearning/search/">搜尋</a><a class="hover:text-white" href="/GoLearning/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">C · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">C8 · 背壓：佇列有界，壓力要回得去</h1><p class="mt-3 text-slate-400">生產者快、消費者慢時怎麼辦：阻塞、拒絕、丟棄、斷線——別讓無界 channel 變成延遲的 OOM。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/c08-backpressure</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">backpressure</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p><strong>背壓（backpressure）</strong> 的意思很白話：後面消化不完時，要把壓力傳回前面——讓前面慢下來、被拒絕、或被丟掉——而不是默默在中間堆積到爆記憶體。</p>
+<p>在 Go 裡最常見的陷阱是：</p>
+<pre class="hljs"><code class="language-go">ch := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> Job) <span class="hljs-comment">// 或超大緩衝</span>
+<span class="hljs-keyword">go</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span>{ <span class="hljs-keyword">for</span> j := <span class="hljs-keyword">range</span> ch { ... } }()
+<span class="hljs-comment">// 然後無腦 ch &lt;- job</span></code></pre><p>生產者永遠比較快時，無界（或「心智上無界」）佇列＝<strong>延遲發作的 OOM</strong>。遊戲 Server 被惡意／故障客戶端灌 input 時特別真實。</p>
+<h2>Python 對照</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>asyncio.Queue(maxsize=N)</code> 滿了就 await</td>
+<td>有界 channel；滿了阻塞或 <code>select</code>+<code>default</code> 拒絕</td>
+</tr>
+<tr>
+<td>無限 list append</td>
+<td>等同無界緩衝——一樣危險</td>
+</tr>
+<tr>
+<td>丟棄／降級常自己寫</td>
+<td>一樣要<strong>明確策略</strong>，語言不會幫你選</td>
+</tr>
+</tbody></table>
+<h2>怎麼寫</h2>
+<p>有界＋非阻塞拒絕：</p>
+<pre class="hljs"><code class="language-go">ch := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> Job, <span class="hljs-number">1024</span>)
+<span class="hljs-keyword">select</span> {
+<span class="hljs-keyword">case</span> ch &lt;- job:
+	<span class="hljs-comment">// 受理</span>
+<span class="hljs-keyword">default</span>:
+	<span class="hljs-keyword">return</span> ErrBusy <span class="hljs-comment">// 滿了：拒絕／改丟棄／叫客戶端減速</span>
+}</code></pre><p>有界＋阻塞：直接 <code>ch &lt;- job</code>，讓生產者變慢——適合「寧可延遲、不可丟」的路徑。</p>
+<p>範例：<code>examples/c08-backpressure</code>。</p>
+<h2>細節</h2>
+<h3>策略怎麼選？</h3>
+<table>
+<thead>
+<tr>
+<th>策略</th>
+<th>什麼時候</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>阻塞</td>
+<td>可接受延遲，且生產者也是你能控的內部元件</td>
+</tr>
+<tr>
+<td>拒絕（回錯／忙）</td>
+<td>API／命令入口，讓呼叫端決定重試</td>
+</tr>
+<tr>
+<td>丟最舊／最新</td>
+<td>遙測、可丟的狀態快照</td>
+</tr>
+<tr>
+<td>斷開客戶端</td>
+<td>明顯輸入洪水、惡意連線</td>
+</tr>
+<tr>
+<td>降級</td>
+<td>關特效、降 tick、少廣播欄位</td>
+</tr>
+</tbody></table>
+<p>沒有萬能策略。要問：<strong>丟了會不會破壞公平／權威狀態？延遲高一點可不可以？</strong></p>
+<h3>為什麼「開超大 buffer」常常只是自我安慰？</h3>
+<p>1024 跟 10240000 都只是延後爆點。若長期生產速率 &gt; 消費速率，再大的緩衝也會滿。<br>緩衝用來吸收<strong>短暫尖峰</strong>，不是用來否認產能不足。</p>
+<h3>跟遊戲輸入的關係</h3>
+<p>每玩家每秒輸入應有上限（例如 40）。超了就斷／拒／合併——這是玩法與安全的交界，不只是效能題。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li>Reactive Streams 那套背壓術語；概念相同。  </li>
+<li>多級佇列（連線 → 房間 → worker）每一級都要有界。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<ul>
+<li>房間 input inbox  </li>
+<li>結算／寫庫的 async worker queue（後面 I5／J6 也會談）  </li>
+<li>廣播：peer 太慢時，是阻塞整房、踢人，還是丟更新？要有政策</li>
+</ul>
+<p>Arena Mini 相關設計時，把「滿了怎麼辦」寫進註解或文件，比事後救火便宜。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li><code>go func</code> + 無界 channel 當萬靈丹。  </li>
+<li>無限 list／slice 當緩衝。  </li>
+<li>出問題才加 buffer，從不設拒絕路徑。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>跑 <code>examples/c08-backpressure</code>，觀察滿佇列行為。  </li>
+<li>為 Arena 設計一條規則：「每玩家每秒最多 40 input」，寫下超限時你要阻塞、拒絕還是斷線。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>實作「丟最舊」：緩衝滿時先抽一個再塞新的（注意併發與正確性）。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>緩衝滿導致整個房間 loop 卡在發送</strong>：關鍵路徑用非阻塞＋政策，或隔離慢消費者。  </li>
+<li><strong>以為 reject 就要 panic</strong>：回 <code>error</code>／關連線即可。  </li>
+<li><strong>度量缺失</strong>：沒有 queue 長度／拒絕次數，你看不見背壓有沒有在運作。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li>搜尋 “backpressure” 與有界佇列設計；搭配本卷 C2／C3。</li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/GoLearning/lessons/c-concurrency/c7-errgroup/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">C7 errgroup：一組任務，錯誤與取消一起收</div></a><a href="/GoLearning/lessons/c-concurrency/c9-scheduler/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">C9 Scheduler 直觀：便宜，但不是免費</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

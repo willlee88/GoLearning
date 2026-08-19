@@ -1,0 +1,157 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Mutex、WaitGroup、Once、Map、Pool 何時用。"><link rel="icon" type="image/svg+xml" href="/GoLearning/favicon.svg"><title>E8 sync 套件地圖 · GoLearning</title><link rel="stylesheet" href="/GoLearning/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/GoLearning/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/GoLearning/path/">學習路徑</a><a class="hover:text-white" href="/GoLearning/volumes/">卷冊</a><a class="hover:text-white" href="/GoLearning/playground/">Playground</a><a class="hover:text-white" href="/GoLearning/search/">搜尋</a><a class="hover:text-white" href="/GoLearning/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">E · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">E8 · sync 套件地圖</h1><p class="mt-3 text-slate-400">Mutex、WaitGroup、Once、Map、Pool 何時用。</p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">sync</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">stdlib</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>C 卷教過：多個 goroutine 一起碰同一塊記憶體，要同步。<code>sync</code> 套件就是這類<strong>低階同步工具箱</strong>。</p>
+<p>本章當<strong>地圖</strong>：每個型別適合什麼場景、不適合什麼。重點不是背完 API，而是<strong>選錯工具的後果</strong>——例如無腦上 <code>sync.Map</code>，或複製含 Mutex 的 struct。</p>
+<h2>先跟 Python 對一下</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+<th>注意</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>threading.Lock</code></td>
+<td><code>sync.Mutex</code></td>
+<td>觀念接近；Go 還有 <code>RWMutex</code></td>
+</tr>
+<tr>
+<td>自己計數 + Event</td>
+<td><code>sync.WaitGroup</code></td>
+<td>等一組 goroutine 結束很常見</td>
+</tr>
+<tr>
+<td>沒有內建 Once 時自己寫 flag</td>
+<td><code>sync.Once</code></td>
+<td>保證函式只執行一次</td>
+</tr>
+<tr>
+<td>以為 <code>dict</code> 加鎖就好</td>
+<td>通常 <code>map</code> + <code>Mutex</code></td>
+<td><code>sync.Map</code> 是特例，不是預設</td>
+</tr>
+</tbody></table>
+<p>人話：</p>
+<ul>
+<li><strong>互斥鎖（Mutex）</strong>：同一時間只准一個人進臨界區。  </li>
+<li><strong>WaitGroup</strong>：像「還有幾個人沒回家」，歸零才開門。  </li>
+<li><strong>Once</strong>：初始化只做一遍，之後呼叫都直接跳過。</li>
+</ul>
+<h2>地圖</h2>
+<table>
+<thead>
+<tr>
+<th>型別</th>
+<th>用途（人話）</th>
+<th>什麼時候想一想</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Mutex</code>／<code>RWMutex</code></td>
+<td>保護共用資料</td>
+<td>讀很多寫很少可試 RWMutex；別重入（Go Mutex 不能鎖兩次）</td>
+</tr>
+<tr>
+<td><code>WaitGroup</code></td>
+<td>等一組 worker 結束</td>
+<td><code>Add</code> 要在 <code>Wait</code> 之前；<code>Add</code> 計數別弄錯</td>
+</tr>
+<tr>
+<td><code>Once</code></td>
+<td>懶初始化／只啟動一次</td>
+<td><code>Do</code> 裡 panic 的語意要看文件</td>
+</tr>
+<tr>
+<td><code>Map</code></td>
+<td>特殊併發 map</td>
+<td>key 穩定、寫少讀多或 key 不相交；<strong>一般業務優先 map+Mutex</strong></td>
+</tr>
+<tr>
+<td><code>Pool</code></td>
+<td>暫存物件重用，降 GC</td>
+<td><code>Get</code> 可能拿到髒物件，用前 Reset；別當快取</td>
+</tr>
+<tr>
+<td><code>Cond</code></td>
+<td>等條件成真</td>
+<td>大多數情況 channel 更清晰；少用</td>
+</tr>
+</tbody></table>
+<h2>怎麼寫（能跑的最小例子）</h2>
+<h3>Once</h3>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">var</span> once sync.Once
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">initAll</span><span class="hljs-params">()</span></span> { <span class="hljs-comment">/* 載入設定、註冊度量… */</span> }
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">ensureInit</span><span class="hljs-params">()</span></span> {
+	once.Do(initAll)
+}</code></pre><h3>Mutex 保護 map（最常見）</h3>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">type</span> Hub <span class="hljs-keyword">struct</span> {
+	mu    sync.Mutex
+	rooms <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*Room
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *Hub)</span></span> Get(id <span class="hljs-type">string</span>) *Room {
+	h.mu.Lock()
+	<span class="hljs-keyword">defer</span> h.mu.Unlock()
+	<span class="hljs-keyword">return</span> h.rooms[id]
+}</code></pre><h3>WaitGroup</h3>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">var</span> wg sync.WaitGroup
+<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">3</span>; i++ {
+	wg.Add(<span class="hljs-number">1</span>)
+	<span class="hljs-keyword">go</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> {
+		<span class="hljs-keyword">defer</span> wg.Done()
+		work()
+	}()
+}
+wg.Wait()</code></pre><h2>為什麼這樣設計／底層在幹嘛</h2>
+<ol>
+<li><p><strong><code>sync</code> 是「共享記憶體＋鎖」路線</strong><br>Go 還有 channel 的「用通訊分享記憶體」。能單一 owner（一個 goroutine 管狀態）就少鎖；真要共享再鎖。</p>
+</li>
+<li><p><strong>為什麼不要複製含 Mutex 的 struct</strong><br>Mutex 複製會複製「鎖的狀態」，變成各看各的鎖，等於沒鎖。傳指標，或別把 Mutex 當值到處傳。</p>
+</li>
+<li><p><strong><code>sync.Map</code> 不是 concurrent dict 萬靈丹</strong><br>文件寫了適用情境。API 也比較醜（存 <code>any</code>）。Hub 的 rooms：房間數不多、操作複雜，<code>map+Mutex</code> 通常更單純。</p>
+</li>
+<li><p><strong><code>Pool</code> 不是快取</strong><br>runtime 可能隨時丟掉 Pool 裡的東西。適合「短命緩衝區」重用；Get 出來要當可能是任意舊物件。</p>
+</li>
+</ol>
+<h2>遊戲 Server 會用在哪</h2>
+<ul>
+<li>Hub：<code>rooms map</code> + <code>Mutex</code>。  </li>
+<li>連線表、玩家 session 表：同樣模式。  </li>
+<li><code>sync.Once</code>：啟動全域 ticker、註冊 metrics 只做一次。  </li>
+<li>關服時 <code>WaitGroup</code> 等各房間／連線收尾（或改 errgroup，見 C7）。  </li>
+<li>寫 WebSocket：多 goroutine 同寫一條連線 → 需要寫鎖（F6）。</li>
+</ul>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li><strong>無腦 <code>sync.Map</code> 當「Python 的 concurrent dict」</strong>。  </li>
+<li><strong>鎖的粒度亂到整個世界一把大鎖</strong>——或反過來鎖太碎死鎖。先粗後量。  </li>
+<li><strong>在持鎖時做遠端 I/O</strong>：鎖會被握很久，別的 goroutine 全堵。  </li>
+<li><strong>以為有 GIL 心智就安全</strong>——Go 沒有那種「單執行緒 bytecode」護身符，race 要用 <code>-race</code> 抓。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>用自己的話說明：Arena／教學 Hub 為什麼通常不用 <code>sync.Map</code>。  </li>
+<li>寫一個「計數器」：10 個 goroutine 各加 1000 次，比較「無鎖（故意錯）」與「Mutex」；有空加 <code>go test -race</code>。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>讀 <code>sync.Map</code> 文件的「何時適合」段落，對照你的 rooms 表是否符合。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong><code>Unlock</code> 忘了</strong>：用 <code>defer</code>。  </li>
+<li><strong><code>WaitGroup</code> 複製傳進函式</strong>：跟 Mutex 一樣，傳指標。  </li>
+<li><strong><code>Add</code> 在 goroutine 裡面才呼叫</strong>：可能 <code>Wait</code> 先看到 0。  </li>
+<li><strong>死鎖</strong>：同 goroutine 鎖兩次、或鎖順序 A→B／B→A 交錯。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://pkg.go.dev/sync">https://pkg.go.dev/sync</a></li>
+</ul>
+<h2>接回主路徑</h2>
+<p>標準庫地圖先到這裡。若尚未讀網路卷 → <strong>F0</strong>。</p>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/GoLearning/lessons/e-stdlib/e7-context-pkg/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">E7 context 套件速查</div></a><a href="/GoLearning/lessons/f-network/f0-index/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">F0 F 卷導讀 · 網路</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

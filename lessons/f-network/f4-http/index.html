@@ -1,0 +1,111 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Handler、ServeMux、狀態碼與 JSON API。"><link rel="icon" type="image/svg+xml" href="/GoLearning/favicon.svg"><title>F4 net/http 基礎 · GoLearning</title><link rel="stylesheet" href="/GoLearning/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/GoLearning/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/GoLearning/path/">學習路徑</a><a class="hover:text-white" href="/GoLearning/volumes/">卷冊</a><a class="hover:text-white" href="/GoLearning/playground/">Playground</a><a class="hover:text-white" href="/GoLearning/search/">搜尋</a><a class="hover:text-white" href="/GoLearning/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">F · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">F4 · net/http 基礎</h1><p class="mt-3 text-slate-400">Handler、ServeMux、狀態碼與 JSON API。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/f04-http-api</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">http</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p><code>net/http</code> 是 Go 做後端<strong>控制面</strong>的預設答案：健康檢查、登入、房間列表、管理 API、metrics 拉取。</p>
+<p>核心概念：</p>
+<ul>
+<li><strong><code>Handler</code></strong>：實作 <code>ServeHTTP(w, r)</code> 的東西  </li>
+<li><strong><code>ServeMux</code></strong>：路由器；Go 1.22+ 支援 <code>&quot;GET /path&quot;</code> 這種方法＋路徑模式  </li>
+<li>每個進來的請求，Server 預設用<strong>一個 goroutine</strong> 跑你的 handler</li>
+</ul>
+<p>遊戲的即時玩法通常走 WebSocket；HTTP 負責「連上遊戲之前／旁邊」的事。</p>
+<h2>先跟 Python 對一下</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+<th>注意</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Flask／FastAPI 的 route</td>
+<td><code>http.HandleFunc</code>／自建 mux</td>
+<td>先標準庫，再決定要不要框架</td>
+</tr>
+<tr>
+<td><code>return dict</code> → JSON</td>
+<td><code>json.NewEncoder(w).Encode(...)</code></td>
+<td>記得設 <code>Content-Type</code></td>
+</tr>
+<tr>
+<td><code>Depends</code>／middleware</td>
+<td>下一章 F5 手寫包裝</td>
+<td></td>
+</tr>
+<tr>
+<td>uvicorn／gunicorn worker</td>
+<td><code>http.Server</code> + goroutine／請求</td>
+<td>模型不同，但都要注意超時</td>
+</tr>
+</tbody></table>
+<h2>怎麼寫（能跑的最小例子）</h2>
+<pre class="hljs"><code class="language-go">mux := http.NewServeMux()
+mux.HandleFunc(<span class="hljs-string">&quot;GET /healthz&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(w http.ResponseWriter, r *http.Request)</span></span> {
+	w.WriteHeader(http.StatusOK)
+	_, _ = w.Write([]<span class="hljs-type">byte</span>(<span class="hljs-string">&quot;ok&quot;</span>))
+})
+log.Fatal(http.ListenAndServe(<span class="hljs-string">&quot;:8080&quot;</span>, mux))</code></pre><p>JSON API 示意：</p>
+<pre class="hljs"><code class="language-go">mux.HandleFunc(<span class="hljs-string">&quot;POST /v1/echo&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(w http.ResponseWriter, r *http.Request)</span></span> {
+	<span class="hljs-keyword">var</span> in <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]any
+	<span class="hljs-keyword">if</span> err := json.NewDecoder(r.Body).Decode(&amp;in); err != <span class="hljs-literal">nil</span> {
+		http.Error(w, <span class="hljs-string">&quot;bad json&quot;</span>, http.StatusBadRequest)
+		<span class="hljs-keyword">return</span>
+	}
+	w.Header().Set(<span class="hljs-string">&quot;Content-Type&quot;</span>, <span class="hljs-string">&quot;application/json&quot;</span>)
+	_ = json.NewEncoder(w).Encode(in)
+})</code></pre><p>範例：<code>examples/f04-http-api</code>。</p>
+<p>較穩的啟動方式是填 <code>http.Server</code>（可設超時），不要永遠只用便利函式：</p>
+<pre class="hljs"><code class="language-go">s := &amp;http.Server{
+	Addr:              <span class="hljs-string">&quot;:8080&quot;</span>,
+	Handler:           mux,
+	ReadHeaderTimeout: <span class="hljs-number">5</span> * time.Second,
+}
+log.Fatal(s.ListenAndServe())</code></pre><h2>為什麼這樣設計／底層在幹嘛</h2>
+<ol>
+<li><p><strong>Handler 介面很小</strong><br>任何滿足 <code>ServeHTTP</code> 的型別都能掛上去；middleware 就是包一層 Handler（F5）。</p>
+</li>
+<li><p><strong>請求上下文</strong><br><code>r.Context()</code> 在客戶端取消／超時時會取消。往下傳 DB 查詢才有意義。</p>
+</li>
+<li><p><strong>錯誤用狀態碼，不要 panic</strong><br>4xx＝客戶問題，5xx＝伺服器問題。panic 可能搞掉 worker；應用層用錯誤值＋明確回應。</p>
+</li>
+<li><p><strong>慢速攻擊與超時</strong><br>不設 <code>ReadHeaderTimeout</code> 等，惡意連線可以慢慢餵資料佔資源。生產環境務必填 Server 欄位。</p>
+</li>
+<li><p><strong>Go 1.22 路由</strong><br><code>&quot;GET /items/{id}&quot;</code> 這類模式讓標準庫 mux 好用很多；舊教學若只寫 <code>&quot;/healthz&quot;</code> 要自己檢查 Method。</p>
+</li>
+</ol>
+<h2>遊戲 Server 會用在哪</h2>
+<p>Arena Mini 典型：</p>
+<ul>
+<li><code>GET /healthz</code>：探活  </li>
+<li><code>GET /rooms</code>：房間列表  </li>
+<li>靜態檔：伺服器網頁客戶端  </li>
+<li><code>GET /ws</code>：升級成 WebSocket（F6）</li>
+</ul>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li><strong>handler 裡用全域 map 不加鎖</strong>——請求併發進來，直接 race。  </li>
+<li><strong>一開始堆巨型框架，middleware 魔法看不懂</strong>——先手寫 20 行。  </li>
+<li><strong>成功／失敗都回 200 + 字串</strong>——用好 HTTP 狀態碼與 JSON 錯誤體。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>跑 <code>examples/f04-http-api</code>，用瀏覽器或 curl 打 <code>/healthz</code> 與 <code>/v1/echo</code>。  </li>
+<li>加一個 <code>GET /v1/time</code>，回傳 UTC 時間（JSON 或純文字皆可）。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>把 <code>ListenAndServe</code> 改成自訂 <code>http.Server</code> 並設 <code>ReadHeaderTimeout</code>。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>寫了 Header 之後才 <code>WriteHeader</code>，或 Encode 兩次</strong>：狀態碼與 body 順序要清。  </li>
+<li><strong>忘記關閉／限制 <code>r.Body</code></strong>：可用 <code>http.MaxBytesReader</code>。  </li>
+<li><strong>在 handler 開 goroutine 卻還用 <code>w</code>／<code>r</code></strong>：請求結束後這些不能再用；要複製需要的資料。  </li>
+<li><strong>路由註冊順序／尾斜線</strong>：測一下 <code>/rooms</code> vs <code>/rooms/</code>。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://pkg.go.dev/net/http">https://pkg.go.dev/net/http</a></li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/GoLearning/lessons/f-network/f3-framing/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">F3 封包邊界與長度前綴</div></a><a href="/GoLearning/lessons/f-network/f5-middleware/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">F5 中介層與路由模式</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

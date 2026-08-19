@@ -1,0 +1,174 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Gateway、Room、Rules、Persist 各做什麼、不該碰什麼；單進程也能先把腦裡分層畫清楚。"><link rel="icon" type="image/svg+xml" href="/GoLearning/favicon.svg"><title>H1 遊戲後端職責地圖：誰管連線、誰管規則 · GoLearning</title><link rel="stylesheet" href="/GoLearning/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/GoLearning/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/GoLearning/path/">學習路徑</a><a class="hover:text-white" href="/GoLearning/volumes/">卷冊</a><a class="hover:text-white" href="/GoLearning/playground/">Playground</a><a class="hover:text-white" href="/GoLearning/search/">搜尋</a><a class="hover:text-white" href="/GoLearning/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">H · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">H1 · 遊戲後端職責地圖：誰管連線、誰管規則</h1><p class="mt-3 text-slate-400">Gateway、Room、Rules、Persist 各做什麼、不該碰什麼；單進程也能先把腦裡分層畫清楚。</p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">architecture</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">game-server</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>大型遊戲後端常拆成很多服務：閘道、匹配、房間、結算、帳號……<br>你現在做教學 demo，<strong>不必一開始就微服務</strong>；但若腦裡沒分層，程式會很快變成「一個檔案又讀 WebSocket 又判勝負又寫資料庫」。</p>
+<p>這章目標：</p>
+<ul>
+<li>能畫出一張<strong>職責地圖</strong>（誰做什麼、刻意不做什麼）  </li>
+<li>知道 Arena Mini 的資料夾大概對應哪一層  </li>
+<li>之後水平擴展時，知道「房間狀態該住在哪」——因為你早就劃清邊界了</li>
+</ul>
+<h2>Python 對照</h2>
+<p>想像你用 FastAPI 寫即時遊戲（其實不太舒服，但比喻夠用）：</p>
+<table>
+<thead>
+<tr>
+<th>若混在一起</th>
+<th>較乾淨的切法</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一個 route 裡讀 WS、改 <code>global players</code>、算碰撞、<code>INSERT</code> 分數</td>
+<td>路由／WS 適配器只負責收發；領域函式純邏輯；背景 worker 跑 tick；DB 另包一層</td>
+</tr>
+<tr>
+<td>Django God Model 又管 HTTP 又管商業規則</td>
+<td>package 邊界：<code>hub</code> 不懂規則，<code>game</code> 不握 socket</td>
+</tr>
+</tbody></table>
+<p>Go 沒有強制「框架幫你分層」——<strong>邊界靠你用 package 與函式簽名表達</strong>。這是好事：你想清楚了，結構就清楚。</p>
+<h2>怎麼想（先畫圖，再寫碼）</h2>
+<p>最小、夠用的心智圖：</p>
+<pre class="hljs"><code class="language-text">Client(s)
+    │  WS / TCP
+    ▼
+Gateway ── 握手、讀寫、心跳、解信封
+    │
+    ▼
+Session ──「這個玩家是誰、在哪一房」
+    │
+    ├──► Match / Lobby ── 湊人、進房
+    │
+    ▼
+Room Runtime ── 生命週期 + Tick 迴圈 + 廣播節奏
+    │
+    ├──► Rules（純邏輯）── 合法移動、碰撞、勝負
+    │
+    └──► Persist（可選）── 結算、戰績、帳號
+         （注意：通常不是每 tick 寫庫）</code></pre><p>口訣：</p>
+<ul>
+<li><strong>Gateway 不懂規則</strong>（不知道「撞到算不算得分」）  </li>
+<li><strong>Rules 不懂 socket</strong>（函式參數裡不該出現 <code>*websocket.Conn</code>）  </li>
+<li><strong>Persist 不懂幀率</strong>（不要在 20Hz 的熱路徑狂寫 DB）</li>
+</ul>
+<h2>Arena Mini 怎麼對上這張圖</h2>
+<p>單進程沒關係，用資料夾表達分層就好：</p>
+<table>
+<thead>
+<tr>
+<th>職責</th>
+<th>Arena Mini 大概在哪</th>
+<th>做什麼</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>組裝／啟動</td>
+<td><code>demo/arena-mini/server/cmd/server</code></td>
+<td><code>main</code>：聽 port、接上 hub</td>
+</tr>
+<tr>
+<td>Gateway + 房間表</td>
+<td><code>internal/hub</code></td>
+<td>連線進出、轉訊息、廣播</td>
+</tr>
+<tr>
+<td>Rules + 房間狀態</td>
+<td><code>internal/game</code></td>
+<td>Ready／Input／Tick／Snapshot</td>
+</tr>
+<tr>
+<td>Persist</td>
+<td>（M4 可幾乎沒有）</td>
+<td>之後 I 卷再補</td>
+</tr>
+</tbody></table>
+<p>你現在打開這些目錄，問自己一句：「這個 <code>.go</code> 檔如果拿掉網路，測試還能不能跑？」——答「能」的，多半是規則層；答「不能」的，多半是 I/O 層。</p>
+<h2>各層「做／不做」對照表</h2>
+<table>
+<thead>
+<tr>
+<th>職責</th>
+<th>做</th>
+<th>不做</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Gateway</td>
+<td>握手、讀寫、心跳、基本解碼</td>
+<td>判定勝負、算物理</td>
+</tr>
+<tr>
+<td>Session</td>
+<td>玩家身份、房號、連線握把</td>
+<td>自己當權威世界</td>
+</tr>
+<tr>
+<td>Match / Lobby</td>
+<td>湊人、建房、拉人進房</td>
+<td>每幀模擬</td>
+</tr>
+<tr>
+<td>Room Runtime</td>
+<td>Phase、Tick、對房內廣播</td>
+<td>DB schema 設計</td>
+</tr>
+<tr>
+<td>Rules</td>
+<td>合法輸入、邊界、碰撞、得分</td>
+<td>持有 <code>net.Conn</code></td>
+</tr>
+<tr>
+<td>Persist</td>
+<td>結算落庫、帳號、戰績查詢</td>
+<td>每個 tick 寫一筆</td>
+</tr>
+</tbody></table>
+<p>「不做」跟「做」一樣重要。邊界被踩一次，之後測試與擴展都會痛。</p>
+<h2>為什麼要先在單機分層</h2>
+<p>之後若要水平擴展，常見痛點是<strong>房間親和</strong>（room affinity）：同一局的狀態必須落在同一台（或同一個 shard），因為 Tick 與權威狀態不能拆給互不相干的機器各改各的。</p>
+<p>若你單機時期就已經：</p>
+<ul>
+<li>Room 有清楚 ID 與生命週期  </li>
+<li>規則狀態只活在 Room／game 裡  </li>
+<li>Gateway 只是入口</li>
+</ul>
+<p>那之後把「整房」遷到某台 worker，只是部署問題；若狀態散落在一堆全域 map 與閉包，遷移會像考古。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li>真的拆服務時，Gateway 與 Room Worker 之間常再走一層內部 RPC／訊息佇列。  </li>
+<li>匹配服務可以偏無狀態；房間服務偏有狀態——H8 會再提。  </li>
+<li>不是每個專案都要六角形架構全套名詞；先做到「規則可單測、I/O 可替換」就很賺。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>幾乎所有即時玩法都會碰到這張地圖：</p>
+<ul>
+<li>手遊大廳 → 匹配 → 進對戰房  </li>
+<li>聊天室／觀戰：Gateway 仍在，Rules 可能極薄  </li>
+<li>回合制卡牌：Tick 可能變「回合事件」，但分層一樣成立</li>
+</ul>
+<p>Arena Mini 是縮小版：手動輸入房號 ≈ 簡化匹配；hub ≈ Gateway + 房間索引；game ≈ Rules + Room 狀態。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li><strong>God class／God package</strong>：一個型別既管連線又算物理又存檔。  </li>
+<li><strong>請求執行緒／讀 loop 直接改全域 dict</strong>，沒有房間隔離——兩個房的人會互相踩狀態。  </li>
+<li><strong>「先能跑再說，分層以後重構」</strong>——即時遊戲的 entangle 速度比 CRUD API 快得多，之後往往是重寫不是重構。  </li>
+<li><strong>每接到一個封包就 <code>INSERT</code> 資料庫</strong>——熱路徑會被磁碟／網路拖死。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>用紙或註解畫一張「Arena Mini 三層對應表」：Gateway／Room／Rules 各對到哪個目錄或型別。  </li>
+<li>打開 <code>internal/hub</code> 與 <code>internal/game</code>，指出<strong>一處</strong>「規則還碰到 I/O」或「已經分得很乾」的地方（寫下檔名與函式名）。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>假設要加「觀戰者只能收 state、不能送 input」——這規則該寫在 hub 還是 game？寫下你的理由。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>用資料夾名稱假裝分層</strong>：<code>game</code> 目錄裡卻 <code>import</code> 了 websocket——名稱很美，依賴已穿管。  </li>
+<li><strong>過早微服務</strong>：兩個人的 demo 拆五個 repo，除錯成本會爆炸；先單進程、腦裡分層。  </li>
+<li><strong>Persist 黏在 Tick 上</strong>：局內 20Hz 寫庫，人一多資料庫先掛，遊戲還在怪「網路不穩」。  </li>
+<li><strong>Room 邊界模糊</strong>：所有人丟進同一個 <code>map[string]*Player</code> 當「全服世界」，之後想做多房／分流會很痛。</li>
+</ul>
+<p>下一章 H2：Session——連線斷了，玩家還算不算「在線」？</p>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/GoLearning/lessons/h-game-server/h0-index/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">H0 H 卷導讀 · 遊戲 Server 核心</div></a><a href="/GoLearning/lessons/h-game-server/h2-session/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">H2 Session 與連線：斷線不等於玩家蒸發</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

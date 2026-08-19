@@ -1,0 +1,82 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="並行做幾件事，任一失敗就取消其他；比手寫 WaitGroup + error 鎖少踩坑。"><link rel="icon" type="image/svg+xml" href="/GoLearning/favicon.svg"><title>C7 errgroup：一組任務，錯誤與取消一起收 · GoLearning</title><link rel="stylesheet" href="/GoLearning/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/GoLearning/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/GoLearning/path/">學習路徑</a><a class="hover:text-white" href="/GoLearning/volumes/">卷冊</a><a class="hover:text-white" href="/GoLearning/playground/">Playground</a><a class="hover:text-white" href="/GoLearning/search/">搜尋</a><a class="hover:text-white" href="/GoLearning/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">C · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">C7 · errgroup：一組任務，錯誤與取消一起收</h1><p class="mt-3 text-slate-400">並行做幾件事，任一失敗就取消其他；比手寫 WaitGroup + error 鎖少踩坑。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/c07-errgroup</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">errgroup</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">concurrency</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>你常會碰到：「同時做 A、B、C，任一失敗就別做了，順便把錯誤帶回主線。」<br>手寫的話要：<code>WaitGroup</code> + 保護 error 的 Mutex + 自己 cancel context——很容易漏。</p>
+<p><code>golang.org/x/sync/errgroup</code> 把這套打包好：<code>Go</code> 丢任務，<code>Wait</code> 等結束並回第一個錯誤；<code>WithContext</code> 還能在首錯時取消其他任務。</p>
+<p>它不是魔法，但能少寫一堆易錯膠水碼。</p>
+<h2>Python 對照</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>asyncio.TaskGroup</code></td>
+<td><code>errgroup.Group</code>／<code>WithContext</code></td>
+</tr>
+<tr>
+<td><code>concurrent.futures.wait</code></td>
+<td>手動或 errgroup</td>
+</tr>
+<tr>
+<td>一個 task 炸、其他還在跑</td>
+<td><code>WithContext</code> 可把取消傳下去（任務要肯理 ctx）</td>
+</tr>
+</tbody></table>
+<h2>怎麼寫</h2>
+<pre class="hljs"><code class="language-go">g, ctx := errgroup.WithContext(context.Background())
+g.Go(<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> <span class="hljs-type">error</span> { <span class="hljs-keyword">return</span> taskA(ctx) })
+g.Go(<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> <span class="hljs-type">error</span> { <span class="hljs-keyword">return</span> taskB(ctx) })
+err := g.Wait()</code></pre><p>注意：<code>Go</code> 裡的函式要回 <code>error</code>；成功回 <code>nil</code>。<br>子任務必須<strong>使用傳入的 <code>ctx</code></strong>，取消才有意義——否則只是「其他人停了，你還在埋頭做」。</p>
+<p>範例：<code>examples/c07-errgroup</code>。</p>
+<h2>細節</h2>
+<h3><code>WithContext</code> 做了什麼？</h3>
+<p>第一個回傳非 nil error 的任務，會觸發派生 context 的 cancel。<br>其他任務若卡在 <code>select</code>／IO 且有聽 <code>ctx.Done()</code>，就能提早收工。<code>Wait</code> 仍會等所有已啟動任務結束（或結束路徑跑完）。</p>
+<h3>併發上限</h3>
+<p>errgroup 預設不會幫你限流。開 10000 個 <code>Go</code> 仍可能把自己打爆。<br>需要限流時：加 semaphore（常見寫法是有緩衝 channel 當權證），或分批。</p>
+<h3>跟 panic 的關係</h3>
+<p><code>Go</code> 裡若 panic 且沒 recover，一樣可能幹掉行程（B3）。<br>errgroup 管的是 <strong>error 值</strong>，不是 panic 防護罩。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li><code>SetLimit</code>（較新版本）可限制同時執行數。  </li>
+<li>只要「等全部完成、收集多個錯誤」而不是「首錯取消」，可能要別的結構（自己累積 errors）。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>適合：</p>
+<ul>
+<li>啟動時並行拉設定／驗票／寫審計  </li>
+<li>一次請求內扇出幾個獨立 IO</li>
+</ul>
+<p>不適合：</p>
+<ul>
+<li>單房 tick 裡無界扇出「每個玩家一個 goroutine 做重計算」——狀態與背壓都會變難</li>
+</ul>
+<p>線上熱路徑先問：有沒有上限？失敗要不要取消兄弟任務？</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>開一堆 task 不管取消。  </li>
+<li>只隨手拿「最後一個 error」，前面的失敗蒸發。  </li>
+<li>以為用了 errgroup 就自動限流。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>跑 <code>examples/c07-errgroup</code>。  </li>
+<li>讓 taskB 失敗，觀察 taskA 是否因 ctx 取消而提早結束（在 A 裡打日誌最清楚）。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>幫扇出加上「最多同時 4 個」的 semaphore。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>子任務忽略 ctx</strong>：表面上用了 <code>WithContext</code>，實則取消失靈。  </li>
+<li><strong>在 <code>Go</code> 裡改共享狀態卻無同步</strong>：errgroup 不替你解決 race。  </li>
+<li><strong>把業務 panic 當 error</strong>：先轉成 error，或在邊界 recover。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://pkg.go.dev/golang.org/x/sync/errgroup">https://pkg.go.dev/golang.org/x/sync/errgroup</a></li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/GoLearning/lessons/c-concurrency/c6-race-lab/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">C6 Race Lab：先紅後綠，親眼看見 data race</div></a><a href="/GoLearning/lessons/c-concurrency/c8-backpressure/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">C8 背壓：佇列有界，壓力要回得去</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

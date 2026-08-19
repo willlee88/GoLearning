@@ -1,0 +1,111 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="把 go build／test／fmt／vet／mod 變成肌肉記憶。格式化不爭論、測試在標準位置、競態偵測器內建。"><link rel="icon" type="image/svg+xml" href="/GoLearning/favicon.svg"><title>P0.7 日常工具鏈：build、test、fmt、vet、mod · GoLearning</title><link rel="stylesheet" href="/GoLearning/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/GoLearning/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/GoLearning/path/">學習路徑</a><a class="hover:text-white" href="/GoLearning/volumes/">卷冊</a><a class="hover:text-white" href="/GoLearning/playground/">Playground</a><a class="hover:text-white" href="/GoLearning/search/">搜尋</a><a class="hover:text-white" href="/GoLearning/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">P0 · L1 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">P0.7 · 日常工具鏈：build、test、fmt、vet、mod</h1><p class="mt-3 text-slate-400">把 go build／test／fmt／vet／mod 變成肌肉記憶。格式化不爭論、測試在標準位置、競態偵測器內建。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/p0-config-stats</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">toolchain</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>Go 的生產力，很大一部分來自：<strong>官方工具鏈就是預設文化</strong>。</p>
+<ul>
+<li>格式化不爭論（<code>gofmt</code>）  </li>
+<li>測試放標準位置（<code>go test</code>）  </li>
+<li>競態偵測器內建（<code>go test -race</code>）  </li>
+<li>依賴有語意版本與可預測的選版（modules + MVS）</li>
+</ul>
+<p>先把命令肌肉記住，後面深度章才有手感。讀完你要能在範例目錄跑通 <code>fmt</code>、<code>test</code>、<code>vet</code>，並知道 CI 最低標長什麼樣。</p>
+<h2>先跟 Python 對一下</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>black</code> / <code>ruff</code>（常要外加）</td>
+<td><code>gofmt</code> / <code>go fmt</code>（官方內建）</td>
+</tr>
+<tr>
+<td><code>pytest</code> 等測試框架</td>
+<td><code>go test</code>（內建）</td>
+</tr>
+<tr>
+<td><code>pip</code> / <code>uv</code> / <code>poetry</code></td>
+<td><code>go mod</code>／<code>go get</code></td>
+</tr>
+<tr>
+<td><code>mypy</code>、各種 linter</td>
+<td><code>go vet</code>；社群還有 staticcheck 等</td>
+</tr>
+</tbody></table>
+<p>你少花時間在「選工具開戰」，多花時間在問題本身——這是刻意的。</p>
+<h2>怎麼寫（能跑的最小例子）</h2>
+<p>把這些當日常口訣：</p>
+<pre class="hljs"><code class="language-bash">go version
+go <span class="hljs-built_in">env</span> GOPATH GOMODCACHE
+
+go mod init example.com/x
+go get example.com/some/module@v1.2.3
+go mod tidy
+
+go <span class="hljs-built_in">fmt</span> ./...
+go vet ./...
+go <span class="hljs-built_in">test</span> ./...
+go <span class="hljs-built_in">test</span> -race ./...
+go <span class="hljs-built_in">test</span> -bench=. -benchmem ./...
+
+go build -o server.exe .
+go run .</code></pre><p>請到 <code>examples/p0-config-stats</code> 實際跑：</p>
+<pre class="hljs"><code class="language-bash">go <span class="hljs-built_in">test</span> ./...
+go <span class="hljs-built_in">fmt</span> ./...
+go vet ./...</code></pre><p>故意把縮排弄亂，再 <code>go fmt</code>，看它怎麼幫你收乾淨——這就是「格式化是社交協定」。</p>
+<h2>為什麼這樣設計／底層在幹嘛</h2>
+<h3><code>gofmt</code> 是社交協定</h3>
+<p>PR 不該討論「要不要空格／換行風格」。機器統一格式，人腦留給邏輯與命名。不跑 <code>fmt</code> 會怎樣？code review 噪音變多，真正的 bug 被蓋住。</p>
+<h3><code>go test</code> 很直球</h3>
+<ul>
+<li>測試檔名：<code>*_test.go</code>  </li>
+<li>通常跟被測套件同目錄；也可以 <code>package foo_test</code> 做黑箱測試  </li>
+<li>表驅動測試（table-driven）是社群主流寫法——D 卷會練</li>
+</ul>
+<p>還沒寫測試時，<code>go test ./...</code> 仍常會成功（沒有測試檔不算失敗）。別誤會成「我測過了」。</p>
+<h3><code>-race</code> 為什麼重要</h3>
+<p>資料競爭是未定義行為。<code>-race</code> 會讓測試變慢，但能抓到很多「偶現、超難重現」的雷。Windows 上通常可用；某些平台需要 cgo 工具鏈——若跑不起來，先查官方說明，別直接放棄。</p>
+<h3>Modules：別手賤改 <code>go.sum</code></h3>
+<p><code>go.mod</code>／<code>go.sum</code> 是依賴真相來源之一。不確定在做什麼就手改 <code>go.sum</code>，之後 <code>tidy</code> 與 CI 會跟你吵架。企業網路常要設 <code>GOPROXY</code>／<code>GOPRIVATE</code>。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li><code>GOTOOLCHAIN</code>：自動下載／切換 toolchain 的行為。  </li>
+<li>build cache 位置與 <code>go clean -cache</code>。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>CI 最低標建議：</p>
+<ol>
+<li><code>go test ./...</code>  </li>
+<li>併發相關套件加 <code>-race</code>  </li>
+<li><code>go vet ./...</code></li>
+</ol>
+<p>效能與瓶頸章再上 pprof、benchmark。優雅關機、metrics 也會依賴你「測得到、建得出 binary」這套肌肉。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>每人一套格式化設定開戰——交給 <code>gofmt</code>。  </li>
+<li>「測試框架選型」耗一週——先用內建 <code>go test</code> 表驅動。  </li>
+<li>全域亂裝依賴卻不鎖版本——看當前 module 的 <code>go.mod</code>／<code>go.sum</code>。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>在 <code>examples/p0-config-stats</code> 跑 <code>go test ./...</code> 與 <code>go fmt ./...</code>。  </li>
+<li>故意破壞格式，再 <code>go fmt</code>，用 diff 看差在哪。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>安裝 <code>staticcheck</code>，對範例跑一次，讀它抱怨什麼。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>代理與防火牆</strong>：<code>go get</code> 失敗時檢查 <code>GOPROXY</code>（公司環境超常見）。  </li>
+<li><strong>忘記 module</strong>：在沒有 <code>go.mod</code> 的目錄乱跑，掉進舊 GOPATH 心智。  </li>
+<li><strong>只跑 <code>go run</code> 從不 <code>go test</code></strong>：很多回歸要靠測試擋；Server 邏輯尤其是。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://go.dev/doc/diagnostic.html">https://go.dev/doc/diagnostic.html</a>  </li>
+<li><a target="_blank" rel="noopener noreferrer" href="https://go.dev/doc/modules/managing-dependencies">https://go.dev/doc/modules/managing-dependencies</a></li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/GoLearning/lessons/p0-python-to-go/p0-6-concurrency-preview/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">P0.6 併發先建立直覺（詳情在 C 卷）</div></a><a href="/GoLearning/lessons/p0-python-to-go/p0-8-how-to-use-this-site/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">P0.8 怎麼走這站：主路徑、L1／L2／L3</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

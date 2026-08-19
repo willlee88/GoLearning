@@ -1,0 +1,98 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="方法就是帶 receiver 的函式。要改狀態多用指標；方法集會影響能不能塞進介面。"><link rel="icon" type="image/svg+xml" href="/GoLearning/favicon.svg"><title>A11 method：值接收者還是指標接收者？ · GoLearning</title><link rel="stylesheet" href="/GoLearning/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/GoLearning/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/GoLearning/path/">學習路徑</a><a class="hover:text-white" href="/GoLearning/volumes/">卷冊</a><a class="hover:text-white" href="/GoLearning/playground/">Playground</a><a class="hover:text-white" href="/GoLearning/search/">搜尋</a><a class="hover:text-white" href="/GoLearning/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">A · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">A11 · method：值接收者還是指標接收者？</h1><p class="mt-3 text-slate-400">方法就是帶 receiver 的函式。要改狀態多用指標；方法集會影響能不能塞進介面。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/a11-methods</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">methods</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>Method（方法）就是「左邊多一個 <strong>receiver（接收者）</strong> 的函式」。<br><strong>值接收者</strong>操作的是拷貝；<strong>指標接收者</strong>才能共享並改到同一份狀態。</p>
+<p>方法還會組成<strong>方法集（method set）</strong>——這決定型別算不算實作某介面。下一章 interface 會接著打這橋。</p>
+<h2>Python 對照</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>def f(self)</code></td>
+<td><code>func (t T) F()</code> 或 <code>(t *T) F()</code></td>
+</tr>
+<tr>
+<td>實例方法幾乎總是參考語意</td>
+<td>你可以選值或指標語意</td>
+</tr>
+<tr>
+<td><code>@classmethod</code>／<code>@staticmethod</code></td>
+<td>多半寫成 package 級函式</td>
+</tr>
+</tbody></table>
+<h2>怎麼寫</h2>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">type</span> Counter <span class="hljs-keyword">struct</span>{ n <span class="hljs-type">int</span> }
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c Counter)</span></span> Value() <span class="hljs-type">int</span> { <span class="hljs-keyword">return</span> c.n }
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(c *Counter)</span></span> Inc() {
+	<span class="hljs-keyword">if</span> c == <span class="hljs-literal">nil</span> {
+		<span class="hljs-keyword">return</span>
+	}
+	c.n++
+}</code></pre><p>範例：<code>examples/a11-methods</code>。</p>
+<h2>細節</h2>
+<h3>怎麼選 receiver</h3>
+<table>
+<thead>
+<tr>
+<th>Receiver</th>
+<th>方法集大致落在</th>
+<th>典型用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>(T)</code></td>
+<td><code>T</code> 與 <code>*T</code> 都能用這些方法</td>
+<td>只讀、小值</td>
+</tr>
+<tr>
+<td><code>(*T)</code></td>
+<td>主要算在 <code>*T</code></td>
+<td>改狀態、大結構</td>
+</tr>
+</tbody></table>
+<p>實用口訣：</p>
+<ul>
+<li>要改欄位 → 指標  </li>
+<li>同一型別的方法風格盡量統一（實務上房間／玩家多半整組用指標）  </li>
+<li>若已經有任一指標方法，對介面賦值時通常準備好用 <code>*T</code></li>
+</ul>
+<h3>為什麼 <code>var c Counter; c.Inc()</code> 常常能編譯？</h3>
+<p>因為 <code>c</code> 是**可取址（addressable）**變數，編譯器可以幫你變成 <code>(&amp;c).Inc()</code>。<br>但不是所有東西都可取址（例如 map 裡的 struct 值）——那就会編譯失敗，解法常是改存 <code>*T</code>。</p>
+<h3>nil receiver</h3>
+<p>指標方法被用 <code>nil</code> 叫到時可以防禦（像上面 <code>Inc</code>），但要文件化：這算不算合法用法？</p>
+<h3>進階可先略過</h3>
+<ul>
+<li>暫存值不可取址，無法直接叫指標方法。  </li>
+<li>介面裡裝的是 <code>T</code> 還是 <code>*T</code>，動態類型不同，下一章的 nil 陷阱會相關。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<pre class="hljs"><code class="language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Room)</span></span> Apply(cmd Command) <span class="hljs-type">error</span>
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r Room)</span></span> Snapshot() State <span class="hljs-comment">// 只讀快照：值語意或回傳拷貝都可以想清楚</span></code></pre><p>規則寫在方法上很直覺；但記得——<strong>方法不自動等於執行緒安全</strong>，鎖還是要你自己設計。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>滿脑子 <code>self</code> 可變，結果用值接收者，改了等於改副本。  </li>
+<li>在 method 裡偷摸一堆全域狀態，測試瞬間變地獄。  </li>
+<li>同一型別值／指標接收者混到自己也說不清。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>跑 <code>examples/a11-methods</code>。  </li>
+<li>用自己的話說明：為什麼可取址的 <code>Counter</code> 能叫 <code>Inc</code>。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>對 map 裡的 struct 值叫指標方法——看編譯錯誤，再改成存 <code>*T</code>。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>混用值／指標 → 介面「好像實作了又沒有」</strong>。  </li>
+<li><strong>map 元素不能取址</strong>：這不是 bug，是規則；存指標。  </li>
+<li><strong>nil receiver 沒防禦又沒文件</strong>：偶發 panic，超難追。</li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/GoLearning/lessons/a-language/a10-struct-tags/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">A10 struct 與 tag：把一筆資料描述清楚</div></a><a href="/GoLearning/lessons/a-language/a12-interfaces/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">A12 interface：描述「會做什麼」，不是繼承</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

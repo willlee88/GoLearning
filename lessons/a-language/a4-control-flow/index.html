@@ -1,0 +1,107 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="只有一種 for、條件一定是 bool、短宣告有作用域；房間狀態機很適合用 switch 寫。"><link rel="icon" type="image/svg+xml" href="/GoLearning/favicon.svg"><title>A4 控制流：if、for、switch（就這麼精簡） · GoLearning</title><link rel="stylesheet" href="/GoLearning/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/GoLearning/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/GoLearning/path/">學習路徑</a><a class="hover:text-white" href="/GoLearning/volumes/">卷冊</a><a class="hover:text-white" href="/GoLearning/playground/">Playground</a><a class="hover:text-white" href="/GoLearning/search/">搜尋</a><a class="hover:text-white" href="/GoLearning/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">A · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">A4 · 控制流：if、for、switch（就這麼精簡）</h1><p class="mt-3 text-slate-400">只有一種 for、條件一定是 bool、短宣告有作用域；房間狀態機很適合用 switch 寫。</p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">control-flow</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>Go 的控制流刻意很少：<code>if</code>、一種 <code>for</code>、很能打的 <code>switch</code>。條件必須是真正的 <code>bool</code>，沒有 Python 那種「非空就算真」。</p>
+<p>另外，短宣告的**作用域（scope）**很常影響 <code>err</code> 與分支變數——看起來像小語法，寫連線／錯誤處理時卻天天踩。</p>
+<h2>Python 對照</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>if/elif/else</code></td>
+<td><code>if</code> / <code>else if</code> / <code>else</code></td>
+</tr>
+<tr>
+<td><code>for</code> 與 <code>while</code></td>
+<td><strong>全部</strong>用 <code>for</code></td>
+</tr>
+<tr>
+<td><code>match</code>（3.10+）</td>
+<td><code>switch</code>（還可以沒有運算式）</td>
+</tr>
+<tr>
+<td>三元運算 <code>a if c else b</code></td>
+<td><strong>沒有</strong>，老老實實寫 <code>if</code></td>
+</tr>
+</tbody></table>
+<h2>怎麼寫</h2>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> {
+	<span class="hljs-keyword">return</span> err
+}
+
+<span class="hljs-keyword">if</span> p := lookup(id); p != <span class="hljs-literal">nil</span> {
+	<span class="hljs-comment">// p 只活在這個 if 裡</span>
+}
+
+<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">3</span>; i++ {
+}
+<span class="hljs-keyword">for</span> _, p := <span class="hljs-keyword">range</span> players {
+}
+<span class="hljs-keyword">for</span> { <span class="hljs-comment">// 無限迴圈</span>
+	<span class="hljs-keyword">break</span>
+}
+
+<span class="hljs-keyword">switch</span> phase {
+<span class="hljs-keyword">case</span> PhaseLobby:
+	<span class="hljs-comment">// ...</span>
+<span class="hljs-keyword">case</span> PhasePlaying, PhaseEnded:
+	<span class="hljs-comment">// ...</span>
+<span class="hljs-keyword">default</span>:
+	<span class="hljs-comment">// ...</span>
+}</code></pre><h2>細節</h2>
+<h3>為什麼只有一種 <code>for</code></h3>
+<p>Go 不想讓你記三套迴圈語法。型態靠寫法區分：</p>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">for</span> cond { }              <span class="hljs-comment">// 像 while</span>
+<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; n; i++ { }
+<span class="hljs-keyword">for</span> i, v := <span class="hljs-keyword">range</span> s { }   <span class="hljs-comment">// 走訪 slice／map／字串／channel</span></code></pre><p><code>range</code> 碰到不同型別行為不一樣：字串走的是 rune（後面 A9），map 順序還是刻意打亂的（A8）。</p>
+<h3><code>switch</code> 的兩個重點</h3>
+<ol>
+<li><strong>預設不 fallthrough</strong>（跟 C 不一樣）。真要穿透就寫顯式 <code>fallthrough</code>。  </li>
+<li>無運算式的 <code>switch { case x &gt; 0: }</code> 很適合取代長長的 if-else。</li>
+</ol>
+<h3>短宣告作用域</h3>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">if</span> err := do(); err != <span class="hljs-literal">nil</span> {
+	<span class="hljs-keyword">return</span> err
+}
+<span class="hljs-comment">// 這裡外層若沒宣告過 err，這個 err 已經不存在了</span></code></pre><p>好處是錯誤處理變數不會污染外層；壞處是你可能「以為還有 err」或跟外層同名變數<strong>陰影（shadow）</strong>——<code>go vet</code> 與 code review 要盯。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li><code>goto</code> 存在，業務碼幾乎不用，多見於產生碼。  </li>
+<li><code>break</code> 可以帶 label，一次跳出外層迴圈。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>房間狀態機超適合 <code>switch</code>：</p>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">switch</span> r.phase {
+<span class="hljs-keyword">case</span> PhaseLobby:
+	<span class="hljs-comment">// 允許 Ready / Leave</span>
+<span class="hljs-keyword">case</span> PhasePlaying:
+	<span class="hljs-comment">// 允許 Input，拒絕 Ready</span>
+<span class="hljs-keyword">default</span>:
+	<span class="hljs-keyword">return</span> ErrInvalidPhase
+}</code></pre><p>先把「這個相位允許哪些動作」寫清楚，比散落一堆布林旗標好維護太多。後面 H 卷的 FSM 也是同一精神。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>滿手 <code>while True</code>——在 Go 寫 <code>for { }</code>。  </li>
+<li>依賴隱式 truthy（空字串、0、空 list）。  </li>
+<li>以為 <code>switch</code> 會像 C 一樣自動往下落。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>用 <code>switch</code> 實作 <code>func canStart(phase Phase, ready int, need int) bool</code>。  </li>
+<li>用 <code>for range</code> 算切片裡 <code>score &gt; 10</code> 的人數。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>先畫房間狀態轉移圖，再寫成程式裡的合法轉移表。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong><code>if v := f(); …</code> 跟外層 <code>v</code> 陰影</strong>：讀碼時很常看錯。  </li>
+<li><strong>一邊 range 一邊改正在迭代的 slice</strong>：行為容易超乎直覺，必要時先拷貝。  </li>
+<li><strong>條件寫成非 bool</strong>：直接編譯失敗——這是好事，別想繞。</li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/GoLearning/lessons/a-language/a3-zero-values-const/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">A3 變數、零值、常數與 iota</div></a><a href="/GoLearning/lessons/a-language/a5-functions/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">A5 函式與多回傳：（結果, error）文化</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

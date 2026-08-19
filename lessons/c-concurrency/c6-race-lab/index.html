@@ -1,0 +1,91 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="用 go test -race 讀報告、修好共享寫入——這是 C 卷檢查點。"><link rel="icon" type="image/svg+xml" href="/GoLearning/favicon.svg"><title>C6 Race Lab：先紅後綠，親眼看見 data race · GoLearning</title><link rel="stylesheet" href="/GoLearning/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/GoLearning/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/GoLearning/path/">學習路徑</a><a class="hover:text-white" href="/GoLearning/volumes/">卷冊</a><a class="hover:text-white" href="/GoLearning/playground/">Playground</a><a class="hover:text-white" href="/GoLearning/search/">搜尋</a><a class="hover:text-white" href="/GoLearning/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">C · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">C6 · Race Lab：先紅後綠，親眼看見 data race</h1><p class="mt-3 text-slate-400">用 go test -race 讀報告、修好共享寫入——這是 C 卷檢查點。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/c06-race-lab</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">race</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">lab</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">game-server</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p><strong>Data race（資料競爭）是 bug</strong>，不是「機率問題」「測一百次沒炸就好」。<br>兩個 goroutine 同時碰同一變數，至少一個是寫，又沒有同步——這就是 race。</p>
+<p>Go 提供 <strong>race detector</strong>：<code>go test -race</code>／<code>go run -race</code> 會插入偵測碼，告訴你衝突的讀寫堆疊。</p>
+<p>本 lab 先給你一個會 race 的大廳計數（<code>broken</code>），再給正確版本（<code>safe</code>）。你的任務不是背 API，而是：<strong>看懂報告 → 選修法 → 證明變綠</strong>。</p>
+<h2>Python 對照</h2>
+<p>Python 多執行緒對 dict／共用變數的問題，常被 GIL 跟運氣蓋住；asyncio 單執行緒又是另一個模型。  </p>
+<p>到 Go 請預設一句話：<strong>共享寫入 = 要同步，或根本不要共享。</strong></p>
+<h2>怎麼寫</h2>
+<pre class="hljs"><code class="language-bash"><span class="hljs-built_in">cd</span> examples/c06-race-lab
+go <span class="hljs-built_in">test</span> -race ./...
+go <span class="hljs-built_in">test</span> -race -run TestBroken ./broken/   <span class="hljs-comment"># 預期失敗（偵測到 race）</span>
+go <span class="hljs-built_in">test</span> -race ./safe/                     <span class="hljs-comment"># 預期通過</span></code></pre><p>先讀 <code>broken</code> 的程式：多個 goroutine 同時改同一份 map／計數，沒有鎖、也沒有單一擁有者。<br>再讀 <code>safe</code>：要嘛 Mutex 保護，要嘛把寫入收斂到安全路徑。</p>
+<h2>細節</h2>
+<h3>報告在說什麼</h3>
+<p>典型 race 報告會指出：</p>
+<ol>
+<li>前一次寫在哪裡  </li>
+<li>這一次讀／寫在哪裡  </li>
+<li>goroutine 是在哪裡被 <code>go</code> 出來的</li>
+</ol>
+<p>別被牆原文嚇到：你只要抓住「這兩個堆疊在搶同一塊記憶體」。</p>
+<h3>三種常見修法</h3>
+<table>
+<thead>
+<tr>
+<th>策略</th>
+<th>什麼時候適合</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>Mutex</code> 保護 map</td>
+<td>資料結構共享、API 是同步方法</td>
+</tr>
+<tr>
+<td>單一 owner goroutine + 請求 channel</td>
+<td>想要狀態機清晰、少鎖</td>
+</tr>
+<tr>
+<td>分片／減少共享</td>
+<td>進階：降鎖競爭</td>
+</tr>
+</tbody></table>
+<p>沒有永遠正確的一種。lab 的重點是你能<strong>解釋為什麼這樣就沒 race</strong>。</p>
+<h3>為什麼「多測幾次」不可靠？</h3>
+<p>Race 跟排程時機有關。今天沒炸，明天負載一變就炸。<br>Detector 也不是數學證明萬無一失，但它抓實務中的問題很兇——CI 開著它，CP 值極高。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li>happens-before 與 Go 記憶體模型（<code>go.dev/ref/mem</code>）。  </li>
+<li>race detector 有成本：開發／CI 開；產線 binary 通常關。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>大廳人數、房間列表、session 索引、連線註冊表——全是 race 熱點。  </p>
+<p>建議：CI 對 <code>internal/...</code> 跑 <code>go test -race</code>。遊戲狀態一旦偶發錯亂，除錯成本遠高於「一開始就同步」。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>「測很多次沒炸＝沒 race」。  </li>
+<li>修 race 靠 <code>sleep</code>／亂加隨機延遲。  </li>
+<li>看到報告就隨手加一把大鎖包山包海，卻說不清不變量是什麼。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做（C 卷檢查點）</h3>
+<ol>
+<li>閱讀 <code>broken</code>：指出誰在並發讀寫什麼。  </li>
+<li>確認 <code>safe</code> 通過 <code>-race</code>。  </li>
+<li>自己實作第三種修法（例如 owner goroutine）放在 <code>safe</code> 旁新檔，並用 <code>-race</code> 證明。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>對 <code>examples/a08-player-registry</code> 開多 goroutine 壓測 <code>Add</code>，跑 <code>-race</code>。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>Windows 上 <code>-race</code> 需要可用的 CGO 工具鏈</strong>：官方安裝通常 OK；若失敗先查環境。  </li>
+<li><strong>測試不夠並發</strong>：只有單線跑，detector 沒事可抓——測試要真的並行。  </li>
+<li><strong>修了 A 變數、忘了 B 變數</strong>：報告可能一次只秀一組；修完再跑直到乾淨。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://go.dev/doc/articles/race_detector">https://go.dev/doc/articles/race_detector</a>  </li>
+<li><a target="_blank" rel="noopener noreferrer" href="https://go.dev/ref/mem">https://go.dev/ref/mem</a></li>
+</ul>
+<h2>檢查點收束</h2>
+<p>走到這裡，你應具備：</p>
+<ul>
+<li>錯誤當值（B）  </li>
+<li>goroutine／channel／select／context／mutex（C1–C5）  </li>
+<li>用 <code>-race</code> 證明共享記憶體沒在裸奔（C6）</li>
+</ul>
+<p>C7–C10 是實務加分：errgroup、背壓、排程成本感、pipeline。主路徑也可以先往 D／F 走，但建議至少讀完 C8 的背壓直覺。  </p>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/GoLearning/lessons/c-concurrency/c5-mutex/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">C5 Mutex：沒有 GIL，共享就要同步</div></a><a href="/GoLearning/lessons/c-concurrency/c7-errgroup/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">C7 errgroup：一組任務，錯誤與取消一起收</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>
