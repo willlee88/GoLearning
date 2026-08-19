@@ -65,11 +65,20 @@ git push
 
 也可直接下載 GitHub Release 的 zip（較舊時請以 `site/` + git 為準）。
 
-## 可選：GitHub Pages（純瀏覽器、連 start.bat 都不用）
+## 推薦線上：GitHub Pages（連 start.bat 都不用）
 
-若開啟 Pages，網址形態：`https://willlee88.github.io/GoLearning/`  
-需要 Actions 的 `workflow` 權限，或在 GitHub 網頁上手動設定。  
-本機 `site/` 方案不依賴 Pages。
+網址：**https://willlee88.github.io/GoLearning/**
+
+用 `gh-pages` 分支發佈（不必 Actions workflow 權限）。作者端：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\deploy-pages.ps1
+```
+
+腳本會：用 `GITHUB_PAGES=true` 建置（路徑前綴 `/GoLearning/`）→ 強制推到 `gh-pages` → 確認 Pages 來源為該分支。
+
+發佈後等約 1～2 分鐘再重新整理。  
+本機 `site/`（路徑前綴 `/`）請繼續用 `build-static.ps1`，兩邊不要混。
 
 ## 和 Docker 差在哪
 

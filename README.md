@@ -8,9 +8,17 @@
 | 規劃書 | [`docs/規劃書.md`](docs/規劃書.md) |
 | 內容策略 | 廣覆蓋 · L1/L2/L3 分層 · Python 對照 · 遊戲情境 |
 
-## 怎麼看課（**不用 Docker、也不用每次下載 ZIP**）
+## 怎麼看課（**不用 Docker**）
 
-倉庫裡已有建好的靜態站：`site/`。另一台電腦只要：
+### 最省事：直接開網頁（GitHub Pages）
+
+**https://willlee88.github.io/GoLearning/**
+
+改完課文並跑完下方「作者端」發佈後，重新整理即可，不用裝東西、不用 `start.bat`。
+
+### 本機離線：`git pull` + `看課.bat`
+
+倉庫裡也有建好的靜態站：`site/`。
 
 ```powershell
 git clone https://github.com/willlee88/GoLearning.git
@@ -18,28 +26,25 @@ cd GoLearning
 .\看課.bat
 ```
 
-瀏覽器開 **http://127.0.0.1:4321**。之後內容更新：
-
-```powershell
-git pull
-# 重新整理瀏覽器；伺服器若已關掉就再跑一次 看課.bat
-```
+瀏覽器開 **http://127.0.0.1:4321**。之後：`git pull` → 重新整理（或再跑一次 `看課.bat`）。
 
 > 靜態版只有**課程閱讀**。線上跑 Go／Arena 仍要 Docker（可選）。  
 > 詳見 [`docs/deploy-static.md`](docs/deploy-static.md)。
 
-### 作者端：改完課文要更新 `site/`
+### 作者端：改完課文要更新 HTML
 
 在有 Node 的電腦：
 
 ```powershell
+# 1) 本機 site/ + zip（給 git pull / 拷貝用）
 powershell -ExecutionPolicy Bypass -File .\scripts\build-static.ps1
 git add content site
 git commit -m "Update lessons"
 git push
-```
 
-（腳本也會順便打一份 `release/GoLearning-static.zip`，給完全不走 git 的人拷貝用。）
+# 2) 線上 GitHub Pages
+powershell -ExecutionPolicy Bypass -File .\scripts\deploy-pages.ps1
+```
 
 ## 快速開始（本機開發）
 
