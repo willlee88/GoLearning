@@ -69,17 +69,24 @@ git push
 
 網址：**https://willlee88.github.io/GoLearning/**
 
-用 `gh-pages` 分支發佈（不必 Actions workflow 權限）。作者端：
+**push 到 `main` 就會自動更新**（workflow：`.github/workflows/static.yml`）。
+
+流程：checkout → `web/` 用 `GITHUB_PAGES=true` 建置 Astro → 上傳 `web/dist` → Deploy Pages。
+
+作者端只要：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\deploy-pages.ps1
+# 可選但建議：同步本機 site/
+powershell -ExecutionPolicy Bypass -File .\scripts\build-static.ps1
+git add content site
+git commit -m "Update lessons"
+git push
 ```
 
-腳本會：用 `GITHUB_PAGES=true` 建置（路徑前綴 `/GoLearning/`）→ 強制推到 `gh-pages` → 確認 Pages 來源為該分支。
+等 Actions 變綠燈（約 1～2 分鐘）後重新整理網站即可。
 
-發佈後等約 1～2 分鐘再重新整理。  
-本機 `site/`（路徑前綴 `/`）請繼續用 `build-static.ps1`，兩邊不要混。
-
+備用（通常不用）：`scripts/deploy-pages.ps1` 推到 `gh-pages` 分支。  
+正確的 workflow 範本也備份在 `docs/github-pages-workflow.example.yml`。
 ## 和 Docker 差在哪
 
 | | `site/` + git | Docker |

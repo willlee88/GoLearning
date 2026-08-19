@@ -33,19 +33,19 @@ cd GoLearning
 
 ### 作者端：改完課文要更新 HTML
 
-在有 Node 的電腦：
-
 ```powershell
-# 1) 本機 site/ + zip（給 git pull / 拷貝用）
+# （建議）同步本機 site/，給 git pull / 離線看課用
 powershell -ExecutionPolicy Bypass -File .\scripts\build-static.ps1
 git add content site
 git commit -m "Update lessons"
 git push
-
-# 2) 線上 GitHub Pages
-powershell -ExecutionPolicy Bypass -File .\scripts\deploy-pages.ps1
 ```
 
+**push 到 `main` 後，GitHub Actions 會自動建置並更新**  
+https://willlee88.github.io/GoLearning/  
+（約 1～2 分鐘；可在 repo 的 Actions 分頁看進度）
+
+> 備用手動發佈（通常不用）：`scripts\deploy-pages.ps1`
 ## 快速開始（本機開發）
 
 ### 前置需求
