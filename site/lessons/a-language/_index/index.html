@@ -1,0 +1,111 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="A 卷在幹嘛：從安裝、package、零值，一路到 slice／map／struct，幫你把 Go 的資料與型別想清楚。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>A0 先看這卷要學什麼（語言地基） · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">A · L1 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">A0 · 先看這卷要學什麼（語言地基）</h1><p class="mt-3 text-slate-400">A 卷在幹嘛：從安裝、package、零值，一路到 slice／map／struct，幫你把 Go 的資料與型別想清楚。</p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">language</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>A 卷是整條路的<strong>語言地基</strong>。目標不是把 API 背起來，而是學完後你能用自己的話回答：</p>
+<ol>
+<li><strong>資料放哪、怎麼共享</strong>——值拷貝、指標、slice 底層陣列差在哪  </li>
+<li><strong>誰能看見誰</strong>——package 的大寫匯出（export）規則  </li>
+<li><strong>編譯器幫你守什麼契約</strong>——型別、方法、後面會碰到的介面</li>
+</ol>
+<p>簡單講：<strong>A1–A14</strong> 是主路徑，必走；<strong>A15–A18</strong> 是加廣／深潛（嵌入、any、unsafe、逃逸），有空再啃也沒關係。</p>
+<h2>Python 對照</h2>
+<table>
+<thead>
+<tr>
+<th>你熟悉的</th>
+<th>在 A 卷會變成</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>動態型別 + <code>None</code></td>
+<td>靜態型別 + 零值（zero value）／<code>nil</code></td>
+</tr>
+<tr>
+<td><code>list</code> / <code>dict</code></td>
+<td>slice / map（語意更貼「底層怎麼存」）</td>
+</tr>
+<tr>
+<td>class 方法</td>
+<td>struct + method（值或指標 receiver）</td>
+</tr>
+<tr>
+<td>模組與 <code>__all__</code> 約定</td>
+<td>名稱大寫＝匯出，編譯器直接擋</td>
+</tr>
+</tbody></table>
+<p>每一章都會再細講一次對照，這裡先建立「整卷地圖」。</p>
+<h2>怎麼寫</h2>
+<p>這卷沒有單一程式要寫。建議你照這個順序走，每章至少跑一次範例：</p>
+<table>
+<thead>
+<tr>
+<th>順序</th>
+<th>章</th>
+<th>你大概在練什麼</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>A1–A3</td>
+<td>安裝、module、package、零值與常數</td>
+</tr>
+<tr>
+<td>2</td>
+<td>A4–A7</td>
+<td>控制流、函式、defer、指標</td>
+</tr>
+<tr>
+<td>3</td>
+<td>A8</td>
+<td>slice／map（本卷檢查點，很重要）</td>
+</tr>
+<tr>
+<td>4</td>
+<td>A9–A11</td>
+<td>字串、struct、method</td>
+</tr>
+<tr>
+<td>5</td>
+<td>A12–A14</td>
+<td>interface、型別斷言、泛型（克制用）</td>
+</tr>
+</tbody></table>
+<p>做完 A 卷，下一步是 <strong>B（錯誤怎麼當一等公民）→ C（併發）</strong>。</p>
+<h2>細節</h2>
+<p>為什麼要先把「資料與型別」講透？因為後面房間、連線、廣播全是：</p>
+<ul>
+<li>一堆 struct（玩家、房間、指令）</li>
+<li>一堆 map／slice（查人、排隊、快照）</li>
+<li>偶爾指標與介面（共享狀態、可替換依賴）</li>
+</ul>
+<p>你要是這裡含糊，C 卷以後的 race、鎖、channel 會更痛苦——不是語法難，是<strong>搞不清楚誰擁有哪份資料</strong>。</p>
+<h2>遊戲 Server 會用在哪</h2>
+<p>A 卷結束後，你應該能乾淨地表達這些「細胞」：</p>
+<ul>
+<li>玩家實體（Player）</li>
+<li>房間裡用 ID 查人的 map</li>
+<li>廣播或存檔用的 slice buffer／快照</li>
+</ul>
+<p>這些就是後面 Session、Room、tick 的原料。Arena Mini（<code>demo/arena-mini</code>）裡你也會一直看到它們。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>「先把語法掃過、細節以後再說」——A8 的 slice 共享、A12 的 nil 介面，拖到後面會連環炸。  </li>
+<li>把 Go 當成「比較快的 Python」硬套 class／例外心智。  </li>
+<li>只看文章不跑 <code>go run</code>／<code>go test</code>——手感要靠編譯器罵你建立。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>順讀 A1→A8，每章至少跑一個 <code>go run</code> 或 <code>go test</code>。  </li>
+<li>完成 <code>examples/a08-player-registry</code>（A8 檢查點）。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>把 P0 的 <code>p0-config-stats</code> 改寫成多 package（呼應 A2）。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li>跳章只看「有趣的」介面／泛型，結果 slice／指標基礎不穩。  </li>
+<li>範例路徑搞錯目錄：一定要在有 <code>go.mod</code> 的資料夾跑指令。  </li>
+<li>以為「看懂文字＝會了」——碰到編譯錯誤才是真正開始學。</li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/p0-python-to-go/p0-8-how-to-use-this-site/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">P0.8 怎麼走這站：主路徑、L1／L2／L3</div></a><a href="/lessons/a-language/a1-install-module/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">A1 先把 Go 裝好，跑出第一個 module</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

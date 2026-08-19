@@ -1,0 +1,121 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="搞懂 error 介面、哨兵 ErrXxx，以及為什麼要比對值而不是比對字串。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>B1 error 是值：哨兵錯誤怎麼用 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">B · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">B1 · error 是值：哨兵錯誤怎麼用</h1><p class="mt-3 text-slate-400">搞懂 error 介面、哨兵 ErrXxx，以及為什麼要比對值而不是比對字串。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/b02-room-errors</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">errors</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>在 Go 裡，<strong>錯誤是值</strong>。<code>error</code> 只是一個很小的介面：有 <code>Error() string</code> 就算。<br>業務上常會定義 <strong>哨兵錯誤（sentinel error）</strong>——例如 <code>var ErrRoomFull = errors.New(&quot;room full&quot;)</code>——代表一個<strong>穩定、可分支的條件</strong>。</p>
+<p>呼叫端不要去比字串（字串一改就全炸），而是用 <code>errors.Is(err, ErrRoomFull)</code> 問：「這是不是滿房那種錯？」</p>
+<p>讀完這章你要能：定義少數幾個哨兵、在函式裡回傳它們、在上層用 <code>Is</code> 轉成給客戶端的錯誤碼。</p>
+<h2>Python 對照</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+<th>白話差在哪</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>raise RoomFull()</code></td>
+<td><code>return ErrRoomFull</code></td>
+<td>錯誤走回傳，不跳控制流</td>
+</tr>
+<tr>
+<td><code>except RoomFull:</code></td>
+<td><code>errors.Is(err, ErrRoomFull)</code></td>
+<td>比的是<strong>值／鏈</strong>，不是例外型別階層</td>
+</tr>
+<tr>
+<td>例外訊息當分支條件</td>
+<td>幾乎永遠別這麼做</td>
+<td>字串一改，行為就 silently 壞掉</td>
+</tr>
+<tr>
+<td>很深的例外繼承樹</td>
+<td>少數哨兵 + 必要時自訂型別</td>
+<td>Go 偏好「少而穩」</td>
+</tr>
+</tbody></table>
+<p>你在 Python 可能習慣「丟一個型別，上面 catch」。Go 比較像：<strong>把一個約定好的值傳回去，上面用 <code>Is</code> 認人。</strong></p>
+<h2>怎麼寫</h2>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">var</span> ErrRoomFull = errors.New(<span class="hljs-string">&quot;room full&quot;</span>)
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">Join</span><span class="hljs-params">(n, <span class="hljs-built_in">cap</span> <span class="hljs-type">int</span>)</span></span> <span class="hljs-type">error</span> {
+	<span class="hljs-keyword">if</span> n &gt;= <span class="hljs-built_in">cap</span> {
+		<span class="hljs-keyword">return</span> ErrRoomFull
+	}
+	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>
+}
+
+<span class="hljs-keyword">if</span> errors.Is(err, ErrRoomFull) {
+	<span class="hljs-comment">// 回傳協定碼 ROOM_FULL 給客戶端</span>
+}</code></pre><p>成功時慣例是 <strong><code>err == nil</code></strong>。失敗時結果值通常當作「不可用」（除非 API 文件明確說半成品也有意義）。</p>
+<p>本站範例：<code>examples/b02-room-errors</code>（裡面還有 wrap，下一章會細講）。</p>
+<h2>細節</h2>
+<h3>為什麼要有哨兵，而不是每次 <code>errors.New(&quot;room full&quot;)</code>？</h3>
+<p>因為每次 <code>errors.New</code> 都是<strong>新的值</strong>。字串一樣，但 <code>==</code> / <code>errors.Is</code> 對不上同一個哨兵。<br>哨兵的重點是：<strong>全專案共用同一個變數</strong>，行為才穩定。</p>
+<h3>為什麼不要比對 <code>err.Error()</code> 字串？</h3>
+<ul>
+<li>訊息常會被 wrap 加上上下文（下一章）  </li>
+<li>翻譯、標點、大小寫一改，分支就錯  </li>
+<li>測試會變脆</li>
+</ul>
+<p>人看的是字串；<strong>程式分支看的是哨兵或型別</strong>。</p>
+<h3>哨兵要少而精</h3>
+<p>不是每個小失敗都要一個 <code>ErrXxx</code>。問自己：</p>
+<blockquote>
+<p>上層會不會需要<strong>不同處理</strong>？（不同錯誤碼、要不要重試、要不要踢人）</p>
+</blockquote>
+<p>要 → 值得哨兵。<br>只是日誌多寫一句 → wrap 上下文就夠，不必新哨兵。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li>自訂型別實作 <code>Error()</code>，再用 <code>errors.As</code> 取出欄位（B2 會碰到）。  </li>
+<li>有些庫用「哨兵 + 包裝型別」同時帶穩定碼與細節。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<table>
+<thead>
+<tr>
+<th>情況</th>
+<th>建議</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>滿房、玩家不存在、階段不允許加入</td>
+<td>哨兵 → 轉協定錯誤碼</td>
+</tr>
+<tr>
+<td>磁碟／DB／網路暫時失敗</td>
+<td>多半 wrap 底層 error，必要時另訂可重試策略</td>
+</tr>
+<tr>
+<td>內部除錯「哪個房間」</td>
+<td>訊息裡帶 ID；分支仍靠哨兵</td>
+</tr>
+</tbody></table>
+<p>客戶端可見錯誤要<strong>穩定</strong>；內部日誌要<strong>有上下文</strong>。兩件事別混成「只丟一句英文」。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>用例外訊息字串當控制流（<code>if &quot;room full&quot; in str(e)</code>）。  </li>
+<li>裸 <code>except:</code> / 無腦 <code>_ = do()</code> 吞掉錯誤。  </li>
+<li>為每個小失敗發明巨大例外階層——在 Go 先問「要不要不同分支」。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>閱讀 <code>examples/b02-room-errors</code> 的哨兵定義（<code>ErrRoomFull</code> 等）。  </li>
+<li>新增 <code>ErrNotReady</code>，在某個不合法操作回傳它，並用 <code>errors.Is</code> 測到。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>列一張表：你的遊戲裡哪些錯誤「客戶端要分碼」、哪些「只記日誌」。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>每次函式裡 <code>return errors.New(&quot;room full&quot;)</code></strong>：字串相同但不是同一個哨兵，<code>Is</code> 會失敗。  </li>
+<li><strong>成功時回傳非 nil error、或失敗時還依賴結果值</strong>：先約定「<code>err != nil</code> 則結果別用」。  </li>
+<li><strong>哨兵訊息寫得很口語又常改</strong>：訊息給人看可以好讀，但別靠它做邏輯。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://pkg.go.dev/errors">https://pkg.go.dev/errors</a>  </li>
+<li><a target="_blank" rel="noopener noreferrer" href="https://go.dev/blog/error-handling-and-go">https://go.dev/blog/error-handling-and-go</a></li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/b-errors-api/b0-index/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">B0 B 卷導讀：錯誤是值，API 要好維護</div></a><a href="/lessons/b-errors-api/b2-wrap/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">B2 wrap：幫錯誤加上上下文，還留得住根因</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

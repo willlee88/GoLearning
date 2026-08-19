@@ -8,20 +8,38 @@
 | 規劃書 | [`docs/規劃書.md`](docs/規劃書.md) |
 | 內容策略 | 廣覆蓋 · L1/L2/L3 分層 · Python 對照 · 遊戲情境 |
 
-## 給另一台電腦看教學站（**不用 Docker**）
+## 怎麼看課（**不用 Docker、也不用每次下載 ZIP**）
 
-對方不能跑 Docker 時，打一份**靜態 HTML**拷過去即可：
+倉庫裡已有建好的靜態站：`site/`。另一台電腦只要：
 
 ```powershell
-cd F:\GoLearning
-powershell -ExecutionPolicy Bypass -File .\scripts\build-static.ps1
+git clone https://github.com/willlee88/GoLearning.git
+cd GoLearning
+.\看課.bat
 ```
 
-得到 `release/GoLearning-static.zip` → 拷到另一台 → 解壓 → 雙擊 **`start.bat`** → 開 http://127.0.0.1:4321  
+瀏覽器開 **http://127.0.0.1:4321**。之後內容更新：
 
-詳見 [`docs/deploy-static.md`](docs/deploy-static.md)。
+```powershell
+git pull
+# 重新整理瀏覽器；伺服器若已關掉就再跑一次 看課.bat
+```
 
-> 靜態版只有**課程閱讀**。線上跑 Go／Arena 仍要 Docker（可選）。
+> 靜態版只有**課程閱讀**。線上跑 Go／Arena 仍要 Docker（可選）。  
+> 詳見 [`docs/deploy-static.md`](docs/deploy-static.md)。
+
+### 作者端：改完課文要更新 `site/`
+
+在有 Node 的電腦：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\build-static.ps1
+git add content site
+git commit -m "Update lessons"
+git push
+```
+
+（腳本也會順便打一份 `release/GoLearning-static.zip`，給完全不走 git 的人拷貝用。）
 
 ## 快速開始（本機開發）
 
@@ -58,13 +76,15 @@ docker compose up --build -d
 
 ```text
 GoLearning/
-├── docs/                 # 規劃書、ADR
+├── 看課.bat              # 閱讀端：開 site/ 本機伺服器
+├── site/                 # 已建置的靜態 HTML（進 git，pull 就能看）
+├── docs/                 # 規劃書、ADR、部署說明
 ├── content/              # 課程 Markdown（真相來源）
-├── web/                  # Astro 學習網站
+├── web/                  # Astro 原始碼（改版面／建置用）
 ├── examples/             # 與章節對應的可執行範例
 ├── samples/              # 廣覆蓋精簡樣本
 ├── demo/arena-mini/      # Capstone 遊戲 Server
-├── scripts/              # 內容檢查等
+├── scripts/              # build-static 等
 ├── docker-compose.yml
 └── Makefile
 ```

@@ -1,0 +1,137 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="旁路快取、TTL、寫穿；遊戲裡哪些資料可以舊一秒，哪些不行。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>I4 快取一致性：允許錯多久，比追求永遠正確實際 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">I · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">I4 · 快取一致性：允許錯多久，比追求永遠正確實際</h1><p class="mt-3 text-slate-400">旁路快取、TTL、寫穿；遊戲裡哪些資料可以舊一秒，哪些不行。</p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">cache</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>快取（cache）本質上會 <strong>跟正本不一樣</strong>——至少在某些瞬間。<br>工程問題不是「怎麼讓快取永遠正確」（那通常貴到等同不要快取），而是：</p>
+<ul>
+<li><strong>可以錯多久？</strong>（TTL、失效策略）  </li>
+<li><strong>錯了影響有多大？</strong>（外觀顯示錯 vs 錢包少錢）  </li>
+<li><strong>誰是正本？</strong>（DB？Room 記憶體？）</li>
+</ul>
+<p>讀完這章，你要能對每個欄位說：「這份快取舊 60 秒可不可以」，以及寫入後要不要刪 key。</p>
+<h2>先跟 Python 對一下</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go／後端</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Django cache、<code>functools.lru_cache</code></td>
+<td>進程內 LRU、或 Redis 當分散快取</td>
+</tr>
+<tr>
+<td>「先讀 cache，沒有再查 DB」</td>
+<td>Cache-aside（旁路快取），一樣常見</td>
+</tr>
+<tr>
+<td>更新 model 忘了清 cache</td>
+<td>一樣是經典bug</td>
+</tr>
+</tbody></table>
+<p>權衡相同：快＝可能舊；要強一致＝路徑更長、更貴。</p>
+<h2>常見模式（先會這幾個）</h2>
+<table>
+<thead>
+<tr>
+<th>模式</th>
+<th>白話</th>
+<th>你要接受什麼</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Cache-aside</strong>（旁路）</td>
+<td>讀：先問快取，miss 再打 DB 並塞回；寫：先寫 DB，再刪／改快取</td>
+<td>寫後讀可能短時間看到舊的（若刪得晚或有競態）</td>
+</tr>
+<tr>
+<td><strong>TTL</strong></td>
+<td>設過期時間，到期自動沒</td>
+<td>簡單；允許「最多舊 N 秒」</td>
+</tr>
+<tr>
+<td><strong>寫穿</strong>（write-through）</td>
+<td>寫的時候同時更新快取</td>
+<td>仍有併發競態；實作較煩</td>
+</tr>
+</tbody></table>
+<p>教學上最常用、也好講清楚的是：</p>
+<pre class="hljs"><code class="language-text">讀: cache.get(key) → miss → db.load → cache.set(key, ttl)
+寫: db.write(...)  → cache.delete(key)   # 刪比「改成新值」單純，少一種半新半舊</code></pre><p>為什麼很多人口袋選「寫後刪」而不是「寫後更新快取」？<br>因為並發下「更新快取」比較容易跟別的寫交錯，留下錯值；刪掉讓下次讀自己載入，雖然多一次 miss，語意較乾淨。</p>
+<h2>為什麼這樣設計</h2>
+<h3>遊戲裡「可舊」跟「不可舊」</h3>
+<table>
+<thead>
+<tr>
+<th>資料</th>
+<th>通常態度</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>角色外觀、稱號、設定表</td>
+<td>可長 TTL</td>
+<td>錯一下只是顯示；正本在 DB</td>
+</tr>
+<tr>
+<td>排行榜展示</td>
+<td>可短延遲</td>
+<td>玩家容忍「幾十秒後才追上」</td>
+</tr>
+<tr>
+<td>錢包、購買、庫存</td>
+<td>要強一致或版本號</td>
+<td>錯＝客訴與客服工單</td>
+</tr>
+<tr>
+<td>對局中血量、座標</td>
+<td><strong>不以跨服快取當權威</strong></td>
+<td>權威在 Room；快取亂指會穿模</td>
+</tr>
+</tbody></table>
+<p>「進行中的 Room 狀態」千萬別隨手丟進 Redis 當跨服真相——除非你做了非常完整的租約、版本、誰說了算。H 卷 sticky Room 就是在回避這團複雜度。</p>
+<h3>驚群（thundering herd）</h3>
+<p>熱 key 一過期，瞬間一萬個請求一起 miss、一起打 DB，DB 會被自己人打掛。<br>進階作法是 <strong>singleflight</strong>（單飛）：同一個 key 只有一個載入在飛，其他人等結果。先知道有這問題；真遇到熱點再加。</p>
+<h3>版本號／CAS</h3>
+<p>資產更新可用「讀版本 → 寫入時檢查版本」或 DB 條件更新，避免用過期快取蓋回正本。<br>這比「無限 TTL 快取使用者餘額」安全太多。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li>延遲雙刪、訂閱 binlog 失效——營運級方案，新手先 TTL＋寫後刪就好。  </li>
+<li>本地快取＋Redis 兩級：除錯時要分得清你看的是哪一層。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<ul>
+<li><strong>大廳展示</strong>：皮膚、戰績摘要 → cache-aside + TTL。  </li>
+<li><strong>商城扣款</strong>：以 DB 交易為準；快取只當讀側加速，寫完一定失效。  </li>
+<li><strong>對局</strong>：血量／座標以 Room 廣播為準；客戶端預測可以舊一點，但 Server 權威不靠「共享快取糊過去」。</li>
+</ul>
+<p>Arena Mini 現階段甚至可以沒有快取層——但你要能解釋「若加外觀快取，更新外觀時鍵怎麼刪」。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li><strong>使用者資產設無限 TTL</strong>——掛機三天看到的還是鬼餘額。  </li>
+<li><strong>更新 DB 卻忘了失效快取</strong>——客服最常接到的「我明明買了怎麼還沒有」。  </li>
+<li><strong>把 Room 權威狀態快取成跨服唯一真相</strong>——除非你真的在做那套分散狀態機器。  </li>
+<li><strong>所有讀都先打 Redis「圖個統一」</strong>——多一跳延遲，還多一個錯誤來源。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>選兩個欄位：一個可以 TTL 60 秒，一個必須強一致。各寫原因（錯了誰受傷、怎麼修復）。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>用文字走一遍競態：A 讀到舊快取、B 寫 DB 並刪 key、A 又把舊值寫回快取——你的策略如何降低這件事？（提示：寫後刪、短 TTL、版本號。）</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>只寫快取不寫 DB</strong>：重啟或淘汰後資料蒸發，還以為存成功了。  </li>
+<li><strong>null 也瘋狂快取</strong>：短時間內「沒這人」被記住，剛註冊的使用者一直 miss 邏輯錯亂——若快取空結果，TTL 要更短。  </li>
+<li><strong>失效鍵名算錯</strong>：寫的是 <code>user:1:profile</code>，刪的是 <code>profile:1</code>，等於沒刪。  </li>
+<li><strong>以為 TTL＝一致</strong>：TTL 只是「錯的上限」；不是交易。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li>Go 生態的 singleflight 概念（同 key 合併載入）</li>
+</ul>
+<h2>下一章</h2>
+<p>該進 DB 的事件，不要堵在 tick 裡做——I5 用有界佇列與 worker 做背景結算。</p>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/i-data/i3-redis-map/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">I3 Redis 用途地圖：該上的時候再上</div></a><a href="/lessons/i-data/i5-async-jobs/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">I5 背景任務與結算：離開 tick，排好隊再寫</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

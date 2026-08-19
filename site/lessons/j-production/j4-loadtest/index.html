@@ -1,0 +1,150 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="用假 client 拉高連線與訊息量；對照 metrics，找出是廣播、鎖還是編碼先爆——別一次開滿只看 crash。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>J4 壓測：先有假設，再漸進加壓 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">J · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">J4 · 壓測：先有假設，再漸進加壓</h1><p class="mt-3 text-slate-400">用假 client 拉高連線與訊息量；對照 metrics，找出是廣播、鎖還是編碼先爆——別一次開滿只看 crash。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/j04-load-client</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">loadtest</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>「感覺應該沒問題」在容量上幾乎沒用。<br><strong>壓測（load test）</strong> 是用可重複的方式問：</p>
+<blockquote>
+<p>在某某場景下，系統會先在哪裡壞？壞的時候長什麼樣？</p>
+</blockquote>
+<p>好的壓測有三件事：</p>
+<ol>
+<li><strong>假設</strong>（例如：單進程 200 連線、同房、20Hz 廣播，CPU 會不會打滿？）  </li>
+<li><strong>漸進加壓</strong>（20 → 50 → 100，而不是瞬間 5000）  </li>
+<li><strong>觀察</strong>（metrics、延遲、錯誤率、必要時 pprof）</li>
+</ol>
+<p>讀完你要能跑 <code>examples/j04-load-client</code>，並說出你在 <code>/metrics</code> 看到了什麼。</p>
+<h2>Python 對照</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>locust、k6、自寫 asyncio client</td>
+<td>自寫假 client（本站範例）／k6 等</td>
+</tr>
+<tr>
+<td>常測 HTTP QPS</td>
+<td>遊戲還要測 <strong>長連線 + 訊息速率 + 狀態是否仍正確</strong></td>
+</tr>
+<tr>
+<td>一次打滿看紅字</td>
+<td>一樣是壞習慣</td>
+</tr>
+</tbody></table>
+<p>Go 寫假 client 很輕：幾千個 goroutine 模擬連線，本機就能玩出有感曲線。</p>
+<h2>怎麼寫</h2>
+<p>本站假 client：</p>
+<pre class="hljs"><code>cd F:\GoLearning\examples\j04-load-client
+<span class="hljs-keyword">go</span> run . -addr http:<span class="hljs-comment">//127.0.0.1:8080 -n 20 -seconds 10 -room load</span></code></pre><p>參數意思（對照範例原始碼）：</p>
+<table>
+<thead>
+<tr>
+<th>參數</th>
+<th>意義</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>-addr</code></td>
+<td>Arena Mini 的 HTTP 基底 URL（會轉成 <code>ws://.../ws</code>）</td>
+</tr>
+<tr>
+<td><code>-n</code></td>
+<td>假人數</td>
+</tr>
+<tr>
+<td><code>-seconds</code></td>
+<td>持續秒數</td>
+</tr>
+<tr>
+<td><code>-room</code></td>
+<td>進哪個房間</td>
+</tr>
+</tbody></table>
+<p>它會連上 WS、送 <code>ready</code>、再狂送 <code>input</code>，最後印大概的成功／失敗／訊息操作數。</p>
+<p>建議流程：</p>
+<ol>
+<li>終端 A：啟動 Arena Mini（<code>demo/arena-mini/server</code> → <code>go run ./cmd/server</code>）  </li>
+<li>瀏覽器打開 <code>http://localhost:8080/metrics</code>（或 curl）  </li>
+<li>終端 B：跑 load-client，從 <code>-n 10</code> 起跳  </li>
+<li>記錄 <code>connections</code>、<code>messages_in</code>／<code>messages_out</code>、CPU 體感  </li>
+<li>再加大 <code>-n</code>，看哪裡先歪</li>
+</ol>
+<h2>為什麼這樣設計／底層在幹嘛</h2>
+<h3>為什麼要有「假設」？</h3>
+<p>沒有假設的壓測，最後只會得到：「哦，炸了。」<br>有假設，你才能驗證或推翻，例如：</p>
+<ul>
+<li>「瓶頸在 JSON 編碼」→ 看 CPU／pprof 是否卡在 encode  </li>
+<li>「瓶頸在廣播 O(N²)」→ <code>messages_out</code> 隨人數二次感上升（J6）  </li>
+<li>「只是本機 loopback 太快，不代表公網」→ 換環境再測</li>
+</ul>
+<h3>「連得上」≠「狀態正確」</h3>
+<p>假人可能：</p>
+<ul>
+<li>TCP／WS 握手成功，但進房失敗  </li>
+<li>一直連著，但 phase 卡死  </li>
+<li>伺服器還活著，可是 tick 嚴重落後</li>
+</ul>
+<p>所以要同時看：錯誤日誌、metrics、抽樣進房玩一下手感。只看「行程沒崩潰」會過度樂觀。</p>
+<h3>漸進加壓為什麼重要？</h3>
+<p>一次開滿：</p>
+<ul>
+<li>分不清是「連線風暴」還是「穩態負載」問題  </li>
+<li>客戶端自己先報錯，污染結果  </li>
+<li>找不到臨界點（從哪一個 N 開始崩）</li>
+</ul>
+<p>漸進才能畫出「還好 → 勉強 → 壞掉」的曲線。</p>
+<h3>本機 loopback 的限制</h3>
+<p>先在本機測，適合找 CPU、鎖、分配、廣播演算法問題。<br>它<strong>不代表</strong>：真實 RTT、無線網路、跨區、TLS 終結、代理緩衝。<br>所以結論要寫清楚：「本機 200 連線 OK」≠「公網 200 沒問題」。</p>
+<h3>跟 pprof／<code>-race</code> 的關係</h3>
+<ul>
+<li>找熱點：用 D4 學的 pprof（CPU／heap）  </li>
+<li><strong><code>-race</code> 不要開在壓測熱路徑</strong>：它很慢，會讓你量到的是「偵測器開銷」而不是真實容量  </li>
+<li>race 偵測放在測試與較小場景；壓測放「代表性負載」</li>
+</ul>
+<h3>進階可先略過</h3>
+<ul>
+<li>分散式壓測（多台產生器）  </li>
+<li>錄放流量、混沌工程  </li>
+<li>SLO：例如 99 分位延遲、斷線率上限</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>對 Arena Mini：</p>
+<ul>
+<li>同房很多人 → 觀察廣播與 tick 是否跟得上  </li>
+<li>多房各一小撮人 → 另一種資源形狀（比較多房間物件、比較少超大廣播）</li>
+</ul>
+<p>上線前活動：用「預期同時在線 × 安全係數」當場景，至少跑過一輪，並留下 metrics 截圖或數字。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>一次開滿，只看有沒有 crash。  </li>
+<li>沒有基線數字就開始「優化」。  </li>
+<li>只測握手，不測穩態訊息。  </li>
+<li>把本機結果直接寫進對外承諾。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>啟動 Arena Mini，跑 load-client：<code>-n 20 -seconds 10</code>。  </li>
+<li>壓測前後各看一次 <code>/metrics</code>，記下 <code>connections</code>、<code>messages_in</code>、<code>messages_out</code>。  </li>
+<li>用一句話寫你的第一個瓶頸猜測（CPU？廣播？還是 client 自己先炸？）。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>同一組參數跑兩次，看數字是否大致可重複。  </li>
+<li>把人都塞進同一個 <code>-room</code>，再改成每人不同 room（若你改 client），比較 <code>messages_out</code> 曲線直覺。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>Server 沒開就壓</strong>：client 全 fail，你卻以為 Server 性能差。  </li>
+<li><strong>看錯 addr</strong>：範例預設是 HTTP base（<code>http://127.0.0.1:8080</code>），不是隨便填 <code>ws://</code> 路徑就完事——以 <code>examples/j04-load-client</code> 的旗標為準。  </li>
+<li><strong>終端被日誌刷爆</strong>：access log 太吵會拖慢；Arena Mini 對 <code>/metrics</code>、<code>/healthz</code> 有略過，但 WS 量大時仍要注意觀測成本。  </li>
+<li><strong>把假 client 與 Server 綁在同一顆過熱 CPU 上搶資源</strong>：解讀結果時要知道產生器自己也吃 CPU。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li>D4：benchmark 與 pprof  </li>
+<li>範例：<code>examples/j04-load-client</code>  </li>
+<li>Arena Mini README 的壓測段落</li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/j-production/j3-graceful-shutdown/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">J3 優雅關閉：Ctrl+C 也不該直接蒸發</div></a><a href="/lessons/j-production/j5-security/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">J5 安全基線：客戶端說的話，預設都不可信</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

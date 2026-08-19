@@ -1,0 +1,117 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="全量 State vs delta、廣播放大、快照自洽。M4 用全量 JSON 就夠；先正確再優化。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>H7 狀態同步：先全量快照，再談省流量 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">H · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">H7 · 狀態同步：先全量快照，再談省流量</h1><p class="mt-3 text-slate-400">全量 State vs delta、廣播放大、快照自洽。M4 用全量 JSON 就夠；先正確再優化。</p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">sync</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>權威狀態算出來了——接下來要讓每個客戶端「看得到同一個世界」。<br>這叫<strong>狀態同步</strong>（state synchronization）。常見路線：</p>
+<table>
+<thead>
+<tr>
+<th>策略</th>
+<th>白話</th>
+<th>優點</th>
+<th>代價</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>全量快照 Snapshot</td>
+<td>每次把現在完整狀態丟出去</td>
+<td>實作簡單、重連好做</td>
+<td>頻寬隨狀態變大</td>
+</tr>
+<tr>
+<td>Delta／增量</td>
+<td>只送「跟上次比改了什麼」</td>
+<td>省流量</td>
+<td>要基準幀、丟包要補、複雜</td>
+</tr>
+<tr>
+<td>興趣管理 AoI</td>
+<td>大世界只送你附近的東西</td>
+<td>人多時必要</td>
+<td>實作與除錯都重</td>
+</tr>
+</tbody></table>
+<p>這章立場很明確：</p>
+<blockquote>
+<p><strong>Arena Mini／M4 用全量 JSON 快照就夠。先正確，再優化。</strong></p>
+</blockquote>
+<p>過早上 delta，通常是在優化一個還沒正確的系統。</p>
+<h2>Python 對照</h2>
+<p>概念一樣：你序列化一份 dict／dataclass 廣播出去。<br>要注意的是<strong>序列化成本</strong>與<strong>廣播放大</strong>——Python 或 Go 都一樣會中招，只是 Go 通常比較扛得住 CPU，但頻寬賬單不會陪你演戲。</p>
+<pre class="hljs"><code class="language-text">每 tick：
+  state = room.Snapshot()   # 同一瞬間的自洽畫面
+  for each observer:
+      send(encode(state))</code></pre><h2>怎麼寫（信封長相）</h2>
+<p>一種教學上常見的包法（跟 G 卷信封一致）：</p>
+<pre class="hljs"><code class="language-json"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">&quot;v&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;type&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;state&quot;</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">&quot;payload&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">{</span>
+    <span class="hljs-attr">&quot;phase&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;playing&quot;</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;tick&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">12</span><span class="hljs-punctuation">,</span>
+    <span class="hljs-attr">&quot;players&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-punctuation">[</span>
+      <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Ada&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;x&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">40</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;y&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">10</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;score&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1</span> <span class="hljs-punctuation">}</span><span class="hljs-punctuation">,</span>
+      <span class="hljs-punctuation">{</span> <span class="hljs-attr">&quot;name&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-string">&quot;Bob&quot;</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;x&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">55</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;y&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">12</span><span class="hljs-punctuation">,</span> <span class="hljs-attr">&quot;score&quot;</span><span class="hljs-punctuation">:</span> <span class="hljs-number">0</span> <span class="hljs-punctuation">}</span>
+    <span class="hljs-punctuation">]</span>
+  <span class="hljs-punctuation">}</span>
+<span class="hljs-punctuation">}</span></code></pre><p>重點：</p>
+<ul>
+<li><strong><code>type=state</code></strong>：這是 Server → Client 的權威畫面，不是 Client 自稱  </li>
+<li><strong>帶 <code>tick</code> 或版本</strong>：除錯與之後做 delta／和解較容易  </li>
+<li><strong>一份快照裡的資料要自洽</strong>：同一個 tick 產出來，不要「半更新」時廣播</li>
+</ul>
+<p>客戶端可以：</p>
+<ul>
+<li>直接把角色 snap 到新座標（最簡單）  </li>
+<li>或在兩次快照之間<strong>插值</strong>（畫面較順）——但<strong>不要</strong>用插值結果當權威寫回 Server</li>
+</ul>
+<h2>為什麼廣播會「突然變貴」</h2>
+<p>粗估（數量級直覺，不是精算）：</p>
+<pre class="hljs"><code class="language-text">出站流量 ≈ 人數 × 觀測者數 × 每秒廣播次數 × 每包大小</code></pre><p>四人同房、每人都能看到全員、20Hz、每包約 200 bytes：</p>
+<pre class="hljs"><code class="language-text">4 × 4 × 20 × 200 ≈ 64_000 bytes/s ≈ 64 KB/s（整房量級）</code></pre><p>看起來不大——但若變成 50 人同場面、每包 2KB、還加上觀戰，數字會非常醜。<br>這就是為什麼大世界要 AoI，而小房間 demo 可以全量。</p>
+<h3>何時才需要 delta？</h3>
+<p>當你量到（或可預估）這些訊號再動：</p>
+<ul>
+<li>頻寬或手機流量成為真實問題  </li>
+<li>狀態很大（一堆實體），但每 tick 只動少數  </li>
+<li>連線慢到全量包開始擠塞</li>
+</ul>
+<p>上 delta 前先具備：</p>
+<ol>
+<li>可靠的全量基準幀（重連、久沒收到時重送全量）  </li>
+<li>序號／tick 對齊  </li>
+<li>丟包時的補償策略</li>
+</ol>
+<h3>進階可先略過</h3>
+<ul>
+<li><strong>二進位協定</strong>（protobuf／自訂 binary）比 JSON 省——但教學可讀性下降。  </li>
+<li><strong>優先級通道</strong>：移動可以丟，命中結算不能丟。  </li>
+<li><strong>客戶端預測與和解</strong>：跟同步策略正交，可疊加，但複雜度上升很快。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>Arena Mini：每 tick 廣播全量 <code>players[{name,x,y,…}]</code>。<br>人少、狀態小、正確性優先——這是對的取捨。<br>你在 Lab 裡應把時間花在「權威對不對、相位對不對」，不是先上壓縮。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li><strong>每人一份長期分叉的本地真相</strong>，偶爾對一下——最後各玩各的。  </li>
+<li><strong>過早上 delta／壓縮／興趣管理</strong>，系統還不能穩定跑完一局。  </li>
+<li><strong>廣播半成品狀態</strong>（鎖內改到一半就 encode）——別人看到瞬移、分數跳變。  </li>
+<li><strong>讓客戶端「幫忙算完再告訴大家」冒充同步</strong>——那是 H4 的權威倒退。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>估算：4 人、20Hz、每快照 200B、每人收到全房狀態——出站大約多少？寫下算式。  </li>
+<li>寫兩句話：什麼情況下你會從全量改 delta？（不要只寫「人多」——要有可觀察的痛點。）</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>在 snapshot 裡加上 <code>tick</code> 計數，客戶端 log 出來，確認單調增加。  </li>
+<li>故意把廣播降到 5Hz，感受「省流量 vs 手感」——思考插值要不要上。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>O(n²) 沒心理準備</strong>：每人一份含全員的包，人數一多平方成長。  </li>
+<li><strong>重連後只收 delta</strong>：沒有基準幀，畫面永遠對不齊——全量才是重連朋友。  </li>
+<li><strong>不同觀察者看到不同 tick 的拼貼</strong>：廣播前先固定 snapshot 變數，再對每人送同一份。  </li>
+<li><strong>為了省事把不同房間的人丟進同一個廣播列表</strong>：串房是同步 Bug 也是隱私事故。</li>
+</ul>
+<p>下一章 H8：人怎麼進到同一房——匹配入門（以及為什麼房號也算一種匹配）。</p>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/h-game-server/h6-input-queue/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">H6 輸入佇列與校驗：先排隊，tick 再套用</div></a><a href="/lessons/h-game-server/h8-matchmaking/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">H8 匹配入門：怎麼把人湊進同一房</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

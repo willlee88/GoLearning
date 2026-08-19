@@ -1,0 +1,107 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Authoritative server——可以預測顯示，但不能讓客戶端自稱 HP=999。校驗、套用、再廣播。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>H4 權威 Server：客戶端送意圖，真相在你這邊 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">H · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">H4 · 權威 Server：客戶端送意圖，真相在你這邊</h1><p class="mt-3 text-slate-400">Authoritative server——可以預測顯示，但不能讓客戶端自稱 HP=999。校驗、套用、再廣播。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/h06-apply-input</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">authoritative</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">game-server</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p><strong>權威伺服器</strong>（authoritative server）的意思很白話：</p>
+<blockquote>
+<p>遊戲世界的真相只住在 Server。客戶端可以畫得漂亮、甚至先預測，但提交的是「我想做什麼」，不是「世界已經變成怎樣」。</p>
+</blockquote>
+<p>對照：</p>
+<table>
+<thead>
+<tr>
+<th>客戶端送來的東西</th>
+<th>好不好</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>{ &quot;x&quot;: 999, &quot;y&quot;: 999, &quot;hp&quot;: 999 }</code> 自稱狀態</td>
+<td>壞：等於把管理員權限交給每個人</td>
+</tr>
+<tr>
+<td><code>{ &quot;dx&quot;: 1, &quot;dy&quot;: 0 }</code> 移動意圖</td>
+<td>好：Server 自己算新座標</td>
+</tr>
+</tbody></table>
+<p>讀完這章，你會知道為什麼教學早期的「點一下傳座標」只能當捷徑，以及正式一點的 input 路徑長什麼樣。</p>
+<h2>Python 對照</h2>
+<p>別把即時遊戲做成「客戶端 POST 一整份存檔，Server 存起來再轉發」。<br>比較像：</p>
+<pre class="hljs"><code class="language-text">客戶端：我按了右鍵（意圖）
+伺服器：依規則模擬一步（權威）
+再告訴大家：現在世界長這樣（快照／事件）</code></pre><p>這跟「信任前端算完的購物車總價」是同一類雷——只是遊戲裡被濫用的後果是飛天、秒殺、全圖透視。</p>
+<h2>怎麼寫（好壞封包對照）</h2>
+<h3>壞：客戶端自稱狀態</h3>
+<pre class="hljs"><code class="language-text">{ &quot;type&quot;:&quot;state&quot;, &quot;payload&quot;: { &quot;x&quot;:999, &quot;y&quot;:999 } }</code></pre><p>Server 若照單全收再廣播，等於協助作弊擴散。</p>
+<h3>好：客戶端送意圖，Server 計算</h3>
+<pre class="hljs"><code class="language-text">{ &quot;type&quot;:&quot;input&quot;, &quot;payload&quot;: { &quot;dx&quot;:1, &quot;dy&quot;:0 } }
+
+Server:
+  校驗 phase、dx/dy 範圍、速率…
+  x = clamp(x + dx*speed, 0, width)
+  廣播權威 state</code></pre><p>最小邏輯可以參考 <code>examples/h06-apply-input</code>（H6 會更細講佇列；這章先抓住「誰擁有真相」）：</p>
+<pre class="hljs"><code class="language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Room)</span></span> PushInput(in Input) <span class="hljs-type">error</span> {
+	<span class="hljs-keyword">if</span> r.Phase != PhasePlaying {
+		<span class="hljs-keyword">return</span> ErrInvalidPhase
+	}
+	<span class="hljs-keyword">if</span> abs(in.DX) &gt; <span class="hljs-number">1</span> || abs(in.DY) &gt; <span class="hljs-number">1</span> {
+		<span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;%w: dx dy must be -1..1&quot;</span>, ErrBadInput)
+	}
+	r.inbox = <span class="hljs-built_in">append</span>(r.inbox, in)
+	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Room)</span></span> Tick() {
+	<span class="hljs-comment">// 依 inbox 更新 Players[i].X/Y——座標只在這裡被改</span>
+}</code></pre><p>客戶端顯示可以立刻往右偏一格（預測），但若 Server 回來說「你其實撞牆了」，以 Server 為準把畫面拉回來。</p>
+<h2>為什麼要權威（不用會怎樣）</h2>
+<h3>1. 防作弊的基線</h3>
+<p>權威不等於「反作弊畢業」，但沒有權威，連基線都沒有：</p>
+<ul>
+<li>邊界（不能走出地圖）  </li>
+<li>速度（不能一幀飛全圖）  </li>
+<li>冷卻（技能不能無 CD 狂放）  </li>
+<li>視野（不該知道霧戰外的資訊就別廣播）</li>
+</ul>
+<p>客戶端代碼<strong>一定</strong>可被改——手遊、網頁、PC 都一樣。把判決放在客戶端，就是把鎖放在門外。</p>
+<h3>2. 同步比較好談</h3>
+<p>大家看到的「世界」都來自同一份 Server 狀態（或同一份狀態的投影）。<br>若每人本地各改各的再偶爾對一下，分叉會像兩人各寫各的 Google 文件又不合併。</p>
+<h3>3. 單機 demo 也要走權威</h3>
+<p>「反正沒有外掛玩家」不是理由。肌肉記憶要趁現在練：<br><strong>input in → state out</strong>。之後接多人、接匹配、接觀戰都比較順。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li><strong>客戶端預測 + 和解</strong>（reconciliation）：本地先模擬，等 Server 快照再修正。體感延遲更好，實作較難。  </li>
+<li><strong>鎖定步／幀同步</strong>（lockstep）：大家只交換輸入、各自模擬——即時競技與 RTS 常見變體，但對延遲與確定性要求高。  </li>
+<li>深度反作弊、伺服器側重放、行為異常偵測 → 之後 J 卷再碰；別跟「權威」混成同一件事。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>本站演進很重要的一刀：</p>
+<ul>
+<li>較早的捷徑：客戶端傳 <code>pos</code>（點擊座標）——好懂、好 demo  </li>
+<li>M4 Arena Mini：改成傳 <strong>input 方向</strong>，座標<strong>只在 Server</strong></li>
+</ul>
+<p>你在 H10 檢查清單會看到：「客戶端不再直傳權威座標當真相」。這不是吹毛求疵，是整卷的脊樑。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li><strong>信任前端算完的結果</strong>（座標、傷害、背包、金錢）。  </li>
+<li><strong>把同步當成「把我的變數複製給所有人」</strong>——複製的是權威快照，不是客戶端私貨。  </li>
+<li><strong>為了少寫幾行，讓客戶端直接改 Room 狀態</strong>——捷徑會變成協定。  </li>
+<li><strong>認為「加密一下封包就夠了」</strong>——加密防的是竊聽，不是「合法客戶端被改邏輯」。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>用自己的話說明：為什麼正式遊戲裡 <code>pos</code> 直傳很危險（至少寫兩點：作弊、不一致）。  </li>
+<li>設計一個 <code>input</code> payload 的<strong>三個欄位</strong>（例如玩家 id、dx、dy；或加上序號）。說明 Server 會拒絕什麼值。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>跑 <code>examples/h06-apply-input</code> 的測試，看「壞輸入」與「Lobby 就送 input」如何失敗。  </li>
+<li>想一個「看起來像狀態、其實是意圖」的技能施放封包，並寫下 Server 還要校驗什麼。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>廣播了 state，卻仍接受客戶端 state 寫回</strong>：雙通道會讓權威名存實亡。  </li>
+<li><strong>只校驗「有沒有登入」，不校驗數值範圍</strong>：<code>dx=999</code> 一樣飛天。  </li>
+<li><strong>視野資料全圖廣播</strong>：沒改座標也可能作弊（透視）。權威要配合「該讓你看多少」。  </li>
+<li><strong>教學捷徑留到上線</strong>：<code>pos</code> 直傳若進正式環境，等於公開後門。</li>
+</ul>
+<p>下一章 H5：Tick——不要收到一包就改世界；給模擬一個固定心跳。</p>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/h-game-server/h3-room-fsm/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">H3 Room 生命週期：用狀態機管准許的操作</div></a><a href="/lessons/h-game-server/h5-tick/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">H5 Tick：固定心跳推進模擬</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

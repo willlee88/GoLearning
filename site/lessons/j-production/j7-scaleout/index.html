@@ -1,0 +1,128 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="搞懂 sticky／房間親和、Gateway 與 Game 切分；為什麼同一房的封包不能隨便打到不同機器。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>J7 水平擴展提醒：有狀態房間不能亂 round-robin · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">J · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">J7 · 水平擴展提醒：有狀態房間不能亂 round-robin</h1><p class="mt-3 text-slate-400">搞懂 sticky／房間親和、Gateway 與 Game 切分；為什麼同一房的封包不能隨便打到不同機器。</p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">scale</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>單機優化（J6）之後，下一步常有人說：「沒關係，我們水平擴展（scale out）多開幾台。」</p>
+<p>對 <strong>無狀態 HTTP</strong>（誰來處理都差不多）這很常見。<br>對 <strong>有狀態的即時對局</strong>——房間狀態活在某台機器的記憶體裡——亂加機器會變這樣：</p>
+<ul>
+<li>玩家 A 的 input 打到機器 1  </li>
+<li>玩家 B 的連線在機器 2  </li>
+<li>兩台各有一份「真相」→ 不同步、互撞、幽靈局</li>
+</ul>
+<p>這章目標不是讓你立刻上 K8s 叢集，而是建立<strong>擴展邊界</strong>：</p>
+<blockquote>
+<p>先知道什麼不能做；真要做時，房間要有「亲和／路由」策略。</p>
+</blockquote>
+<h2>Python 對照</h2>
+<table>
+<thead>
+<tr>
+<th>Python／Web</th>
+<th>遊戲即時對局</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Django／Flask 多 worker + sticky session</td>
+<td>同源問題：會話／狀態在哪裡</td>
+</tr>
+<tr>
+<td>無狀態 JWT API 好擴</td>
+<td>房間 tick 狀態通常「有狀態」</td>
+</tr>
+<tr>
+<td>Celery 多 worker 搶任務</td>
+<td>對局不能隨便搶同一房的寫入</td>
+</tr>
+</tbody></table>
+<p>你若做過「負載平衡打到不同 worker 導致 session 丟失」，感覺是一樣的，只是遊戲更敏感：每秒几十次狀態更新。</p>
+<h2>怎麼寫（先記策略，不是先抄程式）</h2>
+<p>常見策略：</p>
+<h3>1. Sticky／房間親和（最常用的思考起點）</h3>
+<p><strong>同一 <code>room id</code> 的流量，進同一 Game 進程。</strong></p>
+<p>做法直覺：</p>
+<ul>
+<li>Gateway（閘道）無狀態，負責連線、驗證、轉送  </li>
+<li>Game 有狀態，擁有房間記憶體  </li>
+<li>用 <code>room id</code> 做一致性雜湊（consistent hashing）或查「房間目錄服務」：這個房在哪台</li>
+</ul>
+<p>教學結論：</p>
+<blockquote>
+<p><strong>先垂直優化單機 Room；真要擴展，按 room id 黏住，而不是對 WS 亂 round-robin。</strong></p>
+</blockquote>
+<h3>2. 遷移房間（少用、複雜）</h3>
+<p>把整房狀態從機器 A 搬到 B。<br>要處理：暫停、序列化、搬運、恢復、對連線重掛。成本高，通常是「這台要下線」才做。</p>
+<h3>3. 把狀態外置到 Redis 等</h3>
+<p>每 tick 或每次操作都跟外部存儲同步。<br>代價：延遲、複雜度、一致性頭痛。適合某些 presence／大廳資料；<strong>高頻權威對局</strong>很少「每件事都遠端寫」。</p>
+<h2>為什麼這樣設計／底層在幹嘛</h2>
+<h3>為什麼 round-robin WebSocket 會炸？</h3>
+<p>Round-robin（輪詢）假設每個請求可獨立處理。<br>但 Room 是：</p>
+<ul>
+<li>單一（或少數）權威寫入者  </li>
+<li>連續的 tick 與 input 隊列  </li>
+<li>廣播成員名單在記憶體</li>
+</ul>
+<p>封包被拆到兩台 = 兩個權威，規則崩壞。</p>
+<h3>Gateway 無狀態 + Game 有狀態</h3>
+<p>這是常見切分：</p>
+<pre class="hljs"><code class="language-text">Client → Gateway（連線、認證、路由）→ Game（房間、tick、權威）
+                 ↘ Match／目錄服務（這房在哪）</code></pre><p>好處：</p>
+<ul>
+<li>Gateway 可多開，擋斷線重連、TLS  </li>
+<li>Game 按房間水平加機器  </li>
+<li>匹配服務（matchmaking）與對局服務分離：大廳排隊不必跟 20Hz tick 搶同一進程</li>
+</ul>
+<h3>最終一致與全局廣播</h3>
+<p>跨機器的「全伺服器公告」「跨房聊天」常靠 pub／sub。<br>你要接受：不是同一瞬間所有人看到同一句話——這叫最終一致。<br>對局內權威狀態則通常不能靠「大家晚點一致」湊合。</p>
+<h3>觀測也要跟著變</h3>
+<p>多實例時：</p>
+<ul>
+<li>每實例自己的 <code>/metrics</code>  </li>
+<li>上面要有彙總（Prometheus 多 target）  </li>
+<li>日誌帶 <code>instance</code>／<code>room</code>，不然你不知道該看哪台</li>
+</ul>
+<h3>進階可先略過</h3>
+<ul>
+<li>一致性雜湊虛節點、房間目錄的 CAP 取捨  </li>
+<li>多活與異地備援  </li>
+<li>無縫遷移協議細節</li>
+</ul>
+<p>Arena Mini 維持單進程是故意的：先把單機正確性與觀測做滿。</p>
+<h2>遊戲 Server 會用在哪</h2>
+<p>讀完這章，你應能在紙上畫：</p>
+<ul>
+<li>兩個 Gateway  </li>
+<li>兩個 Game  </li>
+<li>玩家帶著 <code>room=abc</code> 進來時，如何保證進同一 Game</li>
+</ul>
+<p>以及標註：<strong>哪些元件可以隨便水平擴，哪些不行。</strong></p>
+<p>Arena Mini 文件與課程標明擴展邊界——不是功能沒做完就算失敗，而是讓你知道下一步要買什麼票。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>無狀態 HTTP 思維硬套即時對局。  </li>
+<li>多副本搶寫同一份記憶體地圖（沒有共享記憶體魔法）。  </li>
+<li>「先多開 pod，掛了再查為什麼不同步」。  </li>
+<li>還沒量單機就上微服務，複雜度爆炸。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>畫「兩 Gateway + 兩 Game」的房間路由草圖：標出 room id 在哪裡決定去哪台。  </li>
+<li>用三句話回答：為什麼同一房的 WS 不能在兩台 Game 之間 round-robin？</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>寫下：大廳 presence 用 Redis、對局狀態留在 Game 記憶體——這樣切的優缺點各一。  </li>
+<li>設想 Game 要下線時，沒有遷移方案，你會如何「拒新進房 + 打完現有房 + 引流」？</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>只黏 IP／連線，不黏房間</strong>：重連換線路後進錯機器。  </li>
+<li><strong>目錄服務與真實房間不一致</strong>：房已關但目錄還指著；要有心跳與對帳。  </li>
+<li><strong>全局鎖在外部存儲</strong>：表面上擴了，實際上所有房搶一把 Redis 鎖。  </li>
+<li><strong>每實例 metrics 看起來都健康，彙總才發現總流量爆</strong>：記得看整體。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li>本站規劃書／架構討論中的 Gateway–Game 切分（若你有文件可對照）  </li>
+<li>H1 拓撲、H8 匹配  </li>
+<li>J6 容量：擴展前先確認不是協定本身在 N²</li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/j-production/j6-capacity/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">J6 容量與廣播放大：人一多，流量不是線性的</div></a><a href="/lessons/j-production/j8-lab/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">J8 Lab：關得乾淨，再壓一下</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

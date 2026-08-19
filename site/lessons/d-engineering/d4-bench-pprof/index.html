@@ -1,0 +1,105 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="用 testing.B 看 ns／op 與記憶體分配；用 pprof 找 CPU／heap 熱點——別靠感覺改碼。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>D4 Benchmark 與 pprof：先測量，再談優化 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">D · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">D4 · Benchmark 與 pprof：先測量，再談優化</h1><p class="mt-3 text-slate-400">用 testing.B 看 ns／op 與記憶體分配；用 pprof 找 CPU／heap 熱點——別靠感覺改碼。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/d04-bench</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">benchmark</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">pprof</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>優化順序只有一句話：</p>
+<blockquote>
+<p><strong>正確 → 測量 → 改熱點 → 再測量</strong></p>
+</blockquote>
+<p>「我覺得這樣比較快」在遊戲 Server 裡非常容易錯：分配、鎖、編碼、廣播放大，常跟直覺打架。</p>
+<p>Go 內建：</p>
+<ul>
+<li><strong><code>testing.B</code></strong>：微基準（benchmark）  </li>
+<li><strong>pprof</strong>：看 CPU／記憶體等剖面</li>
+</ul>
+<p>這章帶你進門：會跑、會看 <code>ns/op</code> 與 <code>B/op</code>，知道熱點大概在哪。</p>
+<h2>Python 對照</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>timeit</code></td>
+<td><code>go test -bench</code></td>
+</tr>
+<tr>
+<td><code>cProfile</code>／<code>py-spy</code></td>
+<td><code>pprof</code>（CPU／heap 等）</td>
+</tr>
+<tr>
+<td>常先改寫法再猜</td>
+<td>文化上更強調先量</td>
+</tr>
+</tbody></table>
+<h2>怎麼寫</h2>
+<pre class="hljs"><code class="language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">BenchmarkSnap</span><span class="hljs-params">(b *testing.B)</span></span> {
+	<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; b.N; i++ {
+		_ = snapshot()
+	}
+}</code></pre><pre class="hljs"><code class="language-bash">go <span class="hljs-built_in">test</span> -bench=. -benchmem
+go <span class="hljs-built_in">test</span> -cpuprofile=cpu.out -bench=.
+go tool pprof cpu.out</code></pre><p><code>-benchmem</code> 會顯示分配相關指標（例如 <code>B/op</code>、<code>allocs/op</code>）——遊戲熱路徑很愛看這個。</p>
+<p>範例：<code>examples/d04-bench</code>。</p>
+<h2>細節</h2>
+<h3><code>b.N</code> 是什麼？</h3>
+<p>測試框架會調整迴圈次數，讓測量穩定到一定時間。<br>你只要把「要量的工作」放進迴圈；不要自己傻 sleep。</p>
+<h3>常見噪音</h3>
+<ul>
+<li>基準裡含網路／磁碟：結果會抖，也難解釋  </li>
+<li>第一次分配／全域 init 混進測量：必要時先在迴圈外暖機  </li>
+<li>編譯器把沒用到的結果優化掉：用 <code>_ =</code> 或累加避免「空轉被消掉」</li>
+</ul>
+<h3>pprof 看什麼？</h3>
+<p>先找：<strong>累積時間最多的函式</strong>、<strong>分配最多的地方</strong>。<br>遊戲裡常出現的熱點：序列化、廣播迴圈、不斷 <code>make</code>／字串拼接、鎖競爭。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li><code>benchstat</code> 比較兩次基準是否真有顯著差異  </li>
+<li>mutex／block profile  </li>
+<li>火焰圖閱讀細節</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>優先量這些，而不是先糾結微語法：</p>
+<ul>
+<li>狀態 snapshot／marshal  </li>
+<li>廣播給 N 個連線  </li>
+<li>每 tick 的分配是否隨人數線性爆掉</li>
+</ul>
+<p>人數一多，分配跟扇出比「某個 if 少寫一行」重要太多。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>無數據改「應該比較快」的寫法。  </li>
+<li>正確性還沒測完就開始微優化。  </li>
+<li>只看平均、不看分配與尖刺（結合負載測試是後面 J 卷）。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>跑 <code>examples/d04-bench</code>，讀懂 <code>ns/op</code>、<code>B/op</code>、<code>allocs/op</code>。  </li>
+<li>故意讓被測函式多分配一點（例如每圈 <code>make</code>），再比一次數字。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>產出 <code>cpu.out</code>，用 <code>go tool pprof</code> 的 <code>top</code> 看前幾名。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>基準寫錯，量到的是 fmt 印字或測試框架本身</strong>。  </li>
+<li><strong>一次改十處再量</strong>：不知道哪改有效。  </li>
+<li><strong>把 debug 日誌留在熱路徑</strong>：量到的是 IO。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://go.dev/doc/diagnostics">https://go.dev/doc/diagnostics</a>  </li>
+<li><a target="_blank" rel="noopener noreferrer" href="https://pkg.go.dev/runtime/pprof">https://pkg.go.dev/runtime/pprof</a></li>
+</ul>
+<h2>D 卷檢查點</h2>
+<p>你現在應該能：</p>
+<ol>
+<li>讀懂並維護 <code>go.mod</code>／<code>go.sum</code>  </li>
+<li>用表驅動鎖住房間規則  </li>
+<li>對解析路徑跑 fuzz  </li>
+<li>用 bench／pprof 回答「慢在哪」而不是「我覺得」</li>
+</ol>
+<p>下一卷 E 會把標準庫常用零件補齊；網路與遊戲房間則在 F／H。  </p>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/d-engineering/d3-fuzz/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">D3 Fuzz：亂餵輸入，抓你以為不會發生的事</div></a><a href="/lessons/e-stdlib/e0-index/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">E0 E 卷導讀 · 標準庫廣覆蓋</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

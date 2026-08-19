@@ -1,0 +1,108 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="用 fixed timestep 累積輸入、推進狀態、再廣播。time.Ticker + select，而不是收到一包就改世界。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>H5 Tick：固定心跳推進模擬 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">H · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">H5 · Tick：固定心跳推進模擬</h1><p class="mt-3 text-slate-400">用 fixed timestep 累積輸入、推進狀態、再廣播。time.Ticker + select，而不是收到一包就改世界。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/h05-tick</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">tick</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p><strong>Tick</strong> 就是 Server 的心跳：每隔固定時間（例如 50ms → 20Hz）做一輪：</p>
+<ol>
+<li>把這段時間累積的輸入拿出來  </li>
+<li>依規則推進模擬（移動、碰撞、得分…）  </li>
+<li>（可選）廣播快照給房裡的人</li>
+</ol>
+<p>為什麼不「收到一包立刻改、立刻廣播」？</p>
+<ul>
+<li>節奏不穩：網路抖、客戶端狂送，世界推進忽快忽慢  </li>
+<li>難重現：同樣操作序列，因到達時間不同結果不同，除錯像抓煙  </li>
+<li>難調參：速度、冷卻、物理步長沒有共同時鐘</li>
+</ul>
+<p>這章你要會用 <code>time.Ticker</code> + <code>select</code> 寫出最小 tick loop，並知道輸入是「先排隊、tick 時再套用」。</p>
+<h2>Python 對照</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>asyncio</code> 裡 <code>await asyncio.sleep(dt)</code> 迴圈</td>
+<td><code>time.NewTicker</code> + <code>for { select { ... } }</code></td>
+</tr>
+<tr>
+<td>每次用真實經過時間當 <code>dt</code> 做積分</td>
+<td>教學與多數玩法先用<strong>固定 dt</strong>（fixed timestep）</td>
+</tr>
+<tr>
+<td>在每個 socket handler 直接改全局狀態</td>
+<td>handler 只 enqueue；tick 才 apply</td>
+</tr>
+</tbody></table>
+<p>變步長（variable timestep）不是不能用，但新手很容易把「幀率不穩」寫進遊戲規則裡。先固定步長，人生較幸福。</p>
+<h2>怎麼寫（能跑的最小例子）</h2>
+<p>範例：<code>examples/h05-tick</code>。概念版：</p>
+<pre class="hljs"><code class="language-go">ticker := time.NewTicker(<span class="hljs-number">50</span> * time.Millisecond)
+<span class="hljs-keyword">defer</span> ticker.Stop()
+
+<span class="hljs-keyword">var</span> buf []Cmd
+<span class="hljs-keyword">for</span> {
+	<span class="hljs-keyword">select</span> {
+	<span class="hljs-keyword">case</span> cmd := &lt;-inbox:
+		buf = <span class="hljs-built_in">append</span>(buf, cmd) <span class="hljs-comment">// 只累積，不立刻當物理世界</span>
+	<span class="hljs-keyword">case</span> &lt;-ticker.C:
+		applyAll(buf)
+		buf = buf[:<span class="hljs-number">0</span>]
+		broadcast(snapshot())
+	<span class="hljs-keyword">case</span> &lt;-ctx.Done():
+		<span class="hljs-keyword">return</span>
+	}
+}</code></pre><p>自己跑看看：</p>
+<pre class="hljs"><code class="language-bash"><span class="hljs-built_in">cd</span> examples/h05-tick
+go run .</code></pre><p>你會看到：輸入在 tick 之間進來，真正 <code>applied</code> 印在 tick 當下。試著改成 <code>100 * time.Millisecond</code>（10Hz），感受訊息節奏變慢。</p>
+<h3>寫的時候記得</h3>
+<ul>
+<li><strong><code>defer ticker.Stop()</code></strong>：房間結束要停，避免洩漏。  </li>
+<li><strong><code>ctx.Done()</code></strong>：取消信號進來要離開迴圈（H2／C4 的生命週期）。  </li>
+<li><strong>inbox 最好有界</strong>：滿了怎麼辦要有政策（丟指令、斷線、回壓）——C8 背壓同一類問題。</li>
+</ul>
+<h2>為什麼是 fixed timestep</h2>
+<h3>可重現、好調參</h3>
+<p>規則若假設「每 tick 移動 <code>speed</code> 像素」，那 20Hz 與 10Hz 的手感差異是<strong>可預期的參數問題</strong>，不是「看誰 CPU 忙」。<br>測試也可以：塞一串 input → 呼叫 N 次 <code>Tick()</code> → 斷言座標——不必真的睡 50ms。</p>
+<h3>輸入與模擬解耦</h3>
+<pre class="hljs"><code class="language-text">WS 讀 loop  ：高速、不規則到達
+inbox       ：緩衝
+Tick        ：固定節奏消費
+broadcast   ：可以跟模擬同頻，或較低頻</code></pre><p>讀 loop 裡做重物理，會讓慢客戶端拖住讀取，也讓鎖與延遲更難估。</p>
+<h3>廣播頻率可以 ≤ 模擬頻率</h3>
+<p>例如模擬 30Hz、廣播 15Hz：省頻寬，中間幀靠客戶端插值顯示。<br>教學 demo（Arena Mini）常直接 20Hz 模擬 + 20Hz 全量廣播——先求正確。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li><strong>餘數累積</strong>（spiral of death 相關）：真實時間落下很多時，一次追很多 tick，要有上限，避免越追越忙。經典文章：<em>Fix Your Timestep</em>（Gaffer on Games）。  </li>
+<li>模擬 tick 與渲染幀分離——Server 通常沒有渲染，但「廣播頻率」仍可分開。  </li>
+<li>房間空轉：Lobby 不一定要跑玩法 tick；進 Playing 再啟動，省資源。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>Arena Mini M4：大約 <strong>20Hz tick</strong>，每 tick 套用 input、更新座標／碰撞，廣播 <code>type=state</code>。<br>你之後改 <code>ScoreToWin</code>、地圖大小、速度時，會感謝自己用的是固定步——手感調整是參數，不是玄學。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li><strong>每收到一包就改狀態並廣播</strong>——無節奏、難測、易被刷封包拖死。  </li>
+<li><strong>用牆鐘時間直接當物理積分且不固定步</strong>，又沒有任何 clamp。  </li>
+<li><strong>每個 tick <code>go func() { simulate() }</code></strong>——短命 goroutine 海，競態與調度開銷齊飛；一房一個長壽命 loop 通常較乾淨。  </li>
+<li><strong>房間銷毀後 ticker 還在跑</strong>——典型洩漏。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>跑 <code>examples/h05-tick</code>，看 <code>applied</code> 與 <code>sum</code> 的輸出節奏。  </li>
+<li>改成 10Hz（100ms），觀察同一批輸入被批量套用的方式有何不同。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>給 inbox 設小容量（例如 2），刻意塞爆，決定要丟棄還是退出，並印 log。  </li>
+<li>把「apply + snapshot」抽成函式，寫一個<strong>不 Sleep</strong>的單元測試：連續呼叫 <code>Tick()</code> 斷言結果。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>忘記 <code>Stop</code> ticker</strong>：房結了還在 tick。  </li>
+<li><strong>在 tick case 裡做很重的同步 I/O</strong>（寫 DB、同步 HTTP）：一卡就整房時間膨脹。  </li>
+<li><strong>無界 slice 當 inbox</strong>：客戶端狂送，記憶體被灌爆。  </li>
+<li><strong>用 <code>time.Sleep</code> 假裝 ticker</strong>：不好取消、不好跟多路事件 <code>select</code>；長駐服務請用 <code>Ticker</code>／<code>timer</code> + context。</li>
+</ul>
+<p>下一章 H6：輸入怎麼入隊、怎麼校驗、一個 tick 內多筆輸入怎麼合併。</p>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/h-game-server/h4-authoritative/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">H4 權威 Server：客戶端送意圖，真相在你這邊</div></a><a href="/lessons/h-game-server/h6-input-queue/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">H6 輸入佇列與校驗：先排隊，tick 再套用</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

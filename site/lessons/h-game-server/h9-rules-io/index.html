@@ -1,0 +1,126 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="純邏輯可單測；hub 只負責收發。時間與隨機數可注入——讓 go test 不需開 port。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>H9 規則與 I/O 分離：game 不該 import websocket · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">H · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">H9 · 規則與 I/O 分離：game 不該 import websocket</h1><p class="mt-3 text-slate-400">純邏輯可單測；hub 只負責收發。時間與隨機數可注入——讓 go test 不需開 port。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/h06-apply-input</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">architecture</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">testing</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>前面章節幾乎都在暗示同一件事，這章把它說死：</p>
+<pre class="hljs"><code class="language-text">hub / ws     解碼信封、找房間、回寫連線
+      ↓
+room.PushInput / Ready / …
+      ↓
+game.Apply / Tick / Snapshot     ← 純邏輯
+      ↓
+hub          編碼、廣播</code></pre><p><strong>規則層（<code>game</code>）不要 import <code>net</code>、不要 import <code>websocket</code>。</strong></p>
+<p>好處非常實際：</p>
+<ul>
+<li><code>go test</code> 不用聽 port、不用真瀏覽器  </li>
+<li>規則改動有表驅動測試護著  </li>
+<li>之後換傳輸（TCP、不同 WS 庫）不會撕開整個玩法</li>
+</ul>
+<p>讀完你要能指出 Arena Mini 裡「純邏輯檔」的路徑，並為 <code>Apply</code>／<code>Tick</code> 寫一個不開 WS 的測試腦內草案。</p>
+<h2>Python 對照</h2>
+<p>這就是小型的<strong>六角形／洋蔥／清潔架構</strong>精神——名字不重要：</p>
+<table>
+<thead>
+<tr>
+<th>層</th>
+<th>責任</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>介面適配器</td>
+<td>FastAPI 路由、WS endpoint</td>
+</tr>
+<tr>
+<td>領域邏輯</td>
+<td><code>apply_input(state, cmd) -&gt; state</code></td>
+</tr>
+<tr>
+<td>基礎設施</td>
+<td>DB、Redis、真實時鐘</td>
+</tr>
+</tbody></table>
+<p>Python 常見痛：測試裡 <code>TestClient</code> 起一整個 app 才測得到「往右走一步」。<br>Go 若一開始就把 <code>Apply</code> 做成普通函式／方法，測試只是普通的 <code>go test</code>。</p>
+<h2>怎麼寫</h2>
+<h3>規則層：只談資料結構</h3>
+<pre class="hljs"><code class="language-go"><span class="hljs-comment">// game/room.go — 純邏輯（示意）</span>
+<span class="hljs-keyword">package</span> game
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Room)</span></span> PushInput(in Input) <span class="hljs-type">error</span> { <span class="hljs-comment">/* 校驗 + 入隊 */</span> }
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Room)</span></span> Tick()                   { <span class="hljs-comment">/* 套用 inbox */</span> }
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Room)</span></span> Snapshot() State         { <span class="hljs-comment">/* 回傳自洽快照 */</span> }</code></pre><p>參考實作：<code>examples/h06-apply-input</code>（沒有網路依賴）。</p>
+<h3>I/O 層：翻譯進出</h3>
+<pre class="hljs"><code class="language-go"><span class="hljs-comment">// hub — I/O（示意）</span>
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *Hub)</span></span> onMessage(sess *Session, env Envelope) {
+	r := h.rooms[sess.RoomID]
+	<span class="hljs-keyword">switch</span> env.Type {
+	<span class="hljs-keyword">case</span> <span class="hljs-string">&quot;input&quot;</span>:
+		in, err := parseInput(env.Payload)
+		<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> { <span class="hljs-comment">/* 回 error */</span> <span class="hljs-keyword">return</span> }
+		<span class="hljs-keyword">if</span> err := r.PushInput(in); err != <span class="hljs-literal">nil</span> { <span class="hljs-comment">/* 回 error */</span> <span class="hljs-keyword">return</span> }
+	<span class="hljs-keyword">case</span> <span class="hljs-string">&quot;ready&quot;</span>:
+		_ = r.Ready(sess.Name)
+	}
+}
+
+<span class="hljs-comment">// tick loop 裡：</span>
+snap := r.Snapshot()
+h.broadcast(sess.RoomID, <span class="hljs-string">&quot;state&quot;</span>, snap)</code></pre><p>hub 可以依賴 game；<strong>game 不可以依賴 hub</strong>。依賴方向只准單向。</p>
+<h2>為什麼這麼執著</h2>
+<h3>1. 測試速度與穩定</h3>
+<p>開 port 的測試會：偶發佔用、CI 較慢、失敗訊息難讀。<br>純邏輯測試可以一秒跑完「Lobby → Ready → Input → Tick → 斷言座標」。</p>
+<h3>2. 避免「規則簽名帶 websocket」</h3>
+<p>一旦出現：</p>
+<pre class="hljs"><code class="language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">ApplyDamage</span><span class="hljs-params">(conn *websocket.Conn, amount <span class="hljs-type">int</span>)</span></span></code></pre><p>你就已經把傳輸細節焊進玩法。之後：</p>
+<ul>
+<li>無法在無網環境測  </li>
+<li>觀戰／Bot／重放都難接  </li>
+<li>併發模型被連線生命週期綁架</li>
+</ul>
+<h3>3. 可注入時間與隨機</h3>
+<p>單測最恨真正的 <code>time.Now()</code> 與全球隨機：</p>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">type</span> Clock <span class="hljs-keyword">interface</span>{ Now() time.Time }
+
+<span class="hljs-comment">// 測試塞假時鐘：開局超時、冷卻結束變得可斷言</span></code></pre><p>隨機數同樣：注入 <code>*rand.Rand</code> 或 seed，讓「抽牌／暴擊」可重現。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li>介面只為了測試而長得到處都是——先抽真的痛點（時間、隨機、ID 產生）。  </li>
+<li>重放系統：把 input log 存下來，對同一 <code>game</code> 再跑一次 Tick——分層後幾乎免費得到。  </li>
+<li>效能熱點若在 Snapshot 複製，仍屬規則／同步議題，不是讓你把 WS 寫回 game 的理由。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>請打開：</p>
+<ul>
+<li><code>demo/arena-mini/server/internal/game</code> — 規則與房間狀態  </li>
+<li><code>demo/arena-mini/server/internal/hub</code> — 連線、路由訊息、廣播</li>
+</ul>
+<p>自問：</p>
+<ol>
+<li><code>game</code> 有沒有 import 網路套件？  </li>
+<li>不開 server，<code>go test ./internal/game</code> 能不能測移動與開局？</li>
+</ol>
+<p>H10 Lab 的檢查清單會再盯一次這條邊界。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li><strong>單元測試裡真的 <code>Listen</code> port</strong> 才能斷言「往右一步」。  </li>
+<li><strong>規則函式參數帶上 <code>websocket</code>／<code>http.ResponseWriter</code></strong>。  </li>
+<li><strong>為了「方便」，在 game 裡直接 <code>conn.WriteJSON</code></strong>——方便是假的，耦合是真的。  </li>
+<li><strong>測試只靠手動開兩個瀏覽器</strong>——那叫煙霧測試，不能取代規則單測。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>指出 demo 中純邏輯相關檔案路徑（至少一個 <code>internal/game</code> 下的檔）。  </li>
+<li>為 <code>Apply</code>／<code>PushInput+Tick</code> 寫一則<strong>不開 WS</strong>的測試構想（Given／When／Then 三行即可）；有餘力就對 <code>examples/h06-apply-input</code> 再加一則。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>把「超時結束對戰」的時間改成可注入 Clock，寫測試：假時間一跳就 Ended。  </li>
+<li>檢查 <code>internal/game</code> 的 import 清單，確認沒有網路套件混入。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>package 名叫 <code>game</code>，內容卻在寫 hub</strong>：名稱無法拯救依賴。  </li>
+<li><strong>測試與正式碼複製兩份規則</strong>：改一處漏一處——請直接測同一份 <code>game</code>。  </li>
+<li><strong>Snapshot 回傳內部 map 的引用</strong>：測試或 hub 一改，權威狀態被外面踩壞；必要時回傳複本。  </li>
+<li><strong>循環 import</strong>：<code>game</code> → <code>hub</code> → <code>game</code>；通常代表邊界畫錯。</li>
+</ul>
+<p>下一章 H10：把 H1–H9 收成 Arena Mini 權威對戰 Lab——這卷的檢查點。</p>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/h-game-server/h8-matchmaking/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">H8 匹配入門：怎麼把人湊進同一房</div></a><a href="/lessons/h-game-server/h10-arena-lab/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">H10 Lab：Arena Mini 權威對戰檢查點</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

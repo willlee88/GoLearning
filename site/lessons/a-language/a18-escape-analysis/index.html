@@ -1,0 +1,62 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="編譯器會判斷區域變數要不要逃到堆上給 GC 管。熱路徑減少無謂分配，並用旗標驗證。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>A18 逃逸分析：變數會待在 stack 還是上 heap？ · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">A · L3 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">A18 · 逃逸分析：變數會待在 stack 還是上 heap？</h1><p class="mt-3 text-slate-400">編譯器會判斷區域變數要不要逃到堆上給 GC 管。熱路徑減少無謂分配，並用旗標驗證。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/a18-escape</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">performance</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">gc</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>Go 會自動管理記憶體，但不是「什麼都隨便 new」。編譯器做<strong>逃逸分析（escape analysis）</strong>：<br>變數若證實只在函式內用，可能留在 <strong>stack（堆疊）</strong>；否則會上 <strong>heap（堆積）</strong>，交給 GC 回收。</p>
+<p>你要的不是背完整規則，而是建立直觀：<strong>熱路徑少做不必要分配</strong>，並用工具看編譯器怎麼判斷。</p>
+<h2>Python 對照</h2>
+<p>CPython 裡物件幾乎都在堆上，你比較少想「這個區域變數會不會逃逸」。<br>Go 有機會更省、更可預測，但寫法讓大量東西逃到 heap，一樣會變「狂配＋GC 壓力」——遊戲 tick 特別明顯。</p>
+<h2>怎麼寫</h2>
+<p>看逃逸提示：</p>
+<pre class="hljs"><code class="language-bash">go build -gcflags=<span class="hljs-string">&quot;-m&quot;</span> .</code></pre><p>輸出裡常見 <code>escapes to heap</code> 這類字樣。<br>範例：<code>examples/a18-escape</code>——先猜哪種寫法更容易逃逸，再對答案。</p>
+<h2>細節</h2>
+<h3>常見讓變數上堆的原因</h3>
+<ul>
+<li>回傳局部變數的指標（生命週期必須超出函式）  </li>
+<li>把值裝進介面（介面要能裝「任意動態值」）  </li>
+<li>閉包捕獲變數，使生命週期變長  </li>
+<li>東西太大，不適合放 stack</li>
+</ul>
+<p>記住：上堆不是罪惡，是機制。問題是<strong>熱路徑無謂上堆</strong>。</p>
+<h3>優化順序</h3>
+<ol>
+<li>先把算法與資料流做對  </li>
+<li>再減少重複分配（預先 make、重用 buffer）  </li>
+<li>最後才微觀到某一行有沒有逃逸</li>
+</ol>
+<p>沒有 profile 的微優化，多半是在浪費人生。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li><code>sync.Pool</code> 重用 buffer（一定要注意生命週期，別把還在用的切片放回去）  </li>
+<li><code>pprof</code> 的 heap 剖面跟 <code>-gcflags=-m</code> 對照著看</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>每個 tick 對 N 個玩家都 <code>json.Marshal</code> 一份完整狀態，分配會很可觀。方向包含：</p>
+<ul>
+<li>重用 buffer  </li>
+<li>降頻／只對感興趣的人廣播  </li>
+<li>改送 delta（見 H7／J6 一帶）</li>
+</ul>
+<p>先量哪裡貴，再改；別一開始就為了逃逸把程式寫到沒人敢維護。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>過早微優化，功能都還沒對。  </li>
+<li>不跑 pprof／benchmark，只靠「我感覺」。  </li>
+<li>把「全部改成指標」或「全部改成值」當萬能加速法。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>對範例跑 <code>-gcflags=-m</code>，讀懂至少兩行輸出。  </li>
+<li>猜一種寫法比較容易逃逸，再驗證。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>對一個小函式比較「回傳值」vs「回傳指標」的逃逸提示差異。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>看到 escapes 就恐慌大改</strong>：先確認它在不在熱路徑。  </li>
+<li><strong>為了不下堆引入複雜別名與生命週期 bug</strong>。  </li>
+<li><strong>忽略配置本身</strong>：算法 O(n²) 比逃逸細節痛一百倍。</li>
+</ul>
+<p>到這裡 A 卷（含深潛）告一段落。下一站 <strong>B0／B1</strong>：把 <code>error</code> 當真・一等公民來設計 API。</p>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/a-language/a17-unsafe-boundary/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">A17 unsafe：知道它存在，平常別碰</div></a><a href="/lessons/b-errors-api/b0-index/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">B0 B 卷導讀：錯誤是值，API 要好維護</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

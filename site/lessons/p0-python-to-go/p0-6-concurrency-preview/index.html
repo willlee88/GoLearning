@@ -1,0 +1,110 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="goroutine 不是 OS thread，也不是 asyncio 的直接翻譯。先搞懂：執行、通訊、多路等待，以及亂開會怎樣。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>P0.6 併發先建立直覺（詳情在 C 卷） · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">P0 · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">P0.6 · 併發先建立直覺（詳情在 C 卷）</h1><p class="mt-3 text-slate-400">goroutine 不是 OS thread，也不是 asyncio 的直接翻譯。先搞懂：執行、通訊、多路等待，以及亂開會怎樣。</p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">python-bridge</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">concurrency</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>Go 談「一次做很多事」（concurrency）時，你常會看到這組工具：</p>
+<ul>
+<li><strong>goroutine</strong> — 輕量的執行單元（用 <code>go</code> 關鍵字啟動）  </li>
+<li><strong>channel</strong> — 用來通訊、交接資料的管線  </li>
+<li><strong>select</strong> — 同時等好幾條路，哪個先好用哪個  </li>
+<li>再加上 <strong><code>sync</code></strong>（鎖等）與 <strong><code>context</code></strong>（取消、截止時間）</li>
+</ul>
+<p>你可以先把遊戲 Server 預設畫面想成：「每個連線一個讀寫迴圈」——但<strong>搞懂生命週期與誰擁有資料之前，不要狂開 goroutine</strong>。</p>
+<p>這章是<strong>預告</strong>，細節在 <strong>C 卷</strong>。這裡只建立正確直覺，避免你用錯模型。</p>
+<h2>先跟 Python 對一下</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go（粗對照，<strong>不要硬套</strong>）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>threading.Thread</code></td>
+<td>goroutine（更輕，模型也不同）</td>
+</tr>
+<tr>
+<td><code>asyncio</code> 協程 + event loop</td>
+<td>多個 goroutine；由 runtime 排程</td>
+</tr>
+<tr>
+<td><code>queue.Queue</code></td>
+<td>channel</td>
+</tr>
+<tr>
+<td>取消／超時常見寫法</td>
+<td><code>context.Context</code></td>
+</tr>
+<tr>
+<td>GIL 限制 CPU 平行</td>
+<td>可以真正平行；<strong>更要注意</strong>共享記憶體</td>
+</tr>
+</tbody></table>
+<p>重點：把 <code>asyncio.create_task</code> 的感覺原封貼成到處 <code>go func</code>，之後會洩漏、會 race、會關不掉。</p>
+<h2>怎麼寫（能跑的最小例子）</h2>
+<p>啟動一個併發執行的函式：</p>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">go</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> {
+	fmt.Println(<span class="hljs-string">&quot;runs concurrently&quot;</span>)
+}()</code></pre><p>用 channel 送收資料（這裡用帶緩衝的 channel，比較好演示）：</p>
+<pre class="hljs"><code class="language-go">ch := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> <span class="hljs-type">string</span>, <span class="hljs-number">1</span>)
+ch &lt;- <span class="hljs-string">&quot;ping&quot;</span>
+msg := &lt;-ch
+fmt.Println(msg)</code></pre><p>注意：若 <code>main</code> 函式結束，整個程式結束，<strong>其他 goroutine 會被直接砍掉</strong>。所以你一定要設計「怎麼等待／怎麼結束」（<code>WaitGroup</code>、channel 會合、<code>context</code> 取消……C 卷會系統教）。</p>
+<h2>為什麼這樣設計／底層在幹嘛</h2>
+<h3>Goroutine 是 M:N 排程</h3>
+<p>很多個 goroutine，由 Go runtime 排到較少的作業系統執行緒上跑。所以它很輕，但<strong>不是免費</strong>：</p>
+<ul>
+<li>每個都有堆疊與狀態  </li>
+<li>開太多、又不結束 → 記憶體與排程壓力會炸  </li>
+<li>共享 map／slice 卻不同步 → <strong>data race（資料競爭）</strong>，行為未定義，是 bug</li>
+</ul>
+<p>用 <code>go test -race</code> 可以抓很多這類問題——養成習慣。</p>
+<h3>Channel 不只是 queue</h3>
+<p>無緩衝 channel 有<strong>交接同步</strong>的味道：送跟收要對上。關閉 channel 有「誰有權關閉」的規則；亂關會 panic。細節留給 C 卷，但你先記住：<strong>通訊也是設計，不是隨手扔資料。</strong></p>
+<h3>口號別當教條</h3>
+<p>常聽到：「不要通過共享記憶體來通訊；通過通訊來共享記憶體。」這是好預設，但熱路徑上用鎖（mutex）仍然完全合理。重點是：<strong>同一塊資料的所有權與同步策略要想清楚</strong>。</p>
+<p>寫錯會怎樣？（預告，後面會實驗室打臉）</p>
+<ul>
+<li>兩個 goroutine 無鎖寫同一個 <code>map</code> → 可能 panic，或更糟：偶發壞資料  </li>
+<li><code>main</code> 太早結束 → 背景工作根本沒跑完  </li>
+<li>無界地 <code>go</code> + 無界佇列 → 背壓沒了，記憶體爆炸</li>
+</ul>
+<h3>進階可先略過</h3>
+<ul>
+<li>為什麼鎖在熱路徑仍合理：通道不是萬能，拷貝與調度也有成本。  </li>
+<li>排程器細節：C 卷與進階章再看。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>典型拆分（先混個臉熟）：</p>
+<ul>
+<li><strong>每連線</strong>：讀取 goroutine + 寫入要串行化（避免交錯寫）  </li>
+<li><strong>每房間</strong>：一個邏輯擁有者（專責 goroutine，或鎖保護的 tick）  </li>
+<li><strong>大廳／registry</strong>：多人同時進房離房，要有明確的併發策略</li>
+</ul>
+<p>之後你會一直問：「這份狀態誰能寫？誰讀？何時結束？」——這比「我會不會寫 <code>go</code>」重要得多。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>把 <code>asyncio.create_task</code> 心智原封貼成到處 <code>go func</code>。  </li>
+<li>假設「不會平行就不會 race」——在 Go 預設就<strong>可能</strong>平行。  </li>
+<li>開了背景工作卻不定義如何停止 → goroutine 洩漏，關機關不乾淨。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>寫一個小程式：主流程送 3 個訊息到 channel，另一個 goroutine 印出它們；想清楚 <strong>main 如何等待</strong> 對方跑完。  </li>
+<li>用文字描述：若兩個 goroutine 無鎖寫同一個 <code>map</code>，可能發生什麼。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>對任何含併發的小實驗跑 <code>go test -race</code>。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>main 結束殺光所有 goroutine</strong>：用 <code>WaitGroup</code> 或 channel 會合。  </li>
+<li><strong>無界 <code>go</code> + 無界工作佇列</strong>：記憶體爆炸——後續會講背壓（backpressure）。  </li>
+<li><strong>以為 channel 取代所有鎖</strong>：該鎖還是要鎖；混用更要規矩清楚。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://go.dev/blog/pipelines">https://go.dev/blog/pipelines</a>  </li>
+<li>卷 C 全卷（正式開打併發）</li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/p0-python-to-go/p0-5-no-class-inheritance/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">P0.5 沒有 class 繼承？用 struct、方法、介面組合</div></a><a href="/lessons/p0-python-to-go/p0-7-toolchain/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">P0.7 日常工具鏈：build、test、fmt、vet、mod</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

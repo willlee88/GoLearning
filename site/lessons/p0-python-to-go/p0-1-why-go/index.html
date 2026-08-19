@@ -1,0 +1,138 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="搞懂 Go 刻意做了哪些取捨：編譯、靜態型別、併發、好部署——以及什麼時候它特別適合遊戲 Server。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>P0.1 為什麼學 Go（而不是把 Python 換皮）？ · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">P0 · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">P0.1 · 為什麼學 Go（而不是把 Python 換皮）？</h1><p class="mt-3 text-slate-400">搞懂 Go 刻意做了哪些取捨：編譯、靜態型別、併發、好部署——以及什麼時候它特別適合遊戲 Server。</p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">python-bridge</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">mindset</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>Go <strong>不是</strong>「語法長得不一樣的 Python」。</p>
+<p>它是一組<strong>刻意的取捨</strong>：語言特性少一點，換團隊好讀；編譯期把型別抓死，換重構與部署比較可預測；內建「一次做很多事」的原語（concurrency），服務網路服務與長連線這類工作。</p>
+<p>學 Go 的第一課是：<strong>接受這些取捨</strong>，而不是把舊習慣硬塞進去。讀完你要能講出「我得到什麼、失去什麼」，以及為什麼遊戲 Server 常落在 Go 的舒適區。</p>
+<h2>先跟 Python 對一下</h2>
+<table>
+<thead>
+<tr>
+<th>面向</th>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>怎麼跑</td>
+<td>直譯／bytecode，常見 CPython + GIL（全域直譯器鎖）</td>
+<td>編譯成原生機器碼，也常做交叉編譯</td>
+</tr>
+<tr>
+<td>型別</td>
+<td>動態；可選 type hints</td>
+<td>靜態；編譯期就檢查</td>
+</tr>
+<tr>
+<td>併發常見說法</td>
+<td>threading / multiprocessing / asyncio</td>
+<td>goroutine + channel（另有 sync 套件）</td>
+</tr>
+<tr>
+<td>怎麼發佈</td>
+<td>虛擬環境 + 直譯器／鎖檔</td>
+<td>常打成單一（或少數）靜態連結的執行檔</td>
+</tr>
+<tr>
+<td>語言有多大</td>
+<td>大、多種寫法都通</td>
+<td>刻意保持小</td>
+</tr>
+</tbody></table>
+<p>兩者都能做後端。Go 特別常被選在：<strong>高連線數、運維想簡單、需要比較明確的效能與記憶體行為</strong>——遊戲 Server 正好落在這個區間。</p>
+<h2>怎麼寫（能跑的最小例子）</h2>
+<p>你現在先記住三件事就好：</p>
+<ol>
+<li>原始碼 → <code>go build</code> → 可執行檔（Windows 上常是 <code>.exe</code>）。  </li>
+<li>一個目錄通常是一個 <strong>package</strong>（套件）；<code>main</code> package 裡的 <code>func main()</code> 是程式入口。  </li>
+<li>工具鏈內建：<code>fmt</code>（印東西／格式化）、<code>test</code>（測試）、<code>mod</code>（依賴）、<code>vet</code>（靜態檢查）。</li>
+</ol>
+<p>最小程式：</p>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">package</span> main
+
+<span class="hljs-keyword">import</span> <span class="hljs-string">&quot;fmt&quot;</span>
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> {
+	fmt.Println(<span class="hljs-string">&quot;hello from GoLearning&quot;</span>)
+}</code></pre><p>在該目錄執行：</p>
+<pre class="hljs"><code class="language-text">go run .</code></pre><p>若還沒有 <code>go.mod</code>，先 <code>go mod init example.com/hello</code>，再跑——從第一天就養成「專案有邊界」的習慣。</p>
+<h2>為什麼這樣設計／底層在幹嘛</h2>
+<h3>Go 大概在承諾什麼</h3>
+<ul>
+<li><strong>可讀性優先於花招</strong>：少魔法，多寫清楚。別人半夜改你的 Server 才不會哭。  </li>
+<li><strong>組合優於繼承</strong>：用小介面（interface）跟嵌入（embedding），而不是深層繼承樹。  </li>
+<li><strong>併發是一等公民</strong>：語法跟 runtime 一起服務大量輕量執行單元（goroutine）。  </li>
+<li><strong>工程預設就齊</strong>：格式化、測試、benchmark、profiling、modules 是文化，不是外掛。</li>
+</ul>
+<h3>你得到什麼、變難什麼</h3>
+<table>
+<thead>
+<tr>
+<th>你得到</th>
+<th>你失去／變難</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>編譯期抓掉大量錯誤</td>
+<td>沒有 Python 那種「先跑再說」的彈性</td>
+</tr>
+<tr>
+<td>部署相對單純</td>
+<td>抽象要克制；不是每種 DSL 都好寫</td>
+</tr>
+<tr>
+<td>併發模型清楚（用對的話）</td>
+<td>channel／鎖用錯一樣會 race、洩漏</td>
+</tr>
+<tr>
+<td>標準庫務實好用</td>
+<td>生態不像 Python「每個領域一個巨框架」</td>
+</tr>
+</tbody></table>
+<h3>和遊戲 Server 為什麼對得上</h3>
+<ul>
+<li><strong>大量連線</strong>：每個連線配一個（或一組）goroutine，心智上直覺。  </li>
+<li><strong>長生命週期服務</strong>：明確的 <code>main</code>、設定、優雅關閉（graceful shutdown）文化。  </li>
+<li><strong>熱路徑可控</strong>：profile、benchmark、少隱藏配置成為日常。  </li>
+<li><strong>規則與 I/O 分開</strong>：靜態型別讓「純邏輯套件」好測。</li>
+</ul>
+<p>寫錯會怎樣？把 Go 當「比較快的腳本」亂寫、到處共享 map 又不加同步——線上會出現難重現的 race，關機也關不乾淨。後面章會教你怎麼避免。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li>讀 <a target="_blank" rel="noopener noreferrer" href="https://go.dev/talks/2012/splash.article">Go at Google: Language Design in the Service of Software Engineering</a>（歷史與動機）。  </li>
+<li>跟 Rust（所有權更嚴）、Java/C#（runtime 與生態更重）、Node（單執行緒事件迴圈文化）比時，重點不是誰贏，而是<strong>問題形狀</strong>是否匹配。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>遊戲後端典型壓力是：<strong>高連線數、狀態要一致、低延遲廣播、可觀測、能乾淨關機</strong>。</p>
+<p>Go 的工具鏈與併發原語，讓這些比較像「工程問題」而不是「語言一直打架」。後面卷會反覆回到：Session（連線工作階段）、Room（房間）、Tick（固定節奏更新）、廣播扇出。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li><strong>「先寫再說，型別以後補」</strong> — 在 Go 裡型別是設計的一部分，不是裝飾。  </li>
+<li><strong>「框架幫我搞定一切」</strong> — 先懂 <code>net/http</code>、標準庫，再選框架。  </li>
+<li><strong>「執行緒 = 併發的唯一心智」</strong> — goroutine 更輕，但<strong>不是</strong>免費的；仍要思考誰擁有資料、何時結束。  </li>
+<li><strong>「例外跳轉當控制流」</strong> — 錯誤是值；控制流應該看得見（下一章會講專案形態，錯誤章在 P0.4）。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>安裝 Go（若尚未安裝），執行 <code>go version</code>。本站以 <strong>Go 1.22+</strong> 為準。  </li>
+<li>在任意目錄建立小專案：<code>go mod init</code> + <code>hello.go</code>，<code>go run .</code> 成功印出字串。  </li>
+<li>用三句話寫下：你選 Go 學遊戲 Server 的理由（可以很務實，例如「好部署」「連線多」）。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>讀 Effective Go 的前言與「Formatting」小節，感受 <code>gofmt</code>「格式化不可爭論」的文化。  </li>
+<li>列出你過去 Python 專案裡「部署最痛」的三點，猜 Go 會怎麼改變它們。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>裝了 Go 但 PATH 沒更新</strong>：新開終端機再跑 <code>go version</code>。  </li>
+<li><strong>把 Go 當腳本亂放檔案</strong>：從一開始用 module：<code>go mod init example.com/hello</code>。  </li>
+<li><strong>版本過舊</strong>：泛型、<code>slog</code> 等後續內容以 <strong>Go 1.22+</strong> 為準；太舊會跟教材對不上。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://go.dev/doc/">https://go.dev/doc/</a>  </li>
+<li><a target="_blank" rel="noopener noreferrer" href="https://go.dev/doc/effective_go">https://go.dev/doc/effective_go</a>  </li>
+<li>本站規劃書：<code>docs/規劃書.md</code> §1–§5</li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/p0-python-to-go/p0-0-why-game-server/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">P0.0 為什麼要拿遊戲 Server 當練習目標？</div></a><a href="/lessons/p0-python-to-go/p0-2-project-shape/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">P0.2 專案長什麼樣？module、package、目錄</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

@@ -1,0 +1,110 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="從 Python 的腳本／套件心智，換成 Go 的 module（依賴邊界）與 package（編譯與可見性邊界）。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>P0.2 專案長什麼樣？module、package、目錄 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">P0 · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">P0.2 · 專案長什麼樣？module、package、目錄</h1><p class="mt-3 text-slate-400">從 Python 的腳本／套件心智，換成 Go 的 module（依賴邊界）與 package（編譯與可見性邊界）。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/p0-config-stats</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">python-bridge</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">modules</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>Python 專案常是「一堆 <code>.py</code> + venv + 某個進入點」。</p>
+<p>Go 專案你要先搞懂兩個「盒子」：</p>
+<ul>
+<li><strong>module（模組）</strong>：依賴與版本的邊界，根目錄有 <code>go.mod</code>  </li>
+<li><strong>package（套件）</strong>：編譯與「別人能不能看到我的名字」的邊界，通常一個目錄一個 package</li>
+</ul>
+<p>盒子放對了，後面的測試、範例、遊戲 Server 才放得下。放錯會怎樣？循環匯入編不過、該藏的 API 全被外面乱用、CI 也不知道從哪測起。</p>
+<h2>先跟 Python 對一下</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>專案根 + <code>pyproject.toml</code> / <code>requirements.txt</code></td>
+<td>根目錄 <code>go.mod</code></td>
+</tr>
+<tr>
+<td>package ≈ 目錄 + <code>__init__.py</code>（概念上）</td>
+<td>package = 同一目錄下相同的 <code>package</code> 名</td>
+</tr>
+<tr>
+<td><code>if __name__ == &quot;__main__&quot;</code></td>
+<td><code>package main</code> + <code>func main()</code></td>
+</tr>
+<tr>
+<td>venv 隔離依賴</td>
+<td>module 路徑 + 版本；toolchain 也可釘選</td>
+</tr>
+<tr>
+<td><code>src/</code> 佈局可選</td>
+<td>常見慣例：<code>cmd/</code>、<code>internal/</code>、<code>pkg/</code>（慣例，不是語法強制）</td>
+</tr>
+</tbody></table>
+<h2>怎麼寫（能跑的最小例子）</h2>
+<p>最小形狀大概長這樣：</p>
+<pre class="hljs"><code class="language-text">myapp/
+  go.mod
+  main.go          # package main
+  player/          # package player
+    player.go</code></pre><pre class="hljs"><code class="language-go"><span class="hljs-comment">// go.mod</span>
+module example.com/myapp
+
+<span class="hljs-keyword">go</span> <span class="hljs-number">1.22</span></code></pre><p>常用指令：</p>
+<pre class="hljs"><code class="language-bash">go mod init example.com/myapp
+go run .
+go <span class="hljs-built_in">test</span> ./...</code></pre><p>本站第一個可跑範例：<code>examples/p0-config-stats</code>（讀 JSON 設定、統計假玩家）。請真的進目錄跑一遍，不要只看文字。</p>
+<h2>為什麼這樣設計／底層在幹嘛</h2>
+<h3>Module 在幹嘛</h3>
+<ul>
+<li><code>go.mod</code> 宣告 <strong>module path</strong>（匯入時的前綴）與 Go 版本。  </li>
+<li>依賴怎麼選版本：採 <strong>Minimal Version Selection（MVS，最小版本選擇）</strong>——後續 D 卷會深講。你現在只要知道：不是「永遠裝最新」，而是有一套可預測規則。</li>
+</ul>
+<p>注意：module path <strong>不必</strong>等於資料夾名，但 <code>import</code> 路徑必須跟 <code>go.mod</code> 一致，亂改會編不過。</p>
+<h3>Package 與可見性（誰看得到誰）</h3>
+<ul>
+<li>名稱<strong>大寫開頭</strong>的識別字，可被<strong>外部 package</strong> 匯入使用（匯出／exported）。  </li>
+<li><strong>小寫開頭</strong> = 這個套件私有。</li>
+</ul>
+<p>這比 Python 靠「底線 <code>_</code> 約定」更硬：編譯器直接擋，不是靠大家自覺。好處是 API 邊界清楚；壞處是你不能再「先亂公開再說」。</p>
+<h3>建議目錄（對 Server 友善）</h3>
+<pre class="hljs"><code class="language-text">cmd/server/main.go     # 入口薄薄一層：組裝、讀設定、啟動
+internal/room/         # 外部其他 module 匯不進來（編譯器強制）
+internal/session/
+pkg/protocol/          # 若真要給別人匯入再用（可選）</code></pre><p>遊戲 Server 習慣口訣：<strong>入口薄、規則純、I/O 放在邊緣</strong>。</p>
+<p>為什麼？規則套件不依賴網路細節，才能單獨 <code>go test</code>；入口只負責接线，重啟／換傳輸層時比較不痛。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li><code>internal/</code> 目錄的「編譯器強制：外面 module 不能 import」規則。  </li>
+<li><code>go.work</code> 多模組工作區（本 monorepo 之後可選用）。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>之後 Arena Mini 會類似這種切法：</p>
+<pre class="hljs"><code class="language-text">demo/arena-mini/server/
+  cmd/server/
+  internal/gateway/
+  internal/room/
+  internal/session/</code></pre><p>你現在學的不是「目錄潔癖」，而是：<strong>之後房間規則、連線閘道、入口</strong>各自有家，才好測、好關機、好換實作。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>到處 <code>import *</code> 式的扁平亂放——Go 沒這招，也不該想這招。  </li>
+<li>只用檔名組織，卻沒有清晰 package 邊界——改檔時會牽一髮動全身。  </li>
+<li>在業務套件裡塞 <code>print</code> 當永久日誌——之後觀測章會用結構化日誌；先別把除錯印成架構。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>閱讀並執行 <code>examples/p0-config-stats</code>（需要已安裝 Go）。  </li>
+<li>指出哪個檔是 <code>main</code>、哪個符號是可匯出 API（看大寫開頭）。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>把範例拆成 <code>cmd/</code> + <code>internal/stats/</code> 兩個 package，再讓它跑起來。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>module path 跟資料夾名無關，但 import 必須對</strong>：編不過時先對一下 <code>go.mod</code> 與 <code>import</code> 字串。  </li>
+<li><strong>循環匯入</strong>：A import B、B 又 import A → 編譯器直接拒絕。解法通常是抽介面，或把共用型別下沉到更低層 package。  </li>
+<li><strong>在錯的目錄跑 <code>go run</code></strong>：確認你在有 <code>go.mod</code> 的 module 根（或子目錄）裡。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://go.dev/doc/modules/layout">https://go.dev/doc/modules/layout</a>  </li>
+<li><a target="_blank" rel="noopener noreferrer" href="https://go.dev/doc/code">https://go.dev/doc/code</a></li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/p0-python-to-go/p0-1-why-go/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">P0.1 為什麼學 Go（而不是把 Python 換皮）？</div></a><a href="/lessons/p0-python-to-go/p0-3-type-thinking/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">P0.3 型別怎麼想？靜態檢查與零值</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

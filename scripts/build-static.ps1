@@ -1,9 +1,14 @@
-# Build a copy-anywhere static teaching site (no Docker required).
-# Output: release/GoLearning-static/  and  release/GoLearning-static.zip
+# Build the teaching site as static HTML (no Docker required).
+#
+# Outputs:
+#   site/                         — tracked in git; other PCs: git pull + 看課.bat
+#   release/GoLearning-static/    — local assemble folder (gitignored)
+#   release/GoLearning-static.zip — optional copy-anywhere zip (gitignored)
 
 $ErrorActionPreference = "Stop"
 $root = Split-Path -Parent $PSScriptRoot
 $web = Join-Path $root "web"
+$site = Join-Path $root "site"
 $out = Join-Path $root "release\GoLearning-static"
 $scripts = $PSScriptRoot
 
@@ -20,21 +25,33 @@ try {
   Pop-Location
 }
 
-Write-Host "==> Assembling release folder..."
-if (Test-Path $out) { Remove-Item $out -Recurse -Force }
-New-Item -ItemType Directory -Path $out -Force | Out-Null
-Copy-Item -Path (Join-Path $web "dist\*") -Destination $out -Recurse -Force
-Copy-Item (Join-Path $scripts "static-start.bat") (Join-Path $out "start.bat") -Force
-Copy-Item (Join-Path $scripts "static-start.ps1") (Join-Path $out "start.ps1") -Force
-Copy-Item (Join-Path $scripts "static-README.txt") (Join-Path $out "README.txt") -Force
+function Publish-StaticFolder([string]$dest) {
+  if (Test-Path $dest) {
+    Get-ChildItem -Path $dest -Force | Remove-Item -Recurse -Force
+  } else {
+    New-Item -ItemType Directory -Path $dest -Force | Out-Null
+  }
+  Copy-Item -Path (Join-Path $web "dist\*") -Destination $dest -Recurse -Force
+  Copy-Item (Join-Path $scripts "static-start.bat") (Join-Path $dest "start.bat") -Force
+  Copy-Item (Join-Path $scripts "static-start.ps1") (Join-Path $dest "start.ps1") -Force
+  Copy-Item (Join-Path $scripts "static-README.txt") (Join-Path $dest "README.txt") -Force
+}
+
+Write-Host "==> Publishing site/ (for git pull readers)..."
+Publish-StaticFolder $site
+
+Write-Host "==> Assembling release folder + zip..."
+New-Item -ItemType Directory -Path (Split-Path $out -Parent) -Force | Out-Null
+Publish-StaticFolder $out
 
 $zip = Join-Path $root "release\GoLearning-static.zip"
 if (Test-Path $zip) { Remove-Item $zip -Force }
-Write-Host "==> Zipping..."
 Compress-Archive -Path $out -DestinationPath $zip -Force
 
 Write-Host ""
 Write-Host "Done."
-Write-Host "  Folder: $out"
-Write-Host "  Zip:    $zip"
-Write-Host "Copy the zip to the other PC, extract, run start.bat"
+Write-Host "  Git-tracked HTML: $site"
+Write-Host "  Zip (optional):   $zip"
+Write-Host ""
+Write-Host "Readers: git pull  then  .\看課.bat"
+Write-Host "Authors: commit content/ + site/ together after this script."

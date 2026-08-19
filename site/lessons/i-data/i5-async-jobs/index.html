@@ -1,0 +1,177 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="有界佇列、worker pool、至少一次投遞與冪等；關服時要排空，不能直接閃人。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>I5 背景任務與結算：離開 tick，排好隊再寫 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">I · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">I5 · 背景任務與結算：離開 tick，排好隊再寫</h1><p class="mt-3 text-slate-400">有界佇列、worker pool、至少一次投遞與冪等；關服時要排空，不能直接閃人。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/i05-worker</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">async</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">workers</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>對局結束後你常要做一串「重要但不必在這一幀完成」的事：</p>
+<ul>
+<li>寫對局結果  </li>
+<li>發獎勵、更新賽季分  </li>
+<li>丟分析事件、打點</li>
+</ul>
+<p>這些若塞回 tick 熱路徑，房間模擬會跟 DB／網路 I/O 綁死——I1 講過的災難再上演一次。</p>
+<p>這章的模式很樸素：</p>
+<pre class="hljs"><code class="language-text">Room.End → jobs &lt;- MatchResult → worker → DB／郵件／log</code></pre><p>關鍵有三：</p>
+<ol>
+<li><strong>有界佇列</strong>（bounded queue）：滿了要有背壓，不能無限 <code>go</code>  </li>
+<li><strong>worker</strong> 在旁邊慢慢消化  </li>
+<li><strong>至少一次</strong>投遞時，結算邏輯要 <strong>冪等</strong>（做兩次別發兩次獎）</li>
+</ol>
+<p>範例：<code>examples/i05-worker</code>。</p>
+<h2>先跟 Python 對一下</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Celery／RQ／Huey</td>
+<td>channel + worker pool，或外部 MQ</td>
+</tr>
+<tr>
+<td><code>asyncio.create_task</code> 丟了不管</td>
+<td>明確的生命週期：<code>WaitGroup</code>、關閉、drain</td>
+</tr>
+<tr>
+<td>broker 佇列長度監控</td>
+<td>有界 channel 滿了立刻知道（或度量）</td>
+</tr>
+</tbody></table>
+<p>Python 裡你可能習慣「丟到 Celery 就好」。Go 小服務常先用 <strong>行程內 channel</strong> 當佇列；流量大了再換成 Redis Stream／NATS／Kafka——但「有界、可關閉、可重試、要冪等」這組原則不變。</p>
+<h2>怎麼寫</h2>
+<p>最小可跑形狀（與範例同精神）：</p>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">type</span> Job <span class="hljs-keyword">struct</span> {
+	MatchID <span class="hljs-type">string</span>
+	Winner  <span class="hljs-type">string</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">worker</span><span class="hljs-params">(id <span class="hljs-type">int</span>, jobs &lt;-<span class="hljs-keyword">chan</span> Job, wg *sync.WaitGroup)</span></span> {
+	<span class="hljs-keyword">defer</span> wg.Done()
+	<span class="hljs-keyword">for</span> j := <span class="hljs-keyword">range</span> jobs {
+		<span class="hljs-comment">// 這裡假裝寫 DB／發獎</span>
+		fmt.Printf(<span class="hljs-string">&quot;worker=%d settled match=%s winner=%s\n&quot;</span>, id, j.MatchID, j.Winner)
+	}
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> {
+	jobs := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> Job, <span class="hljs-number">8</span>) <span class="hljs-comment">// 有界：最多積 8 筆</span>
+	<span class="hljs-keyword">var</span> wg sync.WaitGroup
+	<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">3</span>; i++ {
+		wg.Add(<span class="hljs-number">1</span>)
+		<span class="hljs-keyword">go</span> worker(i, jobs, &amp;wg)
+	}
+
+	<span class="hljs-comment">// 模擬五局結束</span>
+	<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">5</span>; i++ {
+		jobs &lt;- Job{MatchID: fmt.Sprintf(<span class="hljs-string">&quot;m%d&quot;</span>, i), Winner: <span class="hljs-string">&quot;Ada&quot;</span>}
+	}
+	<span class="hljs-built_in">close</span>(jobs) <span class="hljs-comment">// 不再派工，worker 會讀完離開</span>
+	wg.Wait()
+}</code></pre><p>要點：</p>
+<ul>
+<li><code>make(chan Job, N)</code> 的 <strong>N 就是背壓閥門</strong>  </li>
+<li>生產者（Room／結算點）在佇列滿時應 <code>select</code> 失敗路徑：回傳錯誤、拒開新局、或丟棄<strong>非關鍵</strong>分析事件——依業務選  </li>
+<li><code>close(jobs)</code> 後 worker 用 <code>range</code> 自然結束；再 <code>Wait</code> 會合</li>
+</ul>
+<p>請自己跑 <code>examples/i05-worker</code>，看三個 worker 怎麼分掉五筆任務。</p>
+<h3>佇列滿了怎麼辦（L1 就該想）</h3>
+<pre class="hljs"><code class="language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">Push</span><span class="hljs-params">(jobs <span class="hljs-keyword">chan</span>&lt;- Job, j Job)</span></span> <span class="hljs-type">error</span> {
+	<span class="hljs-keyword">select</span> {
+	<span class="hljs-keyword">case</span> jobs &lt;- j:
+		<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>
+	<span class="hljs-keyword">default</span>:
+		<span class="hljs-keyword">return</span> errQueueFull <span class="hljs-comment">// 呼叫端決定：拒絕、改丟分析、或換策略</span>
+	}
+}</code></pre><p>「滿了還用無緩衝硬塞」會堵住 Room 迴圈；「滿了就開新 goroutine」則回到 C8 的無界扇出。有界＋明確錯誤，才是可控。</p>
+<h2>為什麼這樣設計</h2>
+<h3>為什麼結算要冪等？</h3>
+<p>worker 可能：</p>
+<ul>
+<li>寫 DB 成功了，但回報前進程掛了 → 重放  </li>
+<li>網路逾時你以為失敗，其實對方已收到</li>
+</ul>
+<p>所以「至少一次」是常態。冪等手段例如：</p>
+<ul>
+<li>以 <code>match_id</code> 當唯一鍵，<code>INSERT</code> 衝突就視為已結算  </li>
+<li>狀態機：<code>pending → settled</code>，重複事件直接 no-op</li>
+</ul>
+<p>沒有冪等的重試＝玩家收兩次獎，客服收兩倍工單。</p>
+<h3>關服順序</h3>
+<p>長駐服務不要「殺行程了事」：</p>
+<ol>
+<li><strong>停止接收</strong>新的結算／新開局  </li>
+<li><strong>drain</strong>（排空）佇列，或把未完成落地到可重放存放  </li>
+<li>再結束 worker、關 DB</li>
+</ol>
+<p>J 卷的優雅關閉會跟這接起來；這章先建立態度：佇列裡的關鍵任務是「還沒入冊的帳」。</p>
+<h3>Outbox（進階可先略過）</h3>
+<p>若你必須「DB 事務成功」與「訊息一定出去」綁在一起，常見作法是同一交易寫入 <strong>Outbox 表</strong>，再由獨立輸送把 Outbox 投遞出去。這比「先寫業務表再隨手 pubsub」不容易漏。新手先把行程內有界佇列＋冪等做熟即可。</p>
+<h2>遊戲 Server 會用在哪</h2>
+<p>Arena Mini 可在 <code>PhaseEnded</code>（或同等結束點）：</p>
+<ul>
+<li>組一筆 JSON 結果  </li>
+<li><code>Push</code> 進 jobs  </li>
+<li>worker 寫 log／之後換真 DB</li>
+</ul>
+<p>分析事件（「這局大家喜歡哪個模式」）在佇列滿時可以丟；<strong>發獎與扣款</strong>不行——滿了要背壓到「先別開新局／先別完成購買」這一層。</p>
+<p>記得：Room 仍然<strong>不在 tick 裡</strong>做重 I/O；它只負責把 Job 丟過邊界。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li><strong>在請求／tick 裡同步寄信、寫庫 3 秒</strong>——尾巴延遲直接餵給玩家。  </li>
+<li><strong>無界 <code>go func() { settle() }</code> 狂丟</strong>——洩漏與背壓全無（回顧 C1、C8）。  </li>
+<li><strong>重試不談冪等</strong>——等於隨機刷獎機器。  </li>
+<li><strong>關服不 drain</strong>——結算蒸發，還以為「重啟就好」。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>跑通 <code>examples/i05-worker</code>。  </li>
+<li>改成 queue 滿時 <code>Push</code> 回傳 error（<code>select</code> + <code>default</code>），並用測試或 <code>main</code> 演示滿佇列行為。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>幫 <code>Job</code> 加 <code>Attempt</code>，模擬失敗重試；用 <code>match_id</code> 集合確保同一局只印一次「settled」。  </li>
+<li>關機流程：再收一筆 Job 的開關關掉後，排空再印 <code>drained</code>。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>緩衝開超大「先不當有界」</strong>：延遲問題變成記憶體問題，崩得更晚更劇烈。  </li>
+<li><strong>close 後還往 channel 送</strong>：panic；要先停生產者。  </li>
+<li><strong>worker 內再開無界任務</strong>：問題只是被推下一層。  </li>
+<li><strong>把 pubsub 當成這章的隊列</strong>（I3）：不可靠，不適合結算。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li>J3／J4：優雅關閉與負載——跟 drain、背壓同一條故事線</li>
+</ul>
+<h2>本卷收束</h2>
+<p>I 卷要內化的不是某個 Redis 指令，而是：</p>
+<table>
+<thead>
+<tr>
+<th>問題</th>
+<th>答案方向</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>tick 裡寫 DB 嗎？</td>
+<td><strong>不</strong></td>
+</tr>
+<tr>
+<td>權威對局狀態在哪？</td>
+<td>Room <strong>記憶體</strong></td>
+</tr>
+<tr>
+<td>跨進程軟狀態／排行／TTL？</td>
+<td>常是 <strong>Redis</strong></td>
+</tr>
+<tr>
+<td>錢與庫存正本？</td>
+<td><strong>DB 交易</strong></td>
+</tr>
+<tr>
+<td>結束後的重活？</td>
+<td><strong>有界佇列 + worker</strong>，並談冪等</td>
+</tr>
+</tbody></table>
+<p>下一卷 J：日誌、指標、關服、負載——讓這些資料路徑在生產環境跑得夠久。</p>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/i-data/i4-cache-consistency/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">I4 快取一致性：允許錯多久，比追求永遠正確實際</div></a><a href="/lessons/j-production/j0-index/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">J0 J 卷導讀：能玩還不夠，要能關、能看、能守</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

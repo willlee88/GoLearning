@@ -1,0 +1,111 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="熱路徑 vs 冷路徑；事件邊界寫入；帳號資產跟進行中對局為什麼不能同一套語意。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>I1 持久化邊界：什麼時候才該寫進硬碟 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">I · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">I1 · 持久化邊界：什麼時候才該寫進硬碟</h1><p class="mt-3 text-slate-400">熱路徑 vs 冷路徑；事件邊界寫入；帳號資產跟進行中對局為什麼不能同一套語意。</p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">persistence</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">game-server</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>「持久化」（persistence）白話講就是：<strong>讓資料在程式重啟、機器重開之後還在</strong>。<br>但遊戲 Server 的麻煩不是「會不會 <code>INSERT</code>」，而是 <strong>在哪個時間點寫、寫失敗怎麼辦、寫太勤會不會拖垮對局</strong>。</p>
+<p>成本大致從低到高：</p>
+<p>記憶體 → 本機檔案 → Redis → 資料庫 → 跨機房複製</p>
+<p>權威對局狀態（誰站在哪、這幀血量多少）活在 <strong>Room 記憶體</strong>。<br>真正往下沉的寫入，應該發生在<strong>事件邊界</strong>，例如：</p>
+<ul>
+<li>登入／登出  </li>
+<li>購買、領郵件、改綁定  </li>
+<li><strong>對局結束結算</strong>  </li>
+<li>斷線後短時間保留 session（常用 Redis + TTL）</li>
+</ul>
+<p>讀完這章，你要能畫一條線：線的這一側是 tick 熱路徑（只碰記憶體），另一側才是 writer／DB／佇列。</p>
+<h2>先跟 Python 對一下</h2>
+<table>
+<thead>
+<tr>
+<th>Python 常見做法</th>
+<th>Go／遊戲 Server 對應</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>請求結束 <code>session.commit()</code></td>
+<td>可以，但<strong>不要</strong>在 tick 裡 commit</td>
+</tr>
+<tr>
+<td>Flask/Django 每個 view 碰 DB</td>
+<td>HTTP 後台 OK；對局迴圈不行</td>
+</tr>
+<tr>
+<td>Celery 丟非同步任務</td>
+<td>worker goroutine／有界 channel／外部 MQ</td>
+</tr>
+<tr>
+<td>ORM 自動 dirty flush</td>
+<td>明確決定「這次要不要持久化」</td>
+</tr>
+</tbody></table>
+<p>Python Web 裡「請求範圍＝交易範圍」很直覺。遊戲裡<strong>一幀不是一個 HTTP 請求</strong>——一秒可能 20 次 tick，每次都 commit 等於自找麻煩。</p>
+<h2>怎麼劃界（實務規則）</h2>
+<p>先背這三條，之後寫碼才不會飄：</p>
+<ol>
+<li><strong>Tick 內：只改記憶體</strong><br>套用輸入、推進模擬、組廣播快照——到此為止。  </li>
+<li><strong>命令成功且「這個結果必須活過重啟」：丟到有界 channel 給 writer</strong><br>例如購買成功、對局 <code>Ended</code> 要記結果。Room 不在熱路徑直接 <code>db.Exec</code>。  </li>
+<li><strong>關房／關服：flush 還沒寫完的關鍵任務</strong><br>停止接新局 → 排空佇列（或標記重試）→ 再退出。細節在 I5、J3。</li>
+</ol>
+<p>最小形狀可以想成：</p>
+<pre class="hljs"><code class="language-text">tick 迴圈 ──(只改 mem)──► snapshot 廣播
+                │
+                │  只有「事件」才送
+                ▼
+         jobs (有界 channel)
+                │
+                ▼
+            writer / worker ──► Redis 或 DB</code></pre><p>還沒接真 DB 也沒關係：先把「誰准寫、何時寫」拆開，之後換 Postgres 只是換 worker 裡面的實作。</p>
+<h2>為什麼這樣設計</h2>
+<h3>為什麼座標不該每 tick 寫 Postgres？</h3>
+<p>假設 20Hz、房間 100 人、每人每 tick 更新一次座標：</p>
+<ul>
+<li>一秒 ≈ 2000 次寫入<strong>只為了座標</strong>  </li>
+<li>磁碟與連線池先哭，tick 還要等 I/O，延遲尾巴被拉長  </li>
+<li>玩家感覺是「操作黏、廣播慢」，根因卻是你把冷儲存塞進熱迴圈</li>
+</ul>
+<p>更關鍵的是<strong>權威位置</strong>：當下座標的真相在 Room。DB 裡存「進行到一半的座標」通常沒業務價值——進程掛了，這局多數 PvP 直接作廢或判無效，而不是從 DB 還原每一幀。</p>
+<h3>至少一次 vs 剛好一次</h3>
+<p>結算常聽到兩個詞：</p>
+<ul>
+<li><strong>至少一次</strong>（at-least-once）：worker 可能重試，同一筆結果可能被處理兩次 → 你的結算邏輯要<strong>冪等</strong>（做兩次跟做一次結果一樣，或靠唯一鍵擋下來）。  </li>
+<li><strong>剛好一次</strong>（exactly-once）：端到端極難，成本高；實務多半是「至少一次 + 冪等」假裝成剛好一次。</li>
+</ul>
+<p>崩潰時「進行中的那一局」能不能丟？多數休閒 PvP <strong>可以接受丟</strong>。<br>帳號上的鑽石、倉庫道具 <strong>不能丟</strong> → 必須有獨立、清楚的交易邊界（買成功才扣款＋入袋，失敗要可回滾或可對帳）。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li>有些設計會把「關鍵命令」先寫 <strong>Outbox 表</strong> 再非同步投遞，避免「DB 成功了但訊息沒送出」。I5 會再點到。  </li>
+<li>跨區複製、讀寫分離是營運議題；先把單區邊界做對比較實在。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>Arena Mini 教學可以<strong>不接 DB</strong>，照樣把邊界想清楚：</p>
+<ul>
+<li><code>PhaseEnded</code>（或你的 <code>Ended</code>）時：組一筆 match result（誰贏、時長、分數）  </li>
+<li>同步寫檔／log 可以；正式環境比較像「丟進 jobs，讓 worker 寫庫」  </li>
+<li>進行中的 <code>x,y</code>、輸入佇列：<strong>只在記憶體</strong></li>
+</ul>
+<p>之後你加「賽季積分」「解鎖皮膚」，那些才是 DB 交易；不要順手把 Room 結構體塞滿 SQL。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li><strong>ORM／Unit of Work 每個小更新自動 flush</strong>——在 tick 裡等於隱形每幀寫庫。  </li>
+<li><strong>把 Redis 當唯一真相，關鍵資產從不備份到 DB</strong>——Redis 適合快與跨進程，不適合當金庫。  </li>
+<li><strong>「先全部寫 DB 再說，慢了再優化」</strong>——遊戲熱路徑的錯誤分層，後面是結構性重寫，不是加個 index 能救。  </li>
+<li><strong>房間物件直接持有 DB 把手在模擬迴圈使用</strong>——測試難、超時難、關服更難。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>列出 5 個遊戲狀態（例如：座標、準備旗標、錢包餘額、排行榜分數、斷線重連 token），各標「記憶體／Redis／DB」。  </li>
+<li>用自己的話寫 3～5 句：<strong>為什麼玩家座標不該每 tick 寫 Postgres</strong>（延遲、負載、權威、崩潰語意都可寫）。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>假設「購買皮膚」跟「對局結束加分」兩件事，分別畫出：誰在哪個 goroutine 做、失敗如何重試、會不會發兩次獎。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>把「能丟的進行中局」跟「不能丟的資產」用同一條寫入路徑</strong>——重試策略會互相打架。  </li>
+<li><strong>事件到了卻在 tick 裡同步寫庫「圖個簡單」</strong>——尖峰時所有房間一起結算，DB 會瞬間被戳穿。  </li>
+<li><strong>關服直接殺行程</strong>：佇列裡未寫完的結算蒸發；至少要有 drain 或落地再重放的計劃（I5、J3）。  </li>
+<li><strong>無界 buffer 無限累積待寫任務</strong>：記憶體先爆，背壓全無。</li>
+</ul>
+<h2>下一章</h2>
+<p>邊界有了，接著看 Go 標準庫怎麼跟資料庫說話：<code>database/sql</code>、連線池、以及用介面隔開 Room 與儲存實作。</p>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/i-data/i0-index/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">I0 I 卷導讀：資料放哪裡，比怎麼寫 SQL 更重要</div></a><a href="/lessons/i-data/i2-database-sql/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">I2 database/sql：連線池、context，還有 Repo 這層皮</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

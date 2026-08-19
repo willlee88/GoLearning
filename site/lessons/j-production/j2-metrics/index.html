@@ -1,0 +1,149 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="用原子計數做連線數、房間數、訊息速率；先提供 JSON /metrics，之後再換成 Prometheus。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>J2 Metrics：現在系統怎樣，一眼看數字 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">J · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">J2 · Metrics：現在系統怎樣，一眼看數字</h1><p class="mt-3 text-slate-400">用原子計數做連線數、房間數、訊息速率；先提供 JSON /metrics，之後再換成 Prometheus。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/j02-metrics</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">metrics</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>日誌告訴你「發生了什麼故事」。<br><strong>Metrics（指標）</strong> 告訴你「現在整體怎樣」——連線多少、房間多少、訊息多快、錯誤多兇、服務活了多久。</p>
+<p>遊戲 Server 很需要這種「儀表板直覺」：</p>
+<ul>
+<li>剛開活動，連線是爬升還是卡住？  </li>
+<li>廣播有沒有把 <code>messages_out</code> 打爆？  </li>
+<li>關房後 <code>rooms</code>／<code>connections</code> 有沒有掉下來（還是洩漏了）？</li>
+</ul>
+<p>教學路線先做：<strong>原子計數（atomic）+ JSON 的 <code>GET /metrics</code></strong>。<br>概念對了，之後换成 Prometheus 文字格式只是輸出層的事。</p>
+<p>讀完你要能：</p>
+<ol>
+<li>解釋 counter（計數器）跟 gauge（可上可下的量）差在哪  </li>
+<li>為連線／訊息加計數，並從 <code>/metrics</code> 讀回來  </li>
+<li>知道「每個玩家一個標籤」為什麼是災難</li>
+</ol>
+<h2>Python 對照</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>prometheus_client</code> Counter／Gauge</td>
+<td>自己用 <code>atomic</code> + JSON，或 Prometheus client 庫</td>
+</tr>
+<tr>
+<td>Flask／FastAPI 掛 <code>/metrics</code></td>
+<td><code>net/http</code> 掛 <code>GET /metrics</code></td>
+</tr>
+<tr>
+<td>先亂加一堆 label</td>
+<td>一樣危險：標籤基數爆炸會打爆時序庫</td>
+</tr>
+</tbody></table>
+<p>口訣一樣：<strong>先有正確、低基數的指標，再談漂亮儀表板。</strong></p>
+<h2>怎麼寫</h2>
+<p>最小形狀：</p>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">type</span> Metrics <span class="hljs-keyword">struct</span> {
+	Connections atomic.Int64
+	Rooms       atomic.Int64
+	MessagesIn  atomic.Int64
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(m *Metrics)</span></span> snapshot() <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]<span class="hljs-type">int64</span> {
+	<span class="hljs-keyword">return</span> <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]<span class="hljs-type">int64</span>{
+		<span class="hljs-string">&quot;connections&quot;</span>: m.Connections.Load(),
+		<span class="hljs-string">&quot;rooms&quot;</span>:       m.Rooms.Load(),
+		<span class="hljs-string">&quot;messages_in&quot;</span>: m.MessagesIn.Load(),
+	}
+}</code></pre><p>HTTP 端點回 JSON：</p>
+<pre class="hljs"><code class="language-go">mux.HandleFunc(<span class="hljs-string">&quot;GET /metrics&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(w http.ResponseWriter, r *http.Request)</span></span> {
+	w.Header().Set(<span class="hljs-string">&quot;Content-Type&quot;</span>, <span class="hljs-string">&quot;application/json&quot;</span>)
+	_ = json.NewEncoder(w).Encode(m.snapshot())
+})</code></pre><p>在連線建立／斷開、進房／關房、收到訊息的路徑上 <code>Add(1)</code> 或 <code>Add(-1)</code>。</p>
+<p>範例：<code>examples/j02-metrics</code>（<code>:8099</code>，另有 <code>POST /hit</code> 用來增加 <code>messages_in</code>）。</p>
+<p>Arena Mini 的實作在 <code>demo/arena-mini/server/internal/metrics</code>，還多了 <code>messages_out</code>、<code>inputs_applied</code>、<code>errors</code>、<code>uptime_sec</code> 等欄位。瀏覽器打開：</p>
+<p><code>http://localhost:8080/metrics</code></p>
+<h2>為什麼這樣設計／底層在幹嘛</h2>
+<h3>為什麼不用 Mutex 包一個普通 int？</h3>
+<p>可以，但 metrics 更新非常頻繁（每則訊息、每次廣播）。<br><code>sync/atomic</code> 的 <code>Int64</code> 專門做這種「單調加減與讀取」，開銷小、也不容易寫錯成「讀改寫 race」。<br>記住：atomic 適合<strong>獨立計數</strong>；若要「先讀一堆欄位做成一致快照再算複雜邏輯」，那是另一層設計。教學上 snapshot 時分別 <code>Load()</code> 就夠用。</p>
+<h3>Counter vs Gauge</h3>
+<table>
+<thead>
+<tr>
+<th>類型</th>
+<th>意思</th>
+<th>例子</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Counter</td>
+<td>大致只增（或重啟歸零後再增）</td>
+<td><code>messages_in</code>、<code>errors</code></td>
+</tr>
+<tr>
+<td>Gauge</td>
+<td>可上可下的當前值</td>
+<td><code>connections</code>、<code>rooms</code></td>
+</tr>
+</tbody></table>
+<p>搞混的後果：你把連線數做成「只加不加」，關線後數字永遠往上——儀表板會騙你。</p>
+<h3>為什麼教學先 JSON，不先 Prometheus？</h3>
+<p>因為你要先建立：<strong>量什麼、在哪加、怎麼驗證數字會動</strong>。<br>Prometheus 格式、histogram bucket、抓取間隔，都是下一步。概念錯了，換格式也救不了。</p>
+<h3>標籤（label）基數爆炸</h3>
+<p>進階監控常幫指標加標籤，例如 <code>room_id</code>、<code>weapon_type</code>。<br>若標籤值幾乎無限（每個玩家 id、每條聊天內容），時序庫會產生海量時間序列 → 記憶體與查詢一起垮。</p>
+<p>新手規則：</p>
+<ul>
+<li>進程級總數：連線、房間、訊息、錯誤 → OK  </li>
+<li>少量固定枚舉：phase、API 路徑群組 → 小心但通常 OK  </li>
+<li>玩家 id、房間 id 當標籤 → 教學與多數遊戲後端 <strong>不要</strong></li>
+</ul>
+<p>要查「某一房」，用日誌的 <code>room</code> 欄位；metrics 看整機健康。</p>
+<h3>USE／RED 這類口訣（有感覺即可）</h3>
+<ul>
+<li><strong>USE</strong>：Utilization、Saturation、Errors（資源視角）  </li>
+<li><strong>RED</strong>：Rate、Errors、Duration（請求視角）</li>
+</ul>
+<p>遊戲裡常看：連線數、訊息 rate、錯誤數、tick／廣播耗時。延遲分位（histogram）進階再補。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li>Prometheus histogram／summary  </li>
+<li>Exemplar、exemplar 對 trace  </li>
+<li>多進程 metrics 彙總與 relabel</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>Arena Mini 典型觀察：</p>
+<ol>
+<li>開兩個瀏覽器進同房 → <code>connections</code>、<code>rooms</code> 變化  </li>
+<li>開始移動 → <code>messages_in</code>／<code>inputs_applied</code>／<code>messages_out</code> 上升  </li>
+<li>關掉分頁 → <code>connections</code> 應降下來</li>
+</ol>
+<p>壓測時（J4／J8）你更該盯著這些數字，而不是只看終端有沒有噴錯。</p>
+<p>廣播放大時（J6），<code>messages_out</code> 往往比 <code>messages_in</code> 成長得兇——這正是 metrics 要幫你抓到的現象。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>只靠日誌當監控（又慢又貴又難畫曲線）。  </li>
+<li>每個玩家／每個房間一個 metric 標籤。  </li>
+<li>加了計數卻從不在關線／關房路徑減少 gauge。  </li>
+<li>指標名稱今天英文明天中文，沒有穩定契約。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>跑 <code>examples/j02-metrics</code>，對 <code>GET http://127.0.0.1:8099/metrics</code>，再 <code>POST /hit</code> 幾次，看 <code>messages_in</code> 是否增加。  </li>
+<li>啟動 Arena Mini，打開 <code>/metrics</code>，開房前後對照 <code>connections</code>／<code>rooms</code>。  </li>
+<li>想一下：若要加 <code>messages_out</code>，應在「每次成功送出／廣播」的哪一點 <code>Add</code>？（Arena Mini 已有此欄，可對照原始碼。）</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>在自己的小伺服器加 <code>uptime_sec</code>（用啟動時間算）。  </li>
+<li>畫一張紙：列出你認為遊戲 Server 最少要有的 5 個指標，並標註哪個是 counter、哪個是 gauge。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>在熱路徑配字串做複雜格式化才更新 metrics</strong>：指標更新要便宜；重活放到 snapshot／對外輸出。  </li>
+<li><strong>gauge 只加不減</strong>：連線洩漏和計數 bug 看起來一樣，先確認斷線路徑有沒有 <code>Add(-1)</code>。  </li>
+<li><strong>把 <code>/metrics</code> 當公開嬉戲頁又暴露內部細節</strong>：教學本機沒關係；生產常要網路政策或獨立 listen。  </li>
+<li><strong>沒有基線就優化</strong>：先記「20 連線時 messages_out 大概多少」，再談改碼（接 J4）。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li>USE／RED 方法論（搜尋關鍵字即可，先抓概念）  </li>
+<li>範例：<code>examples/j02-metrics</code>  </li>
+<li>Arena Mini：<code>demo/arena-mini/server/internal/metrics</code></li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/j-production/j1-slog/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">J1 結構化日誌 slog：出事時要找得到人</div></a><a href="/lessons/j-production/j3-graceful-shutdown/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">J3 優雅關閉：Ctrl+C 也不該直接蒸發</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

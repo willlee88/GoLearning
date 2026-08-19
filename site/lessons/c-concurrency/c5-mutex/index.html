@@ -1,0 +1,114 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="鎖的粒度、defer Unlock、RWMutex；以及何時該改用「單一擁有者 + channel」。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>C5 Mutex：沒有 GIL，共享就要同步 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">C · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">C5 · Mutex：沒有 GIL，共享就要同步</h1><p class="mt-3 text-slate-400">鎖的粒度、defer Unlock、RWMutex；以及何時該改用「單一擁有者 + channel」。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/c05-mutex</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">sync</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">mutex</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>多個 goroutine 碰同一塊記憶體（例如同一個 <code>map</code>），就需要同步。最常見是 <code>sync.Mutex</code>（互斥鎖）：同一時間只有一個持有者能進臨界區。</p>
+<p>關鍵不是「會不會 Lock」，而是：</p>
+<ul>
+<li><strong>粒度</strong>：鎖太大 → 變慢；太小 → 仍 race 或難懂  </li>
+<li><strong>持鎖時別做慢 IO</strong>  </li>
+<li><strong>解鎖一定要發生</strong>（所以常 <code>defer Unlock</code>）</li>
+</ul>
+<p>Go <strong>沒有 Python 那種 GIL 給你假安全感</strong>。data race 是真 bug。下一章 C6 會用偵測器釘死這件事。</p>
+<p>另一條路：不要共享——讓<strong>單一 goroutine 擁有資料</strong>，外人只透過 channel 送請求。兩種都合理，選可讀的那個。</p>
+<h2>Python 對照</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>threading.Lock</code></td>
+<td><code>sync.Mutex</code></td>
+</tr>
+<tr>
+<td><code>RLock</code>／讀寫鎖配方</td>
+<td><code>sync.RWMutex</code></td>
+</tr>
+<tr>
+<td>GIL 下「偶發沒事」</td>
+<td><strong>沒有 GIL</strong>；並發寫 map 會炸或被 <code>-race</code> 抓</td>
+</tr>
+<tr>
+<td>常靠運氣／單執行緒 asyncio</td>
+<td>必須顯式同步或避免共享</td>
+</tr>
+</tbody></table>
+<p>「我在 CPython 對 dict 這樣寫都沒事」——到 Go 請直接假設：<strong>會出事</strong>。</p>
+<h2>怎麼寫</h2>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">type</span> Registry <span class="hljs-keyword">struct</span> {
+	mu sync.Mutex
+	m  <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]<span class="hljs-type">int</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Registry)</span></span> Inc(id <span class="hljs-type">string</span>) {
+	r.mu.Lock()
+	<span class="hljs-keyword">defer</span> r.mu.Unlock()
+	r.m[id]++
+}</code></pre><p><code>defer Unlock</code> 的好處：中間有 <code>return</code>／錯誤路徑也不容易漏解鎖。</p>
+<p>範例：<code>examples/c05-mutex</code>。務必加 <code>-race</code> 跑。</p>
+<h2>細節</h2>
+<h3>鎖保護的是「不變量」，不是「那一行字」</h3>
+<p>例如 map 的「讀改寫」要在同一段臨界區完成。<br>只鎖 <code>m[id] = x</code> 卻在鎖外先讀舊值——仍可能 race。</p>
+<h3>廣播時的經典手法</h3>
+<pre class="hljs"><code class="language-text">鎖內：把 peer 清單拷貝出來
+解鎖
+對拷貝發送（可能很慢、可能阻塞）</code></pre><p>為什麼？因為持鎖時做網路發送，別的人都卡住，延遲會互相傳染，也更容易死鎖。</p>
+<h3><code>RWMutex</code></h3>
+<p>多讀少寫時，讀鎖可並存。但別預設「RW 一定比較快」——要測量；錯誤使用（讀鎖升級寫鎖等）也容易死鎖。</p>
+<h3>絕對別複製含 Mutex 的 struct</h3>
+<p>複製會複製鎖的狀態，變成「各解各的鎖」——非常難查。傳指標，或讓鎖欄位不被複製（設計上別值傳整個含鎖物件）。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li>鎖順序：多把鎖時全局約定順序，避免 AB/BA 死鎖。  </li>
+<li><code>sync.Map</code> 有特定場景；不是一般 map 的免費加速器。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<table>
+<thead>
+<tr>
+<th>資料</th>
+<th>常見策略</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>大廳人數、房間列表</td>
+<td>Mutex，或單一 lobby owner</td>
+</tr>
+<tr>
+<td>單一房間狀態</td>
+<td><strong>最好</strong>單一 room goroutine 擁有；外人丟命令</td>
+</tr>
+<tr>
+<td>Session 索引</td>
+<td>Mutex／分片（進階）</td>
+</tr>
+</tbody></table>
+<p>房間內規則邏輯能單線跑就單線跑——比到處加鎖簡單太多。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>「有 GIL／我測很多次沒炸」當正確性證明。  </li>
+<li>持鎖時 call 網路、DB、別人的回呼（回呼可能再搶同一把鎖）。  </li>
+<li>用 <code>sleep</code> 降低撞車機率來「修」race。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>跑 <code>examples/c05-mutex</code>，加上 <code>go test -race</code>。  </li>
+<li>寫一版無鎖並發寫 map，看 <code>-race</code> 怎麼報。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>把同一份資料改成「owner goroutine + 請求 channel」，比較可讀性。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>鎖住了但保護範圍不夠</strong>：資料結構的整次更新要在臨界區。  </li>
+<li><strong>死鎖</strong>：同 goroutine 重複 Lock 普通 Mutex；或鎖順序交錯。  </li>
+<li><strong>以為讀不用鎖</strong>：並發讀寫 map 在 Go 非法；純讀多執行緒也要有 happens-before 保證。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://pkg.go.dev/sync">https://pkg.go.dev/sync</a></li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/c-concurrency/c4-context/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">C4 context：取消是一棵樹</div></a><a href="/lessons/c-concurrency/c6-race-lab/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">C6 Race Lab：先紅後綠，親眼看見 data race</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

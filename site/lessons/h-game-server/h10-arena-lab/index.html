@@ -1,0 +1,126 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="把 H1–H9 落到可玩的一局：Ready、Tick、Input、State 廣播。雙人同步過關，才算 H 卷收束。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>H10 Lab：Arena Mini 權威對戰檢查點 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">H · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">H10 · Lab：Arena Mini 權威對戰檢查點</h1><p class="mt-3 text-slate-400">把 H1–H9 落到可玩的一局：Ready、Tick、Input、State 廣播。雙人同步過關，才算 H 卷收束。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">demo/arena-mini</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">lab</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">capstone</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">game-server</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>這是 H 卷的<strong>實作檢查點</strong>，不是再塞新理論。<br>你要把前面學的名詞，全部對到 <code>demo/arena-mini</code> 的行為上：</p>
+<ol>
+<li>進房（Lobby）  </li>
+<li>送 <code>ready</code>  </li>
+<li>≥2 人且皆 ready → <strong>Playing</strong>，並啟動 tick  </li>
+<li>送 <code>input</code>（dx, dy）——意圖，不是自稱座標  </li>
+<li>Server 每 tick 更新座標、處理碰撞得分、廣播 <code>state</code>  </li>
+<li>先到分數或超時 → <strong>Ended</strong> → 數秒後可回 <strong>Lobby</strong></li>
+</ol>
+<p>讀完並動手後，你應該能指著程式說：「這段是 hub，那一段是 game；開局真相在 Server。」</p>
+<h2>這局在驗證什麼（對照前面各章）</h2>
+<table>
+<thead>
+<tr>
+<th>章</th>
+<th>Lab 裡你要看到的證據</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>H1 職責地圖</td>
+<td><code>cmd/server</code> 組裝；<code>hub</code> 收發；<code>game</code> 規則</td>
+</tr>
+<tr>
+<td>H2 Session</td>
+<td>不同 name 進同房；斷線會清理成員</td>
+</tr>
+<tr>
+<td>H3 Room FSM</td>
+<td>Playing 前的 input 被忽略／拒絕；Ready 才能開局</td>
+</tr>
+<tr>
+<td>H4 權威</td>
+<td>客戶端不靠直傳座標當真相</td>
+</tr>
+<tr>
+<td>H5 Tick</td>
+<td>移動是一格一格依節奏更新，不是「封包一到瞬移無序」</td>
+</tr>
+<tr>
+<td>H6 輸入佇列</td>
+<td><code>type=input</code> → 入隊 → tick 套用</td>
+</tr>
+<tr>
+<td>H7 同步</td>
+<td>定期收到全量 <code>state</code></td>
+</tr>
+<tr>
+<td>H8 匹配</td>
+<td>相同 room id ≈ 手動湊局</td>
+</tr>
+<tr>
+<td>H9 規則／I/O</td>
+<td><code>go test ./internal/game</code> 可不開瀏覽器</td>
+</tr>
+</tbody></table>
+<p>若某一列對不上，回去補那一章，別只靠「畫面好像會動」。</p>
+<h2>怎麼跑</h2>
+<pre class="hljs"><code><span class="hljs-built_in">cd</span> F:\GoLearning\demo\arena-mini\server
+go mod tidy
+go <span class="hljs-built_in">test</span> ./...
+go run ./cmd/server</code></pre><p>瀏覽器開：<code>http://localhost:8080</code></p>
+<p>建議流程：</p>
+<ol>
+<li>開<strong>兩個分頁</strong>（或兩個視窗）  </li>
+<li>填<strong>不同 name</strong>、<strong>相同 room</strong>  </li>
+<li>雙方按 Ready  </li>
+<li>開局後用按鈕或方向鍵移動  </li>
+<li>確認你看得到對方位置隨 tick 更新；碰撞／得分若有實作也一併確認</li>
+</ol>
+<p>更完整的說明見：<code>demo/arena-mini/README.md</code>。</p>
+<h2>檢查清單（請逐項打勾）</h2>
+<p>做 Lab 時把下面當驗收單：</p>
+<ul>
+<li><input disabled="" type="checkbox"> 客戶端<strong>不再</strong>把權威座標當真相直傳給 Server 採信  </li>
+<li><input disabled="" type="checkbox"> <code>internal/game</code> 可以單測（<code>go test</code> 通過）  </li>
+<li><input disabled="" type="checkbox"> Playing <strong>之前</strong>的 input 不會亂改正式對戰狀態  </li>
+<li><input disabled="" type="checkbox"> 斷線會清理成員（不會變成幽靈座位一直佔著）  </li>
+<li><input disabled="" type="checkbox"> <code>/healthz</code>、<code>/rooms</code> 這類探針／除錯端點仍可用（若 demo 有提供）  </li>
+<li><input disabled="" type="checkbox"> 兩人真的完成至少一局：Ready → 移動同步 → 看到 state</li>
+</ul>
+<p>全部勾完，H 卷才算「可玩閉環」落地，而不只是讀過名詞。</p>
+<h2>建議閱讀順序（進 repo 時）</h2>
+<ol>
+<li><code>internal/game</code>：Phase、Ready、Input、Tick、Snapshot——規則真相  </li>
+<li><code>internal/hub</code>：連線註冊、訊息分派、廣播——I/O  </li>
+<li><code>cmd/server</code>：怎麼組起來聽 port  </li>
+<li>前端頁面（若有）：它送的是 <code>ready</code>／<code>input</code> 還是舊的 <code>pos</code>？</li>
+</ol>
+<p>一邊看一邊問 H9 那句：依賴方向有沒有被破壞？</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li><strong>開局邏輯寫在前端</strong>：「我看人齊了就自己 start」——兩端時間差會讓世界分裂，也無法防惡意客戶端。  </li>
+<li><strong>沒有 tick 的純事件堆疊</strong>：誰先到誰先改，局很難重現。  </li>
+<li><strong>只測快樂路徑</strong>：從不試「一人 Ready、Lobby 就狂送 input、斷線重進」。  </li>
+<li><strong>改手感卻改到協定</strong>：想調速度時，應改 Server 參數（如 speed、地圖大小），不是讓客戶端多傳倍速。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做（H／M4 檢查點）</h3>
+<ol>
+<li>雙人完成一局移動同步（建議錄一下自己的操作步驟，之後回歸用）。  </li>
+<li>閱讀並用自己的話寫三句：<code>internal/game</code> 與 <code>internal/hub</code> 的邊界。  </li>
+<li>改一個規則參數（速度或地圖大小），再測手感——確認改的是 Server 側。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>調整 <code>ScoreToWin</code>／<code>HitRadius</code>（若專案有這些常數）感受對局長度與碰撞寬鬆度。  </li>
+<li>加第三名玩家進同房（capacity 允許的話），觀察廣播與開局條件。  </li>
+<li>故意在 Lobby 送 input，確認 Server 行為符合你的 FSM 設計。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>兩個分頁用了同一個 name</strong>：頂號／覆蓋／拒絕政策若沒注意，會以為是同步 Bug。  </li>
+<li><strong>以為 <code>go run</code> 過了就不用 <code>go test</code></strong>：規則回歸要靠測試；瀏覽器是體驗驗證。  </li>
+<li><strong>改前端預測當成功</strong>：本機看起來順，另一個分頁對不上——回去查權威 state。  </li>
+<li><strong>房號不一致</strong>：一人在 <code>room1</code>、一人在 <code>room2</code>，永遠等不到開局。</li>
+</ul>
+<h2>M4／H 卷收束</h2>
+<p>你現在具備最小的「可玩」遊戲後端閉環：</p>
+<blockquote>
+<p>連線 → Session → Room／Phase → 權威 Input → Tick → State 廣播 → 結束  </p>
+</blockquote>
+<p>下一階段 <strong>M5（I／J 卷）</strong> 會往外長：資料落庫、觀測指標、壓測、優雅關閉——讓這間小 Arena 比較像能值班的服務，而不只是 demo。</p>
+<p>若時間有限：先保證本 Lab 雙人同步與 <code>internal/game</code> 單測穩綠，再進 I0。</p>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/h-game-server/h9-rules-io/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">H9 規則與 I/O 分離：game 不該 import websocket</div></a><a href="/lessons/i-data/i0-index/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">I0 I 卷導讀：資料放哪裡，比怎麼寫 SQL 更重要</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

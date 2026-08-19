@@ -1,0 +1,109 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="net.Listen、Accept、連線生命週期。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>F2 TCP server 與 client · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">F · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">F2 · TCP server 與 client</h1><p class="mt-3 text-slate-400">net.Listen、Accept、連線生命週期。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/f02-tcp-echo</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">tcp</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">net</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p><strong>TCP</strong> 提供的是<strong>可靠的位元組流</strong>（bytes 會到、有序），不是「訊息佇列」。Server 典型骨架是：</p>
+<ol>
+<li><code>Listen</code> 聽一個位址  </li>
+<li>迴圈裡 <code>Accept</code> 接到新連線  </li>
+<li>每個連線丟給一個（或一組）goroutine 處理  </li>
+<li>用完 <code>Close</code>；讀寫要設 <strong>deadline</strong>，避免永久卡住</li>
+</ol>
+<h2>先跟 Python 對一下</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+<th>注意</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>socket.bind</code>／<code>listen</code>／<code>accept</code></td>
+<td><code>net.Listen</code>／<code>Accept</code></td>
+<td>流程幾乎一一對應</td>
+</tr>
+<tr>
+<td><code>conn.recv</code>／<code>sendall</code></td>
+<td><code>conn.Read</code>／<code>Write</code></td>
+<td>一樣可能短讀短寫</td>
+</tr>
+<tr>
+<td><code>conn.makefile</code></td>
+<td><code>bufio.NewReader(conn)</code></td>
+<td>緩衝讀較好寫</td>
+</tr>
+<tr>
+<td><code>asyncio</code> 一堆 Stream</td>
+<td>每連線 goroutine 很常見</td>
+<td>模型直覺，仍要管生命週期</td>
+</tr>
+</tbody></table>
+<h2>怎麼寫（能跑的最小例子）</h2>
+<pre class="hljs"><code class="language-go">ln, err := net.Listen(<span class="hljs-string">&quot;tcp&quot;</span>, <span class="hljs-string">&quot;:9000&quot;</span>)
+<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> {
+	log.Fatal(err)
+}
+<span class="hljs-keyword">defer</span> ln.Close()
+
+<span class="hljs-keyword">for</span> {
+	conn, err := ln.Accept()
+	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> {
+		<span class="hljs-keyword">continue</span> <span class="hljs-comment">// 實務要分辨「listener 關閉」與暫時錯誤</span>
+	}
+	<span class="hljs-keyword">go</span> handle(conn)
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">handle</span><span class="hljs-params">(conn net.Conn)</span></span> {
+	<span class="hljs-keyword">defer</span> conn.Close()
+	_ = conn.SetReadDeadline(time.Now().Add(<span class="hljs-number">5</span> * time.Second))
+	<span class="hljs-comment">// 讀寫…</span>
+}</code></pre><p>範例：<code>examples/f02-tcp-echo</code>（echo：你打什麼回什麼）。</p>
+<p>Client 端概念：</p>
+<pre class="hljs"><code class="language-go">conn, err := net.Dial(<span class="hljs-string">&quot;tcp&quot;</span>, <span class="hljs-string">&quot;127.0.0.1:9000&quot;</span>)
+<span class="hljs-keyword">defer</span> conn.Close()
+_, _ = conn.Write([]<span class="hljs-type">byte</span>(<span class="hljs-string">&quot;hi\n&quot;</span>))</code></pre><h2>為什麼這樣設計／底層在幹嘛</h2>
+<ol>
+<li><p><strong><code>net.Conn</code> 就是 Reader＋Writer</strong><br>後面所有 framing、<code>io.Copy</code>、JSON Decoder 都能接上去。</p>
+</li>
+<li><p><strong>Accept 迴圈與業務分離</strong><br>接受連線要快；慢邏輯放 <code>handle</code>。關服時先 <code>ln.Close()</code> 讓 Accept 失敗跳出，再等進行中的連線收尾（優雅關閉進階題，J 卷也會談）。</p>
+</li>
+<li><p><strong>Deadline 是必需品</strong><br><code>SetReadDeadline</code>／<code>SetWriteDeadline</code>／<code>SetDeadline</code>：時間到 <code>Read</code>/<code>Write</code> 回 deadline 錯誤。沒設的話，對端不說話，你的 goroutine 可能永遠卡在 <code>Read</code>。</p>
+</li>
+<li><p><strong>短讀短寫</strong><br><code>Write</code> 也可能一次沒寫完（雖然對 TCP 在很多情況下你會包迴圈）。讀訊息邊界更是應用層責任 → F3。</p>
+</li>
+<li><p><strong>連線是 OS 資源</strong><br>檔案描述符有限。洩漏 <code>Close</code>＝慢慢把伺服器卡死。<code>defer conn.Close()</code> 是基本禮貌。</p>
+</li>
+</ol>
+<h2>遊戲 Server 會用在哪</h2>
+<ul>
+<li>非瀏覽器客戶端（手機原生、桌面）常用 <strong>TCP + 長度前綴協定</strong>（F3）。  </li>
+<li>瀏覽器不能亂開裸 TCP 到任意 port（受限），網頁遊戲多走 <strong>WebSocket</strong>（F6），底層其實仍是 TCP（或 TLS 上的 TCP）。  </li>
+<li>健康檢查、匹配服務之間的內部 RPC，有時也是 TCP／HTTP2。</li>
+</ul>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li><strong>單執行緒 accept 完又自己同步處理</strong>，下一個玩家卡在門外。  </li>
+<li><strong>忽略 <code>Close</code>、忽略錯誤</strong>，fd 與 goroutine 洩漏。  </li>
+<li><strong>讀到底都不設 timeout</strong>，假死連線堆成山。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>跑 echo server；另開終端當 client（範例若有 client 就用；或自己 <code>net.Dial</code>）。  </li>
+<li>為 <code>Read</code> 設 5 秒 deadline，超時印出錯誤並關閉。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>用 <code>bufio.Scanner</code> 讀一行一行（這是「換行 framing」的一種，與 F3 長度前綴對照）。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>Listen 位址</strong>：<code>:9000</code> 聽所有介面；<code>127.0.0.1:9000</code> 只本機。  </li>
+<li><strong>Accept 錯誤一律 <code>continue</code></strong>：listener 關閉時應結束迴圈，否則空轉。  </li>
+<li><strong>在 handle 裡 panic</strong>：會弄掉單一 goroutine；重要服務外層可 recover，但更好是別 panic。  </li>
+<li><strong>把同一個 <code>conn</code> 給很多 goroutine 無鎖同寫</strong>：會交錯；寫要串行（F6 同樣問題）。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://pkg.go.dev/net">https://pkg.go.dev/net</a></li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/f-network/f1-network-mindset/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">F1 網路心智模型</div></a><a href="/lessons/f-network/f3-framing/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">F3 封包邊界與長度前綴</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

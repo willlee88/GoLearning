@@ -1,0 +1,104 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Builder、Cut、Contains；[]byte 操作。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>E6 strings 與 bytes 套件 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">E · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">E6 · strings 與 bytes 套件</h1><p class="mt-3 text-slate-400">Builder、Cut、Contains；[]byte 操作。</p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">strings</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">bytes</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>處理文字／位元組時，你會一直用到標準庫的 <strong><code>strings</code></strong> 與 <strong><code>bytes</code></strong>：找不找得到、怎麼切開、怎麼替換、怎麼<strong>高效拼接</strong>。</p>
+<p>記得跟 A9 的心智一起用：Go 字串是 <strong>UTF-8 位元組序列</strong>；用數字索引時是<strong>位元組下標</strong>，不是「第幾個字元」。<code>strings</code>／<code>bytes</code> 的函式多半也是以位元組／子字串為單位（rune 相關 API 會另外標）。</p>
+<h2>先跟 Python 對一下</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+<th>注意</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>&quot;a&quot; in s</code></td>
+<td><code>strings.Contains(s, &quot;a&quot;)</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>s.split(&quot;,&quot;, 1)</code></td>
+<td><code>strings.Cut(s, &quot;,&quot;)</code> 或 <code>SplitN</code></td>
+<td><code>Cut</code> 回 <code>(before, after, found)</code>，很好用</td>
+</tr>
+<tr>
+<td><code>&quot;&quot;.join(parts)</code></td>
+<td><code>strings.Builder</code> 或 <code>strings.Join</code></td>
+<td>熱路徑別狂用 <code>+</code> 拼很大串</td>
+</tr>
+<tr>
+<td><code>s.replace(...)</code></td>
+<td><code>strings.Replace</code> / <code>ReplaceAll</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>bytes</code>／<code>bytearray</code></td>
+<td><code>[]byte</code> + <code>bytes</code> 套件</td>
+<td><code>bytes</code> 與 <code>strings</code> API 幾乎平行</td>
+</tr>
+</tbody></table>
+<h2>怎麼寫（能跑的最小例子）</h2>
+<pre class="hljs"><code class="language-go">strings.Contains(s, <span class="hljs-string">&quot;bot&quot;</span>)
+
+before, after, ok := strings.Cut(s, <span class="hljs-string">&quot;,&quot;</span>)
+<span class="hljs-keyword">if</span> ok {
+	<span class="hljs-comment">// s == &quot;1,-1&quot; → before=&quot;1&quot;, after=&quot;-1&quot;</span>
+}
+
+<span class="hljs-keyword">var</span> b strings.Builder
+b.WriteString(<span class="hljs-string">&quot;hello&quot;</span>)
+b.WriteByte(<span class="hljs-string">&#x27; &#x27;</span>)
+b.WriteString(<span class="hljs-string">&quot;room&quot;</span>)
+out := b.String()</code></pre><p><code>[]byte</code> 版本長得很像：</p>
+<pre class="hljs"><code class="language-go">bytes.Contains(data, []<span class="hljs-type">byte</span>(<span class="hljs-string">&quot;bot&quot;</span>))
+bytes.Cut(data, []<span class="hljs-type">byte</span>(<span class="hljs-string">&quot;,&quot;</span>))</code></pre><p>什麼時候用哪個？</p>
+<ul>
+<li>已經是 <code>string</code>、偏文字邏輯 → <code>strings</code>  </li>
+<li>網路緩衝、二進位、不想一直字串↔[]byte 轉換 → <code>bytes</code></li>
+</ul>
+<h2>為什麼這樣設計／底層在幹嘛</h2>
+<ol>
+<li><p><strong><code>string</code> 不可變；<code>[]byte</code> 可變</strong><br>改內容常用 <code>[]byte</code>；要當 map 鍵、印 log 再用 string。轉換會複製，熱路徑別無腦來回轉。</p>
+</li>
+<li><p><strong><code>Builder</code> 減少分配</strong><br><code>s = s + chunk</code> 在迴圈裡會一直配置新字串。<code>Builder</code> 內部緩衝可成長，最後一次 <code>String()</code>。小次數拼接其實沒差；次數多、片段長再在意。</p>
+</li>
+<li><p><strong><code>Cut</code> vs <code>Split</code></strong><br>只切一刀時 <code>Cut</code> 語意清楚，不必拿到 slice 再 <code>[0]</code> <code>[1]</code>。</p>
+</li>
+<li><p><strong>正規表示式在 <code>regexp</code></strong><br>強大多了，也貴。暱稱過濾、簡單 token 能用 <code>strings</code> 就先別上 regex。</p>
+</li>
+</ol>
+<h2>遊戲 Server 會用在哪</h2>
+<ul>
+<li>解析超簡單的輸入：<code>&quot;dx,dy&quot;</code> → 兩個整數。  </li>
+<li>暱稱長度、是否含空白、簡易敏感詞：<code>Contains</code>／<code>TrimSpace</code>。  </li>
+<li>組 log、組廣播文案：<code>Builder</code> 或 <code>fmt</code>（看情境）。  </li>
+<li>二進位協定夾雜 ASCII 指令時用 <code>bytes</code>。</li>
+</ul>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li><strong>把字串當「字元陣列」用整數 index 亂切中文</strong>——可能切在 UTF-8 正中間。需要字元維度用 <code>range</code> rune 或 <code>utf8</code> 套件。  </li>
+<li><strong>為了「看起來快」一開始就上怪招</strong>——先正確，再用 benchmark 證明。  </li>
+<li><strong>每次檢查都編譯新的 <code>regexp</code></strong>——要編譯一次存起來。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>用 <code>strings.Cut</code> 拆 <code>&quot;1,-1&quot;</code> 這種 <code>dx,dy</code>（再自己 <code>strconv.Atoi</code>）。  </li>
+<li>寫一個函式：暱稱去掉首尾空白後，長度是否在 1～12。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>用 <code>Builder</code> 接 1000 段字串，對照 <code>+</code> 做個超小 benchmark（呼應 D4）。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong><code>Contains</code> 大小寫</strong>：要無視大小寫用 <code>EqualFold</code>／先摺疊，不是直接 Contains。  </li>
+<li><strong><code>Trim</code> 的 cutset 不是「字串前綴」</strong>：是「集合裡的字元」都剝掉；剝前綴用 <code>TrimPrefix</code>。  </li>
+<li><strong>修改 <code>[]byte</code> 卻忘了它可能跟字串共用底層</strong>（進階）：對字面值轉換來的行為要小心；新手分開配置較安心。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://pkg.go.dev/strings">https://pkg.go.dev/strings</a>  </li>
+<li><a target="_blank" rel="noopener noreferrer" href="https://pkg.go.dev/bytes">https://pkg.go.dev/bytes</a></li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/e-stdlib/e5-json/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">E5 encoding/json 實務</div></a><a href="/lessons/e-stdlib/e7-context-pkg/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">E7 context 套件速查</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

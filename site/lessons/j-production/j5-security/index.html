@@ -1,0 +1,168 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="驗證命令、限制大小與速率、守住秘密與信任邊界；權威 Server 是反作弊第一層，但不是全部。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>J5 安全基線：客戶端說的話，預設都不可信 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">J · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">J5 · 安全基線：客戶端說的話，預設都不可信</h1><p class="mt-3 text-slate-400">驗證命令、限制大小與速率、守住秘密與信任邊界；權威 Server 是反作弊第一層，但不是全部。</p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">security</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>遊戲客戶端在玩家手上，等於在「對方完全可控的環境」裡跑。<br>改封包、重放、刷指令、灌垃圾資料，都比你想的容易。</p>
+<p>所以心智模型很硬的一句話：</p>
+<blockquote>
+<p><strong>客戶端不可信。能信的只有：你 Server 驗證過、計算過、授權過的結果。</strong></p>
+</blockquote>
+<p>這章不教你變成資安專家，只建一條<strong>基線（baseline）</strong>：沒有這些，後面什麼 matchmaking、廣播優化都像沙上蓋樓。</p>
+<p>讀完你要能：</p>
+<ol>
+<li>列出至少五項 Server 該做的檢查  </li>
+<li>說明為什麼「前端藏管理員按鈕」不算安全  </li>
+<li>解釋為什麼客戶端直傳座標（<code>pos</code>）很危險（呼應 H4 權威）</li>
+</ol>
+<h2>Python 對照</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go／遊戲後端</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Pydantic／serializer 驗證</td>
+<td>手寫驗證或驗證庫；範圍、長度、枚舉</td>
+</tr>
+<tr>
+<td>rate limit middleware</td>
+<td>每連線／每玩家令牌桶或固定視窗計數</td>
+</tr>
+<tr>
+<td>Django permission</td>
+<td>房間身份、phase、是否輪到你</td>
+</tr>
+<tr>
+<td>不把 secret 打進 log</td>
+<td>同樣；J1 已強調</td>
+</tr>
+</tbody></table>
+<p>層次很像 Web API；差別是：<strong>長連線 + 高頻 input</strong>，速率限制與訊息大小限制更常被打穿。</p>
+<h2>怎麼寫（基線清單）</h2>
+<p>把下面當成上線前的檢查表，不必一次完美實作，但每項都要有態度：</p>
+<h3>1. 驗證所有命令</h3>
+<ul>
+<li>型別對不對？欄位缺不缺？  </li>
+<li>數值在不在範圍？（例如 input 的 <code>dx,dy</code> ∈ [-1, 1]）  </li>
+<li>當前 <strong>phase</strong> 允不允許？（lobby 不能亂套 playing 專用命令）  </li>
+<li>這個人<strong>是不是這個房間的成員</strong>？</li>
+</ul>
+<p>非法就拒絕，並可打 <code>Warn</code>（別把惡意流量打成 Error 洗版）。</p>
+<h3>2. 限制訊息大小與速率</h3>
+<ul>
+<li>最大幀長／最大 JSON 大小：防止一個連線塞爆記憶體  </li>
+<li>每連線每秒最多 N 個 input／聊天：防止刷指令拖垮 tick  </li>
+<li>暱稱長度、字元集：防止超長字串、奇怪控制字元</li>
+</ul>
+<h3>3. 認證與會話（生產）</h3>
+<p>教學 demo 常用 <code>name</code> query 進房；真的上線要：</p>
+<ul>
+<li>登入後發 <strong>token</strong>（令牌），連線時驗證  </li>
+<li>session 過期、重連策略（H2／延伸任務）  </li>
+<li>別只靠「我知道房間代號」當授權</li>
+</ul>
+<h3>4. 傳輸與部署</h3>
+<ul>
+<li>公網用 <strong>TLS</strong>（HTTPS／WSS）  </li>
+<li>管理 API 與玩家口分離（不同 port 或網段）  </li>
+<li>debug／pprof／管理員介面<strong>不要</strong>預設暴露在公網</li>
+</ul>
+<h3>5. 日誌與秘密</h3>
+<ul>
+<li>不打密碼、token 全文（J1）  </li>
+<li>設定檔與環境變數管理秘密，不進 git</li>
+</ul>
+<h3>最小程式直覺（速率限制示意）</h3>
+<pre class="hljs"><code class="language-go"><span class="hljs-comment">// 概念示意：每連線獨立計數，超限就丟棄或關閉</span>
+<span class="hljs-keyword">if</span> n := client.inputsThisSecond; n &gt;= maxInputsPerSec {
+    <span class="hljs-comment">// reject or disconnect</span>
+    <span class="hljs-keyword">return</span>
+}
+client.inputsThisSecond++</code></pre><p>真實實作可用時間窗重置、令牌桶；先有「有上限」比沒有重要。</p>
+<h2>為什麼這樣設計／底層在幹嘛</h2>
+<h3>權威 Server 是反作弊第一層，不是全部</h3>
+<p>H4 講過：位置、碰撞、得分應由 Server 算。<br>客戶端只送「我想往哪走」的 <strong>input</strong>，不送「我已經到某座標」的結論。</p>
+<p>為什麼直傳 <code>pos</code> 危險？</p>
+<ul>
+<li>玩家可以改封包瞬移、穿牆、搶分數  </li>
+<li>你變成「誰喊得兇誰贏」，規則崩盤  </li>
+<li>重放攻擊更容易（直接重送有利座標）</li>
+</ul>
+<p>權威之後仍要防：加速器（異常 input 頻率）、協議濫用、經濟系統刷物——那些可能還要統計、風控、回放。基線是先別把大門打開。</p>
+<h3>信任邊界（trust boundary）</h3>
+<p>畫一條線：線外是客戶端與公網，線內是你的進程與資料庫。<br><strong>跨線的一切都要驗證。</strong><br>「我們前端會檢查」只減少誠實用戶的誤操作，擋不住修改過的客戶端。</p>
+<h3>房號枚舉與資訊洩漏</h3>
+<p>若房間 id 是 <code>1,2,3...</code>，有人會掃一遍嘗試加入。<br>緩解：足夠隨機的 id、需要票據／邀請、權限檢查、速率限制。<br><code>/rooms</code> 這類管理資訊也不要對全世界無條件公開（教學 demo 可鬆，生產要收）。</p>
+<h3>瀏覽器 WebSocket 的 Origin</h3>
+<p>瀏覽器環境可檢查 <code>Origin</code>，降低簡單的跨站濫用。<br>原生遊戲客戶端較不吃這套，仍要靠 token 與協定驗證——<strong>Origin 不是萬能盾。</strong></p>
+<h3>進階可先略過</h3>
+<ul>
+<li>WAF、機器人分數、裝置指紋  </li>
+<li>反外掛驅動級方案  </li>
+<li>正式威脅建模（STRIDE 等）</li>
+</ul>
+<p>新手先把「驗證、限速、秘密、權威計算」做穩。</p>
+<h2>遊戲 Server 會用在哪</h2>
+<p>Arena Mini 已拒絕非法 input（範圍等）；速率限制可當練習自己加。<br>想像這些攻擊面：</p>
+<table>
+<thead>
+<tr>
+<th>行為</th>
+<th>沒有基線時</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>每秒上千 input</td>
+<td>tick／鎖／廣播被拖死</td>
+</tr>
+<tr>
+<td>超大 JSON</td>
+<td>記憶體尖峰、GC 爆炸</td>
+</tr>
+<tr>
+<td>掃房號</td>
+<td>進別人對局、騷擾</td>
+</tr>
+<tr>
+<td>直傳座標</td>
+<td>作弊橫行</td>
+</tr>
+<tr>
+<td>管理 API 裸奔</td>
+<td>直接關房、改分</td>
+</tr>
+</tbody></table>
+<p>壓測（J4）找的是「容量」；安全基線找的是「惡意或異常流量下你還活不活」。兩者都要。</p>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>前端隱藏「管理員按鈕」就當安全。  </li>
+<li>預設把 debug、pprof、寬鬆 CORS 開在公網。  </li>
+<li>「先上線，被打了再補驗證」。  </li>
+<li>相信客戶端算好的分數、金錢、背包。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>寫下 3 個你會加在 Arena Mini（或同類 Server）的 rate limit（例：每連線每秒 input、每連線每秒聊天、每 IP 每分鐘建連）。  </li>
+<li>用自己的話說明：為什麼客戶端直傳 <code>pos</code> 危險？正確做法應送什麼？（呼應 H4）  </li>
+<li>檢查你日誌／設定有沒有可能印出秘密——有的話改掉。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>為暱稱加上最大長度與允許字元集，測超長字串。  </li>
+<li>畫一張「信任邊界」：標出客戶端、Gateway、Game、DB，哪些箭頭要驗證。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>只驗證「開心路徑」</strong>：記得測缺欄位、NaN、超大數、錯誤 phase。  </li>
+<li><strong>限速做成全域一把鎖</strong>：可能變成新瓶頸；通常「每連線狀態」較合理。  </li>
+<li><strong>拒絕時回太多內部細節</strong>：給攻擊者提示；對玩家給簡潔錯誤即可。  </li>
+<li><strong>以為權威 = 絕對安全</strong>：權威防的是狀態說謊；灌流量、挖洞、社工仍要另外防。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li>OWASP API Security（抓概念即可）  </li>
+<li>本站 H4 權威 Server  </li>
+<li>Arena Mini：<code>demo/arena-mini/server/internal/game</code>（規則與輸入邊界）</li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/j-production/j4-loadtest/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">J4 壓測：先有假設，再漸進加壓</div></a><a href="/lessons/j-production/j6-capacity/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">J6 容量與廣播放大：人一多，流量不是線性的</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

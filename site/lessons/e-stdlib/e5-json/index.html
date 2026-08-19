@@ -1,0 +1,129 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="Marshal/Unmarshal、tag、RawMessage、常見陷阱。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>E5 encoding/json 實務 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">E · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">E5 · encoding/json 實務</h1><p class="mt-3 text-slate-400">Marshal/Unmarshal、tag、RawMessage、常見陷阱。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/e05-json</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">json</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">stdlib</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>遊戲前後端、HTTP API、WebSocket 訊息，十有八九會碰到 <strong>JSON</strong>（一種文字格式的資料交換，JavaScript Object Notation）。</p>
+<p>Go 標準庫是 <code>encoding/json</code>。你會搞懂：</p>
+<ul>
+<li>結構體怎麼跟 JSON 欄位對上（<strong>struct tag</strong>）  </li>
+<li>只有<strong>匯出欄位</strong>（大寫開頭）才會進出 JSON  </li>
+<li><code>Marshal</code>／<code>Unmarshal</code> 基本用法  </li>
+<li>進階一點：<code>json.RawMessage</code> 先留著 payload，之後再二次解碼（G1 信封會用）</li>
+</ul>
+<h2>先跟 Python 對一下</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+<th>注意</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>json.loads</code> / <code>dumps</code></td>
+<td><code>json.Unmarshal</code> / <code>Marshal</code></td>
+<td>名字對調很常背反，看一眼就好</td>
+</tr>
+<tr>
+<td><code>dict</code> 到處傳</td>
+<td>優先用 struct</td>
+<td>有 schema、編譯器幫你抓錯字欄位</td>
+</tr>
+<tr>
+<td>pydantic／自行驗證</td>
+<td>struct + 手動檢查</td>
+<td>Go 不幫你驗證「HP 不能是負的」，要自己寫</td>
+</tr>
+<tr>
+<td><code>orjson</code> 等加速庫</td>
+<td>先標準庫，熱路徑再評估</td>
+<td>先測再換</td>
+</tr>
+</tbody></table>
+<h2>怎麼寫（能跑的最小例子）</h2>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">type</span> Player <span class="hljs-keyword">struct</span> {
+	Name   <span class="hljs-type">string</span> <span class="hljs-string">`json:&quot;name&quot;`</span>
+	HP     <span class="hljs-type">int</span>    <span class="hljs-string">`json:&quot;hp&quot;`</span>
+	secret <span class="hljs-type">string</span> <span class="hljs-comment">// 小寫：不會出現在 JSON</span>
+}
+
+p := Player{Name: <span class="hljs-string">&quot;Ada&quot;</span>, HP: <span class="hljs-number">10</span>, secret: <span class="hljs-string">&quot;x&quot;</span>}
+b, err := json.Marshal(p)
+<span class="hljs-comment">// b == []byte(`{&quot;name&quot;:&quot;Ada&quot;,&quot;hp&quot;:10}`)</span>
+
+<span class="hljs-keyword">var</span> q Player
+err = json.Unmarshal([]<span class="hljs-type">byte</span>(<span class="hljs-string">`{&quot;name&quot;:&quot;Lin&quot;,&quot;hp&quot;:7,&quot;extra&quot;:true}`</span>), &amp;q)
+<span class="hljs-comment">// q.Name==&quot;Lin&quot;；多餘的 extra 預設會被忽略</span></code></pre><p>範例：<code>examples/e05-json</code>。</p>
+<h3>常用 tag</h3>
+<table>
+<thead>
+<tr>
+<th>tag</th>
+<th>意思</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>`json:&quot;name&quot;`</code></td>
+<td>JSON 鍵叫 <code>name</code></td>
+</tr>
+<tr>
+<td><code>`json:&quot;hp,omitempty&quot;`</code></td>
+<td>若是<strong>零值</strong>就省略這個欄位</td>
+</tr>
+<tr>
+<td><code>`json:&quot;-&quot;`</code></td>
+<td>永遠忽略（不輸出、不解入）</td>
+</tr>
+</tbody></table>
+<h3>先看 type 再解 payload：<code>RawMessage</code></h3>
+<pre class="hljs"><code class="language-go"><span class="hljs-keyword">type</span> Envelope <span class="hljs-keyword">struct</span> {
+	Type    <span class="hljs-type">string</span>          <span class="hljs-string">`json:&quot;type&quot;`</span>
+	Payload json.RawMessage <span class="hljs-string">`json:&quot;payload&quot;`</span> <span class="hljs-comment">// 先當原始 JSON 位元組留著</span>
+}</code></pre><p>解完信封後，依 <code>Type</code> 再 <code>json.Unmarshal(env.Payload, &amp;具體結構)</code>。這是協定層超常見手法（見 G1）。</p>
+<h2>為什麼這樣設計／底層在幹嘛</h2>
+<ol>
+<li><p><strong>匯出規則與反射</strong><br><code>encoding/json</code> 用反射看結構體。未匯出欄位外面的套件（包含 <code>json</code>）摸不到，所以自然不會序列化——這不是 bug，是可見性規則。</p>
+</li>
+<li><p><strong>未知欄位預設忽略</strong><br>對「向前相容」友善：伺服器加欄位，舊客戶端不解也不炸。若你要嚴格：用 <code>Decoder</code> 並 <code>DisallowUnknownFields()</code>。</p>
+</li>
+<li><p><strong>數字進 <code>any</code>／<code>map[string]any</code> 會變 <code>float64</code></strong><br>JSON 數字沒有 int／float 之分。解到空介面時要小心，別直接當 <code>int</code> 型斷言。</p>
+</li>
+<li><p><strong>成本</strong><br>每次 Marshal／Unmarshal 都有解析與配置成本。大廳聊天沒差；若每秒成千上萬小包，要 <strong>benchmark</strong>（D 卷）再決定要不要換二進位協定。</p>
+</li>
+<li><p><strong>錯誤別吞</strong><br>範例裡為了短會寫 <code>_ =</code>；正式碼請檢查 <code>err</code>，否則壞訊息會變成「零值結構體」，超難查。</p>
+</li>
+</ol>
+<h2>遊戲 Server 會用在哪</h2>
+<ul>
+<li>WebSocket 文字訊息：<code>{&quot;type&quot;:&quot;move&quot;,&quot;payload&quot;:{...}}</code>  </li>
+<li>HTTP <code>/rooms</code> 回傳房間列表  </li>
+<li>狀態快照 <code>type=state</code>  </li>
+<li>設定檔若用 JSON，同一套 API</li>
+</ul>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li><strong>整條管線只用 <code>dict</code>／<code>map[string]any</code></strong>——型別與驗證會散落各處。  </li>
+<li><strong>信任客戶端 JSON</strong>：還是要檢查範圍（例如 dx 只能 -1..1）。  </li>
+<li><strong>熱迴圈反覆 Marshal 超大快照卻從不測量</strong>——先量，再優化。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>跑 <code>examples/e05-json</code>，看 <code>secret</code> 有沒有進 JSON。  </li>
+<li>自己加一個未匯出欄位，證明它不會出現。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>幫 <code>Player</code> 加 <code>omitempty</code> 的 <code>Title string</code>，空字串時輸出什麼。  </li>
+<li>用 <code>json.Decoder</code> + <code>DisallowUnknownFields</code> 拒絕多餘鍵。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>Unmarshal 忘了傳指標</strong>（要 <code>&amp;q</code>）：會錯。  </li>
+<li><strong>把時間當字串格式搞錯</strong>：<code>time.Time</code> 預設 RFC3339；前後端要講好。  </li>
+<li><strong><code>omitempty</code> 對 <code>false</code>／<code>0</code>／<code>&quot;&quot;</code> 都會省略</strong>——布林「假」可能傳不出去，必要時用指標或自訂型別。  </li>
+<li><strong>stream 用 <code>Marshal</code> 拼字串</strong>：HTTP 可直接 <code>json.NewEncoder(w).Encode(v)</code>。</li>
+</ul>
+<h2>延伸閱讀</h2>
+<ul>
+<li><a target="_blank" rel="noopener noreferrer" href="https://pkg.go.dev/encoding/json">https://pkg.go.dev/encoding/json</a></li>
+</ul>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/e-stdlib/e4-filepath-embed/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">E4 filepath 與 embed 概念</div></a><a href="/lessons/e-stdlib/e6-strings-bytes/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">E6 strings 與 bytes 套件</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

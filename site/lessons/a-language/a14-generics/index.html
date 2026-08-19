@@ -1,0 +1,101 @@
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="型別參數適合容器與演算法；別把房間規則寫成天書。到這裡 A 卷主路徑告一段落。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>A14 泛型：好用，但請克制 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">A · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">A14 · 泛型：好用，但請克制</h1><p class="mt-3 text-slate-400">型別參數適合容器與演算法；別把房間規則寫成天書。到這裡 A 卷主路徑告一段落。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/a14-generics</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">generics</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<p>Go 1.18+ 有<strong>泛型（generics）</strong>：函式或型別可以帶型別參數。它很適合消除「資料結構／演算法」的重複，例如 stack、filter、map 的 keys。</p>
+<p>但它不適合把所有 API 都變成 <code>func F[T any](...)</code>。深刻理解包含：<strong>約束（constraints）</strong>、可讀性代價、以及跟 interface 怎麼分工。</p>
+<h2>Python 對照</h2>
+<table>
+<thead>
+<tr>
+<th>Python</th>
+<th>Go</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>TypeVar</code>／結構型 Protocol</td>
+<td><code>func F[T constraints.Ordered](...)</code></td>
+</tr>
+<tr>
+<td>執行期比較像「感覺有泛型」</td>
+<td>編譯期檢查；實作細節另說</td>
+</tr>
+<tr>
+<td>到處 <code>Any</code></td>
+<td>到處用 <code>any</code> 當約束 ≈ 幾乎沒約束</td>
+</tr>
+</tbody></table>
+<h2>怎麼寫</h2>
+<pre class="hljs"><code class="language-go"><span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">Keys</span>[<span class="hljs-title">K</span> <span class="hljs-title">comparable</span>, <span class="hljs-title">V</span> <span class="hljs-title">any</span>]<span class="hljs-params">(m <span class="hljs-keyword">map</span>[K]V)</span></span> []K {
+	out := <span class="hljs-built_in">make</span>([]K, <span class="hljs-number">0</span>, <span class="hljs-built_in">len</span>(m))
+	<span class="hljs-keyword">for</span> k := <span class="hljs-keyword">range</span> m {
+		out = <span class="hljs-built_in">append</span>(out, k)
+	}
+	<span class="hljs-keyword">return</span> out
+}</code></pre><pre class="hljs"><code class="language-go"><span class="hljs-keyword">type</span> Stack[T any] <span class="hljs-keyword">struct</span>{ items []T }
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(s *Stack[T])</span></span> Push(v T) {
+	s.items = <span class="hljs-built_in">append</span>(s.items, v)
+}</code></pre><p>範例：<code>examples/a14-generics</code>。</p>
+<h2>細節</h2>
+<h3>常見約束</h3>
+<ul>
+<li><code>any</code>：什麼型別都行（也代表你幾乎沒限制）  </li>
+<li><code>comparable</code>：可比較，才能當 map key、才能用 <code>==</code>  </li>
+<li>自訂約束：用介面寫「一組型別」或「需要哪些方法」</li>
+</ul>
+<h3>跟介面怎麼選</h3>
+<ul>
+<li><strong>介面</strong>：抽象「行為」（能 Notify、能 Read）  </li>
+<li><strong>泛型</strong>：參數化「資料長什麼型別」（Stack of T）</li>
+</ul>
+<p>很多時候普通介面就夠了；別為了顯得現代硬上泛型。</p>
+<h3>方法不能再自己宣告一組新的型別參數</h3>
+<p>型別參數宣告在型別／函式上。這點跟某些語言不一樣，寫到編譯器報錯時先回來查這條。</p>
+<h3>進階可先略過</h3>
+<ul>
+<li>編譯器何時單態化、何時用字典派發。  </li>
+<li>跟 <code>any</code> + 型別斷言的效能／可讀性取捨。</li>
+</ul>
+<h2>遊戲 Server 會用在哪</h2>
+<p>適合：</p>
+<ul>
+<li>通用 <code>Registry[ID, Entity]</code>  </li>
+<li>有界佇列 <code>Queue[Command]</code>  </li>
+<li>小工具函式：<code>Filter</code>、<code>Keys</code></li>
+</ul>
+<p>不適合：</p>
+<ul>
+<li>把 <code>Room</code> 規則本體做成難讀的泛型階層  </li>
+<li>為了「一個函式打天下」讓錯誤訊息長到沒人敢改</li>
+</ul>
+<h2>請丟掉的舊習慣</h2>
+<ol>
+<li>為了優雅把業務流程寫成天書泛型。  </li>
+<li>用泛型逃避把 domain 型別建模清楚。  </li>
+<li>以為「有泛型了就不需要介面」。</li>
+</ol>
+<h2>動手練習</h2>
+<h3>必做</h3>
+<ol>
+<li>跑 <code>examples/a14-generics</code>。  </li>
+<li>寫 <code>func Filter[T any](s []T, keep func(T) bool) []T</code>。</li>
+</ol>
+<h3>選做</h3>
+<ol>
+<li>用泛型做一個小的 <code>Set[T comparable]</code>。</li>
+</ol>
+<h2>常見坑</h2>
+<ul>
+<li><strong>錯誤訊息又臭又長</strong>：先把約束縮小、範例變單純，再除錯。  </li>
+<li><strong>過度抽象</strong>：新人改不了進房邏輯，抽象就失敗了。  </li>
+<li><strong>該用介面卻用泛型</strong>（或反过来）：先問「我在抽象行為還是資料形狀」。</li>
+</ul>
+<h2>A 卷檢查點（主路徑到這裡）</h2>
+<p>走到 A14，你應該能：</p>
+<ol>
+<li>用 package 切分可測程式  </li>
+<li>正確使用 slice／map／struct／method／interface  </li>
+<li>解釋 nil 介面陷阱與 slice 底層共享  </li>
+<li>需要時<strong>克制</strong>使用泛型</li>
+</ol>
+<p>下一卷 <strong>B</strong> 會專講 error 與 API 慣例。A15–A18 是加廣／深潛，時間夠再看。</p>
+</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/a-language/a13-type-assert/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">A13 型別斷言與 type switch：從介面拿回具體型別</div></a><a href="/lessons/a-language/a15-embedding/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">A15 嵌入：少寫轉發，但別當成繼承</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>
