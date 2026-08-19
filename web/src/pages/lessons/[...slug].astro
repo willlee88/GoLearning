@@ -1,7 +1,9 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import MarkdownBody from '../../components/MarkdownBody.astro';
+import ExamplePanel from '../../components/ExamplePanel.astro';
 import { getAllLessons, getLessonByLessonId } from '../../lib/lessons';
+import { loadExampleFiles } from '../../lib/examples';
 import { url } from '../../lib/url';
 
 export function getStaticPaths() {
@@ -14,6 +16,7 @@ export function getStaticPaths() {
 const { lesson } = Astro.props;
 const prev = lesson.prev ? getLessonByLessonId(lesson.prev) : undefined;
 const next = lesson.next ? getLessonByLessonId(lesson.next) : undefined;
+const exampleFiles = lesson.example ? loadExampleFiles(lesson.example) : [];
 ---
 <BaseLayout title={`${lesson.lessonId} ${lesson.title}`} description={lesson.description}>
   <div class="mb-8">
@@ -22,7 +25,8 @@ const next = lesson.next ? getLessonByLessonId(lesson.next) : undefined;
     <p class="mt-3 text-slate-400">{lesson.description}</p>
     {lesson.example && (
       <p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">
-        範例：<code class="text-emerald-300">{lesson.example}</code>
+        範例路徑：<code class="text-emerald-300">{lesson.example}</code>
+        <span class="text-slate-500"> · 完整原始碼在本頁下方</span>
       </p>
     )}
     {lesson.tags?.length > 0 && (
@@ -37,6 +41,10 @@ const next = lesson.next ? getLessonByLessonId(lesson.next) : undefined;
   <div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4">
     <MarkdownBody content={lesson.body} />
   </div>
+
+  {lesson.example && (
+    <ExamplePanel examplePath={lesson.example} files={exampleFiles} />
+  )}
 
   <nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8">
     {prev ? (

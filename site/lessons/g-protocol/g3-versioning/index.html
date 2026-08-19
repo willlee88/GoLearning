@@ -1,5 +1,5 @@
-<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="v 欄位、容錯解碼、棄用路徑。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>G3 版本化與相容策略 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
-</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">G · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">G3 · 版本化與相容策略</h1><p class="mt-3 text-slate-400">v 欄位、容錯解碼、棄用路徑。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/g01-envelope</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">protocol</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="v 欄位、容錯解碼、棄用路徑。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>G3 版本化與相容策略 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.BnpCu1oU.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">G · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">G3 · 版本化與相容策略</h1><p class="mt-3 text-slate-400">v 欄位、容錯解碼、棄用路徑。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例路徑：<code class="text-emerald-300">examples/g01-envelope</code><span class="text-slate-500"> · 完整原始碼在本頁下方</span></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">protocol</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
 <p>客戶端<strong>不會</strong>在同一天全部升級——尤其是 App Store／Play 商店審核還會拖。協定一開始就要想：<strong>舊客戶端連上來怎麼辦？</strong></p>
 <p>務實三件套：</p>
 <ol>
@@ -78,4 +78,78 @@ v2 → parseV2 → 同一內部模型</code></pre><p>伺服器內部只認一種
 <li>用 JSON 信封區分命令／事件，並理解 <code>v</code> 欄位</li>
 </ol>
 <p>下一階段 <strong>H 卷</strong>：Room、tick、權威狀態，把 Arena Mini 往「真正的對戰房」推。  </p>
-</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/g-protocol/g2-command-event/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">G2 命令與事件分離</div></a><a href="/lessons/h-game-server/h0-index/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">H0 H 卷導讀 · 遊戲 Server 核心</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>
+</article></div><section class="mt-10 rounded-2xl border border-emerald-900/50 bg-slate-900/50 p-5 sm:p-6"><div class="flex flex-wrap items-start justify-between gap-3"><div><h2 class="text-lg font-semibold text-emerald-300">專案裡的完整範例</h2><p class="mt-1 text-sm text-slate-400">上面課文可能是精簡示意；這裡才是 repo 裡可跑的檔案（建置時直接讀進來，不會跟專案脫節）。</p></div><code class="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-emerald-300">examples/g01-envelope</code></div><p class="mt-3 text-sm text-slate-500">本機可跑：<code class="text-slate-300">cd examples/g01-envelope</code> → <code class="text-slate-300">go run .</code> 或 <code class="text-slate-300">go test ./...</code></p><div class="mt-5 space-y-5"><div><div class="mb-2 flex items-center gap-2"><span class="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs text-slate-300">envelope_test.go</span></div><pre class="hljs overflow-x-auto rounded-xl border border-slate-800 bg-[#0d1117] p-4 text-sm leading-relaxed"><code class="language-go"><span class="hljs-keyword">package</span> envelope_test
+
+<span class="hljs-keyword">import</span> (
+	<span class="hljs-string">&quot;testing&quot;</span>
+
+	<span class="hljs-string">&quot;github.com/willyliao/golearning/examples/g01-envelope&quot;</span>
+)
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestParseMove</span><span class="hljs-params">(t *testing.T)</span></span> {
+	raw := []<span class="hljs-type">byte</span>(<span class="hljs-string">`{&quot;v&quot;:1,&quot;type&quot;:&quot;move&quot;,&quot;payload&quot;:{&quot;dx&quot;:1,&quot;dy&quot;:0}}`</span>)
+	env, err := envelope.Parse(raw)
+	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> {
+		t.Fatal(err)
+	}
+	m, err := envelope.ParseMove(env)
+	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> || m.DX != <span class="hljs-number">1</span> {
+		t.Fatalf(<span class="hljs-string">&quot;%+v %v&quot;</span>, m, err)
+	}
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestBadVersion</span><span class="hljs-params">(t *testing.T)</span></span> {
+	_, err := envelope.Parse([]<span class="hljs-type">byte</span>(<span class="hljs-string">`{&quot;v&quot;:99,&quot;type&quot;:&quot;chat&quot;,&quot;payload&quot;:{}}`</span>))
+	<span class="hljs-keyword">if</span> err == <span class="hljs-literal">nil</span> {
+		t.Fatal(<span class="hljs-string">&quot;expected error&quot;</span>)
+	}
+}
+</code></pre></div><div><div class="mb-2 flex items-center gap-2"><span class="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs text-slate-300">envelope.go</span></div><pre class="hljs overflow-x-auto rounded-xl border border-slate-800 bg-[#0d1117] p-4 text-sm leading-relaxed"><code class="language-go"><span class="hljs-keyword">package</span> envelope
+
+<span class="hljs-keyword">import</span> (
+	<span class="hljs-string">&quot;encoding/json&quot;</span>
+	<span class="hljs-string">&quot;fmt&quot;</span>
+)
+
+<span class="hljs-keyword">type</span> Envelope <span class="hljs-keyword">struct</span> {
+	V       <span class="hljs-type">int</span>             <span class="hljs-string">`json:&quot;v&quot;`</span>
+	Type    <span class="hljs-type">string</span>          <span class="hljs-string">`json:&quot;type&quot;`</span>
+	Payload json.RawMessage <span class="hljs-string">`json:&quot;payload&quot;`</span>
+}
+
+<span class="hljs-keyword">type</span> MovePayload <span class="hljs-keyword">struct</span> {
+	DX <span class="hljs-type">int</span> <span class="hljs-string">`json:&quot;dx&quot;`</span>
+	DY <span class="hljs-type">int</span> <span class="hljs-string">`json:&quot;dy&quot;`</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">Parse</span><span class="hljs-params">(data []<span class="hljs-type">byte</span>)</span></span> (Envelope, <span class="hljs-type">error</span>) {
+	<span class="hljs-keyword">var</span> env Envelope
+	<span class="hljs-keyword">if</span> err := json.Unmarshal(data, &amp;env); err != <span class="hljs-literal">nil</span> {
+		<span class="hljs-keyword">return</span> Envelope{}, err
+	}
+	<span class="hljs-keyword">if</span> env.V != <span class="hljs-number">1</span> {
+		<span class="hljs-keyword">return</span> Envelope{}, fmt.Errorf(<span class="hljs-string">&quot;unsupported version %d&quot;</span>, env.V)
+	}
+	<span class="hljs-keyword">if</span> env.Type == <span class="hljs-string">&quot;&quot;</span> {
+		<span class="hljs-keyword">return</span> Envelope{}, fmt.Errorf(<span class="hljs-string">&quot;missing type&quot;</span>)
+	}
+	<span class="hljs-keyword">return</span> env, <span class="hljs-literal">nil</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">ParseMove</span><span class="hljs-params">(env Envelope)</span></span> (MovePayload, <span class="hljs-type">error</span>) {
+	<span class="hljs-keyword">if</span> env.Type != <span class="hljs-string">&quot;move&quot;</span> {
+		<span class="hljs-keyword">return</span> MovePayload{}, fmt.Errorf(<span class="hljs-string">&quot;not move&quot;</span>)
+	}
+	<span class="hljs-keyword">var</span> m MovePayload
+	<span class="hljs-keyword">if</span> err := json.Unmarshal(env.Payload, &amp;m); err != <span class="hljs-literal">nil</span> {
+		<span class="hljs-keyword">return</span> MovePayload{}, err
+	}
+	<span class="hljs-keyword">if</span> m.DX &lt; <span class="hljs-number">-1</span> || m.DX &gt; <span class="hljs-number">1</span> || m.DY &lt; <span class="hljs-number">-1</span> || m.DY &gt; <span class="hljs-number">1</span> {
+		<span class="hljs-keyword">return</span> MovePayload{}, fmt.Errorf(<span class="hljs-string">&quot;move out of range&quot;</span>)
+	}
+	<span class="hljs-keyword">return</span> m, <span class="hljs-literal">nil</span>
+}
+</code></pre></div><div><div class="mb-2 flex items-center gap-2"><span class="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs text-slate-300">go.mod</span></div><pre class="hljs overflow-x-auto rounded-xl border border-slate-800 bg-[#0d1117] p-4 text-sm leading-relaxed"><code class="language-go">module github.com/willyliao/golearning/examples/g01-envelope
+
+<span class="hljs-keyword">go</span> <span class="hljs-number">1.22</span>
+</code></pre></div></div></section><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/g-protocol/g2-command-event/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">G2 命令與事件分離</div></a><a href="/lessons/h-game-server/h0-index/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">H0 H 卷導讀 · 遊戲 Server 核心</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

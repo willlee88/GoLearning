@@ -1,5 +1,5 @@
-<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="HTTP 升級、幀、與瀏覽器互通。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>F6 WebSocket 原理與實作 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
-</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">F · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">F6 · WebSocket 原理與實作</h1><p class="mt-3 text-slate-400">HTTP 升級、幀、與瀏覽器互通。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">examples/f08-ws-room</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">websocket</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">game-server</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="HTTP 升級、幀、與瀏覽器互通。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>F6 WebSocket 原理與實作 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.BnpCu1oU.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">F · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">F6 · WebSocket 原理與實作</h1><p class="mt-3 text-slate-400">HTTP 升級、幀、與瀏覽器互通。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例路徑：<code class="text-emerald-300">examples/f08-ws-room</code><span class="text-slate-500"> · 完整原始碼在本頁下方</span></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">websocket</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">game-server</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
 <p><strong>WebSocket</strong> 讓瀏覽器跟伺服器維持一條<strong>雙向長連線</strong>。它不是憑空變出來的協定魔術，而是：</p>
 <ol>
 <li>先用普通 HTTP 打去（例如 <code>GET /ws</code>）  </li>
@@ -36,7 +36,7 @@
 <pre class="hljs"><code class="language-text">Client: GET /ws  Connection: Upgrade  Upgrade: websocket ...
 Server: 101 Switching Protocols
 之後: 雙向 text/binary frames</code></pre><p>瀏覽器端大致是：</p>
-<pre class="hljs"><code><span class="hljs-keyword">const</span> ws = <span class="hljs-keyword">new</span> <span class="hljs-title class_">WebSocket</span>(<span class="hljs-string">&quot;ws://localhost:8080/ws?room=r1&amp;name=Ada&quot;</span>);
+<pre class="hljs"><code class="language-js"><span class="hljs-keyword">const</span> ws = <span class="hljs-keyword">new</span> <span class="hljs-title class_">WebSocket</span>(<span class="hljs-string">&quot;ws://localhost:8080/ws?room=r1&amp;name=Ada&quot;</span>);
 ws.<span class="hljs-property">onmessage</span> = <span class="hljs-function">(<span class="hljs-params">ev</span>) =&gt;</span> <span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(ev.<span class="hljs-property">data</span>);
 ws.<span class="hljs-title function_">send</span>(<span class="hljs-title class_">JSON</span>.<span class="hljs-title function_">stringify</span>({ <span class="hljs-attr">type</span>: <span class="hljs-string">&quot;chat&quot;</span>, <span class="hljs-attr">payload</span>: { <span class="hljs-attr">text</span>: <span class="hljs-string">&quot;hi&quot;</span> } }));</code></pre><p>伺服器端：HTTP handler 裡完成升級，然後：</p>
 <ul>
@@ -93,4 +93,199 @@ ws.<span class="hljs-title function_">send</span>(<span class="hljs-title class_
 <li>RFC 6455（WebSocket 協定；可略讀概念）  </li>
 <li><code>examples/f08-ws-room</code></li>
 </ul>
-</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/f-network/f5-middleware/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">F5 中介層與路由模式</div></a><a href="/lessons/f-network/f7-heartbeat-reconnect/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">F7 心跳、重連與會話</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>
+</article></div><section class="mt-10 rounded-2xl border border-emerald-900/50 bg-slate-900/50 p-5 sm:p-6"><div class="flex flex-wrap items-start justify-between gap-3"><div><h2 class="text-lg font-semibold text-emerald-300">專案裡的完整範例</h2><p class="mt-1 text-sm text-slate-400">上面課文可能是精簡示意；這裡才是 repo 裡可跑的檔案（建置時直接讀進來，不會跟專案脫節）。</p></div><code class="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-emerald-300">examples/f08-ws-room</code></div><p class="mt-3 text-sm text-slate-500">本機可跑：<code class="text-slate-300">cd examples/f08-ws-room</code> → <code class="text-slate-300">go run .</code> 或 <code class="text-slate-300">go test ./...</code></p><div class="mt-5 space-y-5"><div><div class="mb-2 flex items-center gap-2"><span class="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs text-slate-300">main.go</span></div><pre class="hljs overflow-x-auto rounded-xl border border-slate-800 bg-[#0d1117] p-4 text-sm leading-relaxed"><code class="language-go"><span class="hljs-keyword">package</span> main
+
+<span class="hljs-keyword">import</span> (
+	<span class="hljs-string">&quot;encoding/json&quot;</span>
+	<span class="hljs-string">&quot;log&quot;</span>
+	<span class="hljs-string">&quot;net/http&quot;</span>
+	<span class="hljs-string">&quot;os&quot;</span>
+	<span class="hljs-string">&quot;sync&quot;</span>
+	<span class="hljs-string">&quot;time&quot;</span>
+
+	<span class="hljs-string">&quot;golang.org/x/net/websocket&quot;</span>
+)
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> {
+	h := newHub()
+	mux := http.NewServeMux()
+	mux.HandleFunc(<span class="hljs-string">&quot;GET /healthz&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(w http.ResponseWriter, r *http.Request)</span></span> {
+		_ = json.NewEncoder(w).Encode(<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]any{<span class="hljs-string">&quot;ok&quot;</span>: <span class="hljs-literal">true</span>, <span class="hljs-string">&quot;rooms&quot;</span>: h.stats()})
+	})
+	mux.Handle(<span class="hljs-string">&quot;GET /ws&quot;</span>, websocket.Handler(h.handleWS))
+	web := env(<span class="hljs-string">&quot;WEB_DIR&quot;</span>, <span class="hljs-string">&quot;web&quot;</span>)
+	mux.Handle(<span class="hljs-string">&quot;GET /&quot;</span>, http.FileServer(http.Dir(web)))
+
+	addr := env(<span class="hljs-string">&quot;ADDR&quot;</span>, <span class="hljs-string">&quot;:8090&quot;</span>)
+	log.Printf(<span class="hljs-string">&quot;f08-ws-room on %s&quot;</span>, addr)
+	log.Fatal(http.ListenAndServe(addr, mux))
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">env</span><span class="hljs-params">(k, d <span class="hljs-type">string</span>)</span></span> <span class="hljs-type">string</span> {
+	<span class="hljs-keyword">if</span> v := os.Getenv(k); v != <span class="hljs-string">&quot;&quot;</span> {
+		<span class="hljs-keyword">return</span> v
+	}
+	<span class="hljs-keyword">return</span> d
+}
+
+<span class="hljs-keyword">type</span> hub <span class="hljs-keyword">struct</span> {
+	mu    sync.RWMutex
+	rooms <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*room
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">newHub</span><span class="hljs-params">()</span></span> *hub { <span class="hljs-keyword">return</span> &amp;hub{rooms: <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*room{}} }
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *hub)</span></span> stats() <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]<span class="hljs-type">int</span> {
+	h.mu.RLock()
+	<span class="hljs-keyword">defer</span> h.mu.RUnlock()
+	out := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]<span class="hljs-type">int</span>, <span class="hljs-built_in">len</span>(h.rooms))
+	<span class="hljs-keyword">for</span> id, r := <span class="hljs-keyword">range</span> h.rooms {
+		out[id] = r.size()
+	}
+	<span class="hljs-keyword">return</span> out
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *hub)</span></span> get(id <span class="hljs-type">string</span>) *room {
+	h.mu.Lock()
+	<span class="hljs-keyword">defer</span> h.mu.Unlock()
+	<span class="hljs-keyword">if</span> r, ok := h.rooms[id]; ok {
+		<span class="hljs-keyword">return</span> r
+	}
+	r := &amp;room{id: id, members: <span class="hljs-keyword">map</span>[*websocket.Conn]<span class="hljs-type">string</span>{}}
+	h.rooms[id] = r
+	<span class="hljs-keyword">return</span> r
+}
+
+<span class="hljs-keyword">type</span> envelope <span class="hljs-keyword">struct</span> {
+	V       <span class="hljs-type">int</span>    <span class="hljs-string">`json:&quot;v&quot;`</span>
+	Type    <span class="hljs-type">string</span> <span class="hljs-string">`json:&quot;type&quot;`</span>
+	From    <span class="hljs-type">string</span> <span class="hljs-string">`json:&quot;from,omitempty&quot;`</span>
+	Room    <span class="hljs-type">string</span> <span class="hljs-string">`json:&quot;room,omitempty&quot;`</span>
+	Payload <span class="hljs-type">string</span> <span class="hljs-string">`json:&quot;payload,omitempty&quot;`</span>
+}
+
+<span class="hljs-keyword">type</span> room <span class="hljs-keyword">struct</span> {
+	id      <span class="hljs-type">string</span>
+	mu      sync.Mutex
+	members <span class="hljs-keyword">map</span>[*websocket.Conn]<span class="hljs-type">string</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *room)</span></span> size() <span class="hljs-type">int</span> {
+	r.mu.Lock()
+	<span class="hljs-keyword">defer</span> r.mu.Unlock()
+	<span class="hljs-keyword">return</span> <span class="hljs-built_in">len</span>(r.members)
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *hub)</span></span> handleWS(conn *websocket.Conn) {
+	req := conn.Request()
+	roomID := req.URL.Query().Get(<span class="hljs-string">&quot;room&quot;</span>)
+	<span class="hljs-keyword">if</span> roomID == <span class="hljs-string">&quot;&quot;</span> {
+		roomID = <span class="hljs-string">&quot;lobby&quot;</span>
+	}
+	name := req.URL.Query().Get(<span class="hljs-string">&quot;name&quot;</span>)
+	<span class="hljs-keyword">if</span> name == <span class="hljs-string">&quot;&quot;</span> {
+		name = <span class="hljs-string">&quot;anon&quot;</span>
+	}
+	r := h.get(roomID)
+	r.mu.Lock()
+	r.members[conn] = name
+	r.mu.Unlock()
+
+	r.broadcast(envelope{V: <span class="hljs-number">1</span>, Type: <span class="hljs-string">&quot;system&quot;</span>, Room: roomID, Payload: name + <span class="hljs-string">&quot; joined&quot;</span>})
+	<span class="hljs-keyword">defer</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> {
+		r.mu.Lock()
+		<span class="hljs-built_in">delete</span>(r.members, conn)
+		r.mu.Unlock()
+		_ = conn.Close()
+		r.broadcast(envelope{V: <span class="hljs-number">1</span>, Type: <span class="hljs-string">&quot;system&quot;</span>, Room: roomID, Payload: name + <span class="hljs-string">&quot; left&quot;</span>})
+	}()
+
+	<span class="hljs-keyword">for</span> {
+		<span class="hljs-keyword">var</span> raw <span class="hljs-type">string</span>
+		<span class="hljs-keyword">if</span> err := websocket.Message.Receive(conn, &amp;raw); err != <span class="hljs-literal">nil</span> {
+			<span class="hljs-keyword">return</span>
+		}
+		<span class="hljs-keyword">var</span> env envelope
+		<span class="hljs-keyword">if</span> err := json.Unmarshal([]<span class="hljs-type">byte</span>(raw), &amp;env); err != <span class="hljs-literal">nil</span> {
+			env = envelope{V: <span class="hljs-number">1</span>, Type: <span class="hljs-string">&quot;chat&quot;</span>, Payload: raw}
+		}
+		<span class="hljs-keyword">if</span> env.V == <span class="hljs-number">0</span> {
+			env.V = <span class="hljs-number">1</span>
+		}
+		<span class="hljs-keyword">if</span> env.Type == <span class="hljs-string">&quot;&quot;</span> {
+			env.Type = <span class="hljs-string">&quot;chat&quot;</span>
+		}
+		<span class="hljs-keyword">if</span> env.Type == <span class="hljs-string">&quot;ping&quot;</span> {
+			_ = websocket.Message.Send(conn, mustJSON(envelope{V: <span class="hljs-number">1</span>, Type: <span class="hljs-string">&quot;pong&quot;</span>, Payload: time.Now().UTC().Format(time.RFC3339)}))
+			<span class="hljs-keyword">continue</span>
+		}
+		env.From = name
+		env.Room = roomID
+		r.broadcast(env)
+	}
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *room)</span></span> broadcast(env envelope) {
+	data := mustJSON(env)
+	r.mu.Lock()
+	<span class="hljs-keyword">defer</span> r.mu.Unlock()
+	<span class="hljs-keyword">for</span> c := <span class="hljs-keyword">range</span> r.members {
+		_ = websocket.Message.Send(c, data)
+	}
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">mustJSON</span><span class="hljs-params">(v any)</span></span> <span class="hljs-type">string</span> {
+	b, _ := json.Marshal(v)
+	<span class="hljs-keyword">return</span> <span class="hljs-type">string</span>(b)
+}
+</code></pre></div><div><div class="mb-2 flex items-center gap-2"><span class="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs text-slate-300">go.mod</span></div><pre class="hljs overflow-x-auto rounded-xl border border-slate-800 bg-[#0d1117] p-4 text-sm leading-relaxed"><code class="language-go">module github.com/willyliao/golearning/examples/f08-ws-room
+
+<span class="hljs-keyword">go</span> <span class="hljs-number">1.22</span>
+
+require golang.org/x/net v0<span class="hljs-number">.34</span><span class="hljs-number">.0</span>
+</code></pre></div><div><div class="mb-2 flex items-center gap-2"><span class="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs text-slate-300">web/index.html</span></div><pre class="hljs overflow-x-auto rounded-xl border border-slate-800 bg-[#0d1117] p-4 text-sm leading-relaxed"><code class="language-xml"><span class="hljs-meta">&lt;!DOCTYPE <span class="hljs-keyword">html</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">html</span> <span class="hljs-attr">lang</span>=<span class="hljs-string">&quot;zh-Hant&quot;</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">head</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">meta</span> <span class="hljs-attr">charset</span>=<span class="hljs-string">&quot;UTF-8&quot;</span> /&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">title</span>&gt;</span>f08-ws-room<span class="hljs-tag">&lt;/<span class="hljs-name">title</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">style</span>&gt;</span>
+    body { font-family: system-ui, sans-serif; max-width: 640px; margin: 2rem auto; background: #0f1419; color: #e8eef7; }
+    input, button { padding: .5rem; margin: .25rem; border-radius: 8px; border: 1px solid #345; background: #1a2332; color: inherit; }
+    button { background: #2b6cb0; border-color: #2b6cb0; cursor: pointer; }
+    #log { white-space: pre-wrap; background: #0a0e14; border: 1px solid #234; border-radius: 8px; min-height: 200px; padding: .75rem; font-family: ui-monospace, monospace; font-size: 13px; }
+  <span class="hljs-tag">&lt;/<span class="hljs-name">style</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">head</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">h1</span>&gt;</span>f08 · WS Room Lab<span class="hljs-tag">&lt;/<span class="hljs-name">h1</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">input</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;room&quot;</span> <span class="hljs-attr">value</span>=<span class="hljs-string">&quot;lobby&quot;</span> /&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">input</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;name&quot;</span> <span class="hljs-attr">value</span>=<span class="hljs-string">&quot;player1&quot;</span> /&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;conn&quot;</span>&gt;</span>Connect<span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">input</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;msg&quot;</span> <span class="hljs-attr">style</span>=<span class="hljs-string">&quot;width:70%&quot;</span> <span class="hljs-attr">placeholder</span>=<span class="hljs-string">&#x27;{&quot;v&quot;:1,&quot;type&quot;:&quot;chat&quot;,&quot;payload&quot;:&quot;hi&quot;}&#x27;</span> /&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;send&quot;</span>&gt;</span>Send<span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;ping&quot;</span>&gt;</span>Ping<span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;log&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">script</span>&gt;</span><span class="language-javascript">
+    <span class="hljs-keyword">let</span> ws;
+    <span class="hljs-keyword">const</span> <span class="hljs-title function_">log</span> = (<span class="hljs-params">t</span>) =&gt; { logEl.<span class="hljs-property">textContent</span> += t + <span class="hljs-string">&#x27;\n&#x27;</span>; };
+    <span class="hljs-keyword">const</span> logEl = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;log&#x27;</span>);
+    <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;conn&#x27;</span>).<span class="hljs-property">onclick</span> = <span class="hljs-function">() =&gt;</span> {
+      <span class="hljs-keyword">const</span> room = roomEl.<span class="hljs-property">value</span>, name = nameEl.<span class="hljs-property">value</span>;
+      <span class="hljs-keyword">const</span> proto = location.<span class="hljs-property">protocol</span> === <span class="hljs-string">&#x27;https:&#x27;</span> ? <span class="hljs-string">&#x27;wss&#x27;</span> : <span class="hljs-string">&#x27;ws&#x27;</span>;
+      ws = <span class="hljs-keyword">new</span> <span class="hljs-title class_">WebSocket</span>(<span class="hljs-string">`<span class="hljs-subst">${proto}</span>://<span class="hljs-subst">${location.host}</span>/ws?room=<span class="hljs-subst">${<span class="hljs-built_in">encodeURIComponent</span>(room)}</span>&amp;name=<span class="hljs-subst">${<span class="hljs-built_in">encodeURIComponent</span>(name)}</span>`</span>);
+      ws.<span class="hljs-property">onmessage</span> = <span class="hljs-function">(<span class="hljs-params">e</span>) =&gt;</span> <span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;← &#x27;</span> + e.<span class="hljs-property">data</span>);
+      ws.<span class="hljs-property">onopen</span> = <span class="hljs-function">() =&gt;</span> <span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;open&#x27;</span>);
+      ws.<span class="hljs-property">onclose</span> = <span class="hljs-function">() =&gt;</span> <span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;close&#x27;</span>);
+    };
+    <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;send&#x27;</span>).<span class="hljs-property">onclick</span> = <span class="hljs-function">() =&gt;</span> ws?.<span class="hljs-title function_">send</span>(msgEl.<span class="hljs-property">value</span>);
+    <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;ping&#x27;</span>).<span class="hljs-property">onclick</span> = <span class="hljs-function">() =&gt;</span> ws?.<span class="hljs-title function_">send</span>(<span class="hljs-title class_">JSON</span>.<span class="hljs-title function_">stringify</span>({<span class="hljs-attr">v</span>:<span class="hljs-number">1</span>,<span class="hljs-attr">type</span>:<span class="hljs-string">&#x27;ping&#x27;</span>}));
+    <span class="hljs-keyword">const</span> roomEl = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;room&#x27;</span>);
+    <span class="hljs-keyword">const</span> nameEl = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;name&#x27;</span>);
+    <span class="hljs-keyword">const</span> msgEl = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;msg&#x27;</span>);
+  </span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span>
+</code></pre></div></div></section><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/f-network/f5-middleware/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">F5 中介層與路由模式</div></a><a href="/lessons/f-network/f7-heartbeat-reconnect/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">F7 心跳、重連與會話</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

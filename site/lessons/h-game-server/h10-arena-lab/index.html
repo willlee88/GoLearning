@@ -1,5 +1,5 @@
-<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="把 H1–H9 落到可玩的一局：Ready、Tick、Input、State 廣播。雙人同步過關，才算 H 卷收束。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>H10 Lab：Arena Mini 權威對戰檢查點 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.ciQyR-C_.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
-</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">H · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">H10 · Lab：Arena Mini 權威對戰檢查點</h1><p class="mt-3 text-slate-400">把 H1–H9 落到可玩的一局：Ready、Tick、Input、State 廣播。雙人同步過關，才算 H 卷收束。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例：<code class="text-emerald-300">demo/arena-mini</code></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">lab</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">capstone</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">game-server</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
+<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="description" content="把 H1–H9 落到可玩的一局：Ready、Tick、Input、State 廣播。雙人同步過關，才算 H 卷收束。"><link rel="icon" type="image/svg+xml" href="/favicon.svg"><title>H10 Lab：Arena Mini 權威對戰檢查點 · GoLearning</title><link rel="stylesheet" href="/_astro/BaseLayout.BnpCu1oU.css"><style>pre code.hljs{padding:1em;display:block;overflow-x:auto}code.hljs{padding:3px 5px}.hljs{color:#c9d1d9;background:#0d1117}.hljs-doctag,.hljs-keyword,.hljs-meta .hljs-keyword,.hljs-template-tag,.hljs-template-variable,.hljs-type,.hljs-variable.language_{color:#ff7b72}.hljs-title,.hljs-title.class_,.hljs-title.class_.inherited__,.hljs-title.function_{color:#d2a8ff}.hljs-attr,.hljs-attribute,.hljs-literal,.hljs-meta,.hljs-number,.hljs-operator,.hljs-variable,.hljs-selector-attr,.hljs-selector-class,.hljs-selector-id{color:#79c0ff}.hljs-regexp,.hljs-string,.hljs-meta .hljs-string{color:#a5d6ff}.hljs-built_in,.hljs-symbol{color:#ffa657}.hljs-comment,.hljs-code,.hljs-formula{color:#8b949e}.hljs-name,.hljs-quote,.hljs-selector-tag,.hljs-selector-pseudo{color:#7ee787}.hljs-subst{color:#c9d1d9}.hljs-section{color:#1f6feb;font-weight:700}.hljs-bullet{color:#f2cc60}.hljs-emphasis{color:#c9d1d9;font-style:italic}.hljs-strong{color:#c9d1d9;font-weight:700}.hljs-addition{color:#aff5b4;background-color:#033a16}.hljs-deletion{color:#ffdcd7;background-color:#67060c}.lesson-md{color:#cbd5e1;font-size:1rem;line-height:1.75}.lesson-md>:first-child{margin-top:0}.lesson-md h1{color:#fff;margin:1.5rem 0 1rem;font-size:1.875rem;font-weight:700}.lesson-md h2{color:#6ee7b7;border-bottom:1px solid #1e293b;margin:2.25rem 0 .85rem;padding-bottom:.4rem;font-size:1.35rem;font-weight:600}.lesson-md h3{color:#f8fafc;margin:1.5rem 0 .6rem;font-size:1.1rem;font-weight:600}.lesson-md p{margin:.75rem 0}.lesson-md a{color:#38bdf8;text-decoration:underline #0369a1}.lesson-md a:hover{color:#7dd3fc}.lesson-md ul,.lesson-md ol{margin:.75rem 0;padding-left:1.4rem}.lesson-md ul{list-style:outside}.lesson-md ol{list-style:decimal}.lesson-md li{margin:.25rem 0}.lesson-md strong{color:#f8fafc;font-weight:600}.lesson-md code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;font-size:.9em}.lesson-md :not(pre)>code{color:#6ee7b7;background:#1e293b;border-radius:.25rem;padding:.1rem .35rem}.lesson-md pre.hljs,.lesson-md pre{border:1px solid #1e293b;border-radius:.75rem;margin:1rem 0;padding:1rem;font-size:.875rem;line-height:1.55;overflow-x:auto;background:#0d1117!important}.lesson-md pre code{color:inherit;background:0 0;padding:0}.lesson-md table{border-collapse:collapse;width:100%;margin:1rem 0;font-size:.9rem;display:block;overflow-x:auto}.lesson-md th,.lesson-md td{text-align:left;vertical-align:top;border-bottom:1px solid #1e293b;padding:.55rem .75rem}.lesson-md th{color:#cbd5e1;font-weight:600}.lesson-md blockquote{color:#94a3b8;border-left:3px solid #10b981;margin:1rem 0;padding:.25rem 0 .25rem 1rem}.lesson-md hr{border:0;border-top:1px solid #1e293b;margin:2rem 0}
+</style></head><body class="min-h-screen bg-slate-950 text-slate-100 antialiased"><header class="border-b border-slate-800/80 bg-slate-950/90 backdrop-blur sticky top-0 z-20"><div class="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3"><a href="/" class="font-semibold tracking-tight text-emerald-400 hover:text-emerald-300">GoLearning</a><nav class="flex flex-wrap items-center gap-4 text-sm text-slate-300"><a class="hover:text-white" href="/path/">學習路徑</a><a class="hover:text-white" href="/volumes/">卷冊</a><a class="hover:text-white" href="/playground/">Playground</a><a class="hover:text-white" href="/search/">搜尋</a><a class="hover:text-white" href="/about/">關於</a></nav></div></header><main class="mx-auto max-w-6xl px-4 py-8"><div class="mb-8"><p class="text-sm text-emerald-500/90">H · L2 · ready</p><h1 class="mt-2 text-3xl font-bold text-white sm:text-4xl">H10 · Lab：Arena Mini 權威對戰檢查點</h1><p class="mt-3 text-slate-400">把 H1–H9 落到可玩的一局：Ready、Tick、Input、State 廣播。雙人同步過關，才算 H 卷收束。</p><p class="mt-3 rounded-lg border border-slate-800 bg-slate-900/60 px-3 py-2 text-sm text-slate-300">範例路徑：<code class="text-emerald-300">demo/arena-mini</code><span class="text-slate-500"> · 完整原始碼在本頁下方</span></p><div class="mt-3 flex flex-wrap gap-2"><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">lab</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">capstone</span><span class="rounded-full border border-slate-700 px-2 py-0.5 text-xs text-slate-400">game-server</span></div></div><div class="rounded-2xl border border-slate-800 bg-slate-900/30 px-5 py-2 sm:px-8 sm:py-4"><article class="lesson-md"><h2>這章你會搞懂什麼</h2>
 <p>這是 H 卷的<strong>實作檢查點</strong>，不是再塞新理論。<br>你要把前面學的名詞，全部對到 <code>demo/arena-mini</code> 的行為上：</p>
 <ol>
 <li>進房（Lobby）  </li>
@@ -123,4 +123,1386 @@ go run ./cmd/server</code></pre><p>瀏覽器開：<code>http://localhost:8080</c
 </blockquote>
 <p>下一階段 <strong>M5（I／J 卷）</strong> 會往外長：資料落庫、觀測指標、壓測、優雅關閉——讓這間小 Arena 比較像能值班的服務，而不只是 demo。</p>
 <p>若時間有限：先保證本 Lab 雙人同步與 <code>internal/game</code> 單測穩綠，再進 I0。</p>
-</article></div><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/h-game-server/h9-rules-io/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">H9 規則與 I/O 分離：game 不該 import websocket</div></a><a href="/lessons/i-data/i0-index/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">I0 I 卷導讀：資料放哪裡，比怎麼寫 SQL 更重要</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>
+</article></div><section class="mt-10 rounded-2xl border border-emerald-900/50 bg-slate-900/50 p-5 sm:p-6"><div class="flex flex-wrap items-start justify-between gap-3"><div><h2 class="text-lg font-semibold text-emerald-300">專案裡的完整範例</h2><p class="mt-1 text-sm text-slate-400">上面課文可能是精簡示意；這裡才是 repo 裡可跑的檔案（建置時直接讀進來，不會跟專案脫節）。</p></div><code class="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-emerald-300">demo/arena-mini</code></div><p class="mt-3 text-sm text-slate-500">本機可跑：<code class="text-slate-300">cd demo/arena-mini</code></p><div class="mt-5 space-y-5"><div><div class="mb-2 flex items-center gap-2"><span class="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs text-slate-300">server/cmd/server/main.go</span></div><pre class="hljs overflow-x-auto rounded-xl border border-slate-800 bg-[#0d1117] p-4 text-sm leading-relaxed"><code class="language-go"><span class="hljs-comment">// Arena Mini — authoritative match, metrics, slog, graceful shutdown.</span>
+<span class="hljs-keyword">package</span> main
+
+<span class="hljs-keyword">import</span> (
+	<span class="hljs-string">&quot;context&quot;</span>
+	<span class="hljs-string">&quot;encoding/json&quot;</span>
+	<span class="hljs-string">&quot;log/slog&quot;</span>
+	<span class="hljs-string">&quot;net/http&quot;</span>
+	<span class="hljs-string">&quot;os&quot;</span>
+	<span class="hljs-string">&quot;os/signal&quot;</span>
+	<span class="hljs-string">&quot;syscall&quot;</span>
+	<span class="hljs-string">&quot;time&quot;</span>
+
+	<span class="hljs-string">&quot;github.com/willyliao/golearning/demo/arena-mini/internal/hub&quot;</span>
+	<span class="hljs-string">&quot;github.com/willyliao/golearning/demo/arena-mini/internal/metrics&quot;</span>
+)
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">main</span><span class="hljs-params">()</span></span> {
+	log := slog.New(slog.NewJSONHandler(os.Stdout, &amp;slog.HandlerOptions{Level: slog.LevelInfo}))
+	slog.SetDefault(log)
+
+	addr := env(<span class="hljs-string">&quot;ADDR&quot;</span>, <span class="hljs-string">&quot;:8080&quot;</span>)
+	m := metrics.New()
+	h := hub.New(m, log)
+
+	mux := http.NewServeMux()
+	mux.HandleFunc(<span class="hljs-string">&quot;GET /healthz&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(w http.ResponseWriter, r *http.Request)</span></span> {
+		writeJSON(w, <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]any{
+			<span class="hljs-string">&quot;ok&quot;</span>:      <span class="hljs-literal">true</span>,
+			<span class="hljs-string">&quot;service&quot;</span>: <span class="hljs-string">&quot;arena-mini&quot;</span>,
+			<span class="hljs-string">&quot;version&quot;</span>: <span class="hljs-string">&quot;m5.1&quot;</span>,
+			<span class="hljs-string">&quot;time&quot;</span>:    time.Now().UTC().Format(time.RFC3339),
+			<span class="hljs-string">&quot;rooms&quot;</span>:   h.RoomCount(),
+		})
+	})
+	mux.HandleFunc(<span class="hljs-string">&quot;GET /rooms&quot;</span>, <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(w http.ResponseWriter, r *http.Request)</span></span> {
+		writeJSON(w, <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]any{<span class="hljs-string">&quot;rooms&quot;</span>: h.RoomStats()})
+	})
+	mux.HandleFunc(<span class="hljs-string">&quot;GET /metrics&quot;</span>, m.Handler())
+	mux.HandleFunc(<span class="hljs-string">&quot;GET /ws&quot;</span>, h.HandleWS)
+
+	webDir := env(<span class="hljs-string">&quot;WEB_DIR&quot;</span>, <span class="hljs-string">&quot;../web&quot;</span>)
+	mux.Handle(<span class="hljs-string">&quot;GET /&quot;</span>, http.FileServer(http.Dir(webDir)))
+
+	srv := &amp;http.Server{
+		Addr:              addr,
+		Handler:           withCORS(withAccessLog(log, mux)),
+		ReadHeaderTimeout: <span class="hljs-number">5</span> * time.Second,
+	}
+
+	<span class="hljs-keyword">go</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> {
+		log.Info(<span class="hljs-string">&quot;arena-mini listening&quot;</span>, <span class="hljs-string">&quot;addr&quot;</span>, addr, <span class="hljs-string">&quot;web&quot;</span>, webDir, <span class="hljs-string">&quot;version&quot;</span>, <span class="hljs-string">&quot;m5.1&quot;</span>)
+		<span class="hljs-keyword">if</span> err := srv.ListenAndServe(); err != <span class="hljs-literal">nil</span> &amp;&amp; err != http.ErrServerClosed {
+			log.Error(<span class="hljs-string">&quot;listen failed&quot;</span>, <span class="hljs-string">&quot;err&quot;</span>, err)
+			os.Exit(<span class="hljs-number">1</span>)
+		}
+	}()
+
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	<span class="hljs-keyword">defer</span> stop()
+	&lt;-ctx.Done()
+	log.Info(<span class="hljs-string">&quot;shutdown signal received&quot;</span>)
+
+	<span class="hljs-comment">// stop game loops first, then HTTP</span>
+	h.Close()
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), <span class="hljs-number">8</span>*time.Second)
+	<span class="hljs-keyword">defer</span> cancel()
+	<span class="hljs-keyword">if</span> err := srv.Shutdown(shutdownCtx); err != <span class="hljs-literal">nil</span> {
+		log.Error(<span class="hljs-string">&quot;http shutdown&quot;</span>, <span class="hljs-string">&quot;err&quot;</span>, err)
+	}
+	log.Info(<span class="hljs-string">&quot;bye&quot;</span>)
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">env</span><span class="hljs-params">(k, def <span class="hljs-type">string</span>)</span></span> <span class="hljs-type">string</span> {
+	<span class="hljs-keyword">if</span> v := os.Getenv(k); v != <span class="hljs-string">&quot;&quot;</span> {
+		<span class="hljs-keyword">return</span> v
+	}
+	<span class="hljs-keyword">return</span> def
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">writeJSON</span><span class="hljs-params">(w http.ResponseWriter, v any)</span></span> {
+	w.Header().Set(<span class="hljs-string">&quot;Content-Type&quot;</span>, <span class="hljs-string">&quot;application/json&quot;</span>)
+	_ = json.NewEncoder(w).Encode(v)
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">withCORS</span><span class="hljs-params">(next http.Handler)</span></span> http.Handler {
+	<span class="hljs-keyword">return</span> http.HandlerFunc(<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(w http.ResponseWriter, r *http.Request)</span></span> {
+		w.Header().Set(<span class="hljs-string">&quot;Access-Control-Allow-Origin&quot;</span>, <span class="hljs-string">&quot;*&quot;</span>)
+		<span class="hljs-keyword">if</span> r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			<span class="hljs-keyword">return</span>
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">withAccessLog</span><span class="hljs-params">(log *slog.Logger, next http.Handler)</span></span> http.Handler {
+	<span class="hljs-keyword">return</span> http.HandlerFunc(<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(w http.ResponseWriter, r *http.Request)</span></span> {
+		<span class="hljs-comment">// skip noisy static / high-frequency if needed</span>
+		<span class="hljs-keyword">if</span> r.URL.Path == <span class="hljs-string">&quot;/metrics&quot;</span> || r.URL.Path == <span class="hljs-string">&quot;/healthz&quot;</span> {
+			next.ServeHTTP(w, r)
+			<span class="hljs-keyword">return</span>
+		}
+		start := time.Now()
+		next.ServeHTTP(w, r)
+		<span class="hljs-keyword">if</span> r.URL.Path != <span class="hljs-string">&quot;/&quot;</span> &amp;&amp; r.Header.Get(<span class="hljs-string">&quot;Upgrade&quot;</span>) == <span class="hljs-string">&quot;&quot;</span> {
+			log.Info(<span class="hljs-string">&quot;http&quot;</span>, <span class="hljs-string">&quot;method&quot;</span>, r.Method, <span class="hljs-string">&quot;path&quot;</span>, r.URL.Path, <span class="hljs-string">&quot;dur&quot;</span>, time.Since(start).String())
+		}
+	})
+}
+</code></pre></div><div><div class="mb-2 flex items-center gap-2"><span class="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs text-slate-300">server/internal/game/room_test.go</span></div><pre class="hljs overflow-x-auto rounded-xl border border-slate-800 bg-[#0d1117] p-4 text-sm leading-relaxed"><code class="language-go"><span class="hljs-keyword">package</span> game_test
+
+<span class="hljs-keyword">import</span> (
+	<span class="hljs-string">&quot;errors&quot;</span>
+	<span class="hljs-string">&quot;testing&quot;</span>
+
+	<span class="hljs-string">&quot;github.com/willyliao/golearning/demo/arena-mini/internal/game&quot;</span>
+)
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestLobbyReadyStartAndMove</span><span class="hljs-params">(t *testing.T)</span></span> {
+	r := game.NewRoom(game.Config{ID: <span class="hljs-string">&quot;t&quot;</span>, Capacity: <span class="hljs-number">4</span>, Width: <span class="hljs-number">100</span>, Height: <span class="hljs-number">100</span>, Speed: <span class="hljs-number">5</span>})
+	<span class="hljs-keyword">if</span> err := r.Join(<span class="hljs-string">&quot;a&quot;</span>); err != <span class="hljs-literal">nil</span> {
+		t.Fatal(err)
+	}
+	<span class="hljs-keyword">if</span> err := r.Join(<span class="hljs-string">&quot;b&quot;</span>); err != <span class="hljs-literal">nil</span> {
+		t.Fatal(err)
+	}
+	_ = r.Ready(<span class="hljs-string">&quot;a&quot;</span>)
+	<span class="hljs-keyword">if</span> r.PhaseSnapshot() != game.PhaseLobby {
+		t.Fatal(<span class="hljs-string">&quot;need both ready&quot;</span>)
+	}
+	_ = r.Ready(<span class="hljs-string">&quot;b&quot;</span>)
+	<span class="hljs-keyword">if</span> r.PhaseSnapshot() != game.PhasePlaying {
+		t.Fatalf(<span class="hljs-string">&quot;phase=%v&quot;</span>, r.PhaseSnapshot())
+	}
+
+	snap := r.Snapshot()
+	<span class="hljs-keyword">var</span> ax <span class="hljs-type">int</span>
+	<span class="hljs-keyword">for</span> _, p := <span class="hljs-keyword">range</span> snap.Players {
+		<span class="hljs-keyword">if</span> p.Name == <span class="hljs-string">&quot;a&quot;</span> {
+			ax = p.X
+		}
+	}
+	<span class="hljs-keyword">if</span> err := r.PushInput(game.Input{Player: <span class="hljs-string">&quot;a&quot;</span>, DX: <span class="hljs-number">1</span>, DY: <span class="hljs-number">0</span>}); err != <span class="hljs-literal">nil</span> {
+		t.Fatal(err)
+	}
+	r.TickOnce()
+	snap = r.Snapshot()
+	<span class="hljs-keyword">for</span> _, p := <span class="hljs-keyword">range</span> snap.Players {
+		<span class="hljs-keyword">if</span> p.Name == <span class="hljs-string">&quot;a&quot;</span> &amp;&amp; p.X != ax+<span class="hljs-number">5</span> {
+			t.Fatalf(<span class="hljs-string">&quot;x=%d want %d&quot;</span>, p.X, ax+<span class="hljs-number">5</span>)
+		}
+	}
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestRejectClientStyleTeleport</span><span class="hljs-params">(t *testing.T)</span></span> {
+	r := game.NewRoom(game.Config{ID: <span class="hljs-string">&quot;t&quot;</span>, Speed: <span class="hljs-number">5</span>})
+	_ = r.Join(<span class="hljs-string">&quot;a&quot;</span>)
+	_ = r.Join(<span class="hljs-string">&quot;b&quot;</span>)
+	_ = r.Ready(<span class="hljs-string">&quot;a&quot;</span>)
+	_ = r.Ready(<span class="hljs-string">&quot;b&quot;</span>)
+	err := r.PushInput(game.Input{Player: <span class="hljs-string">&quot;a&quot;</span>, DX: <span class="hljs-number">9</span>, DY: <span class="hljs-number">0</span>})
+	<span class="hljs-keyword">if</span> !errors.Is(err, game.ErrBadInput) {
+		t.Fatalf(<span class="hljs-string">&quot;%v&quot;</span>, err)
+	}
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestCollisionScoresAndWin</span><span class="hljs-params">(t *testing.T)</span></span> {
+	r := game.NewRoom(game.Config{
+		ID: <span class="hljs-string">&quot;t&quot;</span>, Width: <span class="hljs-number">200</span>, Height: <span class="hljs-number">200</span>, Speed: <span class="hljs-number">0</span>,
+		HitRadius: <span class="hljs-number">50</span>, HitCooldown: <span class="hljs-number">5</span>, ScoreToWin: <span class="hljs-number">2</span>, MaxTicks: <span class="hljs-number">0</span>,
+	})
+	_ = r.Join(<span class="hljs-string">&quot;a&quot;</span>)
+	_ = r.Join(<span class="hljs-string">&quot;b&quot;</span>)
+	<span class="hljs-comment">// force positions close</span>
+	<span class="hljs-comment">// start game</span>
+	_ = r.Ready(<span class="hljs-string">&quot;a&quot;</span>)
+	_ = r.Ready(<span class="hljs-string">&quot;b&quot;</span>)
+	<span class="hljs-comment">// place on top of each other via inputs with speed 0 won&#x27;t move — use Tick with manual?</span>
+	<span class="hljs-comment">// Speed 0 means no move; set by pushing and we need positions equal.</span>
+	<span class="hljs-comment">// Re-create with speed and many ticks toward each other is fragile.</span>
+	<span class="hljs-comment">// Use ScoreToWin and collide by joining spawn close: spawn is 40,40 and 120,40 — not close.</span>
+	<span class="hljs-comment">// Directly test by many ticks with high speed toward each other.</span>
+	r = game.NewRoom(game.Config{
+		ID: <span class="hljs-string">&quot;t2&quot;</span>, Width: <span class="hljs-number">400</span>, Height: <span class="hljs-number">240</span>, Speed: <span class="hljs-number">20</span>,
+		HitRadius: <span class="hljs-number">30</span>, HitCooldown: <span class="hljs-number">2</span>, ScoreToWin: <span class="hljs-number">1</span>, EndHoldTicks: <span class="hljs-number">3</span>, MaxTicks: <span class="hljs-number">0</span>,
+	})
+	_ = r.Join(<span class="hljs-string">&quot;ann&quot;</span>)
+	_ = r.Join(<span class="hljs-string">&quot;bob&quot;</span>)
+	_ = r.Ready(<span class="hljs-string">&quot;ann&quot;</span>)
+	_ = r.Ready(<span class="hljs-string">&quot;bob&quot;</span>)
+	<span class="hljs-comment">// ann at left spawn, bob to the right — move ann right, bob left</span>
+	<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-number">20</span> &amp;&amp; r.PhaseSnapshot() == game.PhasePlaying; i++ {
+		_ = r.PushInput(game.Input{Player: <span class="hljs-string">&quot;ann&quot;</span>, DX: <span class="hljs-number">1</span>, DY: <span class="hljs-number">0</span>})
+		_ = r.PushInput(game.Input{Player: <span class="hljs-string">&quot;bob&quot;</span>, DX: <span class="hljs-number">-1</span>, DY: <span class="hljs-number">0</span>})
+		r.TickOnce()
+	}
+	<span class="hljs-keyword">if</span> r.PhaseSnapshot() != game.PhaseEnded {
+		t.Fatalf(<span class="hljs-string">&quot;expected ended after collision score, phase=%v snap=%+v&quot;</span>, r.PhaseSnapshot(), r.Snapshot())
+	}
+	<span class="hljs-comment">// hold then lobby</span>
+	r.TickOnce()
+	r.TickOnce()
+	r.TickOnce()
+	<span class="hljs-keyword">if</span> r.PhaseSnapshot() != game.PhaseLobby {
+		t.Fatalf(<span class="hljs-string">&quot;expected lobby after hold, phase=%v&quot;</span>, r.PhaseSnapshot())
+	}
+	<span class="hljs-keyword">for</span> _, p := <span class="hljs-keyword">range</span> r.Snapshot().Players {
+		<span class="hljs-keyword">if</span> p.Ready || p.Score != <span class="hljs-number">0</span> {
+			t.Fatalf(<span class="hljs-string">&quot;lobby reset incomplete: %+v&quot;</span>, p)
+		}
+	}
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">TestTimeoutHighestScoreWins</span><span class="hljs-params">(t *testing.T)</span></span> {
+	r := game.NewRoom(game.Config{
+		ID: <span class="hljs-string">&quot;t&quot;</span>, Width: <span class="hljs-number">100</span>, Height: <span class="hljs-number">100</span>, Speed: <span class="hljs-number">0</span>,
+		HitRadius: <span class="hljs-number">1</span>, ScoreToWin: <span class="hljs-number">99</span>, MaxTicks: <span class="hljs-number">3</span>, EndHoldTicks: <span class="hljs-number">100</span>,
+	})
+	_ = r.Join(<span class="hljs-string">&quot;a&quot;</span>)
+	_ = r.Join(<span class="hljs-string">&quot;b&quot;</span>)
+	_ = r.Ready(<span class="hljs-string">&quot;a&quot;</span>)
+	_ = r.Ready(<span class="hljs-string">&quot;b&quot;</span>)
+	<span class="hljs-comment">// no collision possible with tiny radius and speed 0; timeout</span>
+	r.TickOnce()
+	r.TickOnce()
+	r.TickOnce()
+	<span class="hljs-keyword">if</span> r.PhaseSnapshot() != game.PhaseEnded {
+		t.Fatalf(<span class="hljs-string">&quot;phase=%v&quot;</span>, r.PhaseSnapshot())
+	}
+}
+</code></pre></div><div><div class="mb-2 flex items-center gap-2"><span class="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs text-slate-300">server/internal/game/room.go</span></div><pre class="hljs overflow-x-auto rounded-xl border border-slate-800 bg-[#0d1117] p-4 text-sm leading-relaxed"><code class="language-go"><span class="hljs-keyword">package</span> game
+
+<span class="hljs-keyword">import</span> (
+	<span class="hljs-string">&quot;encoding/json&quot;</span>
+	<span class="hljs-string">&quot;errors&quot;</span>
+	<span class="hljs-string">&quot;fmt&quot;</span>
+	<span class="hljs-string">&quot;sync&quot;</span>
+)
+
+<span class="hljs-keyword">type</span> Phase <span class="hljs-type">int</span>
+
+<span class="hljs-keyword">const</span> (
+	PhaseLobby Phase = <span class="hljs-literal">iota</span>
+	PhasePlaying
+	PhaseEnded
+)
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(p Phase)</span></span> String() <span class="hljs-type">string</span> {
+	<span class="hljs-keyword">switch</span> p {
+	<span class="hljs-keyword">case</span> PhaseLobby:
+		<span class="hljs-keyword">return</span> <span class="hljs-string">&quot;lobby&quot;</span>
+	<span class="hljs-keyword">case</span> PhasePlaying:
+		<span class="hljs-keyword">return</span> <span class="hljs-string">&quot;playing&quot;</span>
+	<span class="hljs-keyword">case</span> PhaseEnded:
+		<span class="hljs-keyword">return</span> <span class="hljs-string">&quot;ended&quot;</span>
+	<span class="hljs-keyword">default</span>:
+		<span class="hljs-keyword">return</span> fmt.Sprintf(<span class="hljs-string">&quot;phase(%d)&quot;</span>, <span class="hljs-type">int</span>(p))
+	}
+}
+
+<span class="hljs-keyword">var</span> (
+	ErrInvalidPhase = errors.New(<span class="hljs-string">&quot;invalid phase&quot;</span>)
+	ErrRoomFull     = errors.New(<span class="hljs-string">&quot;room full&quot;</span>)
+	ErrBadInput     = errors.New(<span class="hljs-string">&quot;bad input&quot;</span>)
+	ErrNotInRoom    = errors.New(<span class="hljs-string">&quot;not in room&quot;</span>)
+	ErrExists       = errors.New(<span class="hljs-string">&quot;already joined&quot;</span>)
+)
+
+<span class="hljs-keyword">type</span> Input <span class="hljs-keyword">struct</span> {
+	Player <span class="hljs-type">string</span>
+	DX, DY <span class="hljs-type">int</span>
+}
+
+<span class="hljs-keyword">type</span> Player <span class="hljs-keyword">struct</span> {
+	Name   <span class="hljs-type">string</span> <span class="hljs-string">`json:&quot;name&quot;`</span>
+	X      <span class="hljs-type">int</span>    <span class="hljs-string">`json:&quot;x&quot;`</span>
+	Y      <span class="hljs-type">int</span>    <span class="hljs-string">`json:&quot;y&quot;`</span>
+	Ready  <span class="hljs-type">bool</span>   <span class="hljs-string">`json:&quot;ready&quot;`</span>
+	Score  <span class="hljs-type">int</span>    <span class="hljs-string">`json:&quot;score&quot;`</span>
+	lastDX <span class="hljs-type">int</span>
+	lastDY <span class="hljs-type">int</span>
+	iFrame <span class="hljs-type">int</span> <span class="hljs-comment">// ticks until can score again</span>
+}
+
+<span class="hljs-comment">// Room is pure game state + rules (no network I/O).</span>
+<span class="hljs-keyword">type</span> Room <span class="hljs-keyword">struct</span> {
+	mu sync.Mutex
+
+	ID           <span class="hljs-type">string</span>
+	Capacity     <span class="hljs-type">int</span>
+	Width        <span class="hljs-type">int</span>
+	Height       <span class="hljs-type">int</span>
+	Speed        <span class="hljs-type">int</span>
+	HitRadius    <span class="hljs-type">int</span> <span class="hljs-comment">// collision distance</span>
+	HitCooldown   <span class="hljs-type">int</span> <span class="hljs-comment">// i-frames after a scoring bump</span>
+	ScoreToWin   <span class="hljs-type">int</span>
+	EndHoldTicks <span class="hljs-type">int</span> <span class="hljs-comment">// how long to show Ended before lobby reset</span>
+	MaxTicks     <span class="hljs-type">int</span> <span class="hljs-comment">// optional match timeout (0 = off)</span>
+
+	Phase    Phase
+	Tick     <span class="hljs-type">int</span>
+	EndTicks <span class="hljs-type">int</span>
+	Winner   <span class="hljs-type">string</span>
+	Players  <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*Player
+	inbox    []Input
+	spawnN   <span class="hljs-type">int</span>
+}
+
+<span class="hljs-keyword">type</span> Config <span class="hljs-keyword">struct</span> {
+	ID           <span class="hljs-type">string</span>
+	Capacity     <span class="hljs-type">int</span>
+	Width        <span class="hljs-type">int</span>
+	Height       <span class="hljs-type">int</span>
+	Speed        <span class="hljs-type">int</span>
+	HitRadius    <span class="hljs-type">int</span>
+	HitCooldown   <span class="hljs-type">int</span>
+	ScoreToWin   <span class="hljs-type">int</span>
+	EndHoldTicks <span class="hljs-type">int</span>
+	MaxTicks     <span class="hljs-type">int</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">NewRoom</span><span class="hljs-params">(cfg Config)</span></span> *Room {
+	<span class="hljs-keyword">if</span> cfg.Capacity &lt;= <span class="hljs-number">0</span> {
+		cfg.Capacity = <span class="hljs-number">4</span>
+	}
+	<span class="hljs-keyword">if</span> cfg.Width &lt;= <span class="hljs-number">0</span> {
+		cfg.Width = <span class="hljs-number">400</span>
+	}
+	<span class="hljs-keyword">if</span> cfg.Height &lt;= <span class="hljs-number">0</span> {
+		cfg.Height = <span class="hljs-number">240</span>
+	}
+	<span class="hljs-keyword">if</span> cfg.Speed &lt;= <span class="hljs-number">0</span> {
+		cfg.Speed = <span class="hljs-number">8</span>
+	}
+	<span class="hljs-keyword">if</span> cfg.HitRadius &lt;= <span class="hljs-number">0</span> {
+		cfg.HitRadius = <span class="hljs-number">28</span>
+	}
+	<span class="hljs-keyword">if</span> cfg.HitCooldown &lt;= <span class="hljs-number">0</span> {
+		cfg.HitCooldown = <span class="hljs-number">15</span> <span class="hljs-comment">// 0.75s at 20Hz</span>
+	}
+	<span class="hljs-keyword">if</span> cfg.ScoreToWin &lt;= <span class="hljs-number">0</span> {
+		cfg.ScoreToWin = <span class="hljs-number">3</span>
+	}
+	<span class="hljs-keyword">if</span> cfg.EndHoldTicks &lt;= <span class="hljs-number">0</span> {
+		cfg.EndHoldTicks = <span class="hljs-number">60</span> <span class="hljs-comment">// 3s at 20Hz</span>
+	}
+	<span class="hljs-keyword">if</span> cfg.MaxTicks &lt;= <span class="hljs-number">0</span> {
+		cfg.MaxTicks = <span class="hljs-number">20</span> * <span class="hljs-number">60</span> <span class="hljs-comment">// 60s at 20Hz</span>
+	}
+	<span class="hljs-keyword">return</span> &amp;Room{
+		ID:           cfg.ID,
+		Capacity:     cfg.Capacity,
+		Width:        cfg.Width,
+		Height:       cfg.Height,
+		Speed:        cfg.Speed,
+		HitRadius:    cfg.HitRadius,
+		HitCooldown:   cfg.HitCooldown,
+		ScoreToWin:   cfg.ScoreToWin,
+		EndHoldTicks: cfg.EndHoldTicks,
+		MaxTicks:     cfg.MaxTicks,
+		Phase:        PhaseLobby,
+		Players:      <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*Player{},
+	}
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Room)</span></span> Join(name <span class="hljs-type">string</span>) <span class="hljs-type">error</span> {
+	r.mu.Lock()
+	<span class="hljs-keyword">defer</span> r.mu.Unlock()
+	<span class="hljs-keyword">if</span> r.Phase != PhaseLobby {
+		<span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;join: %w&quot;</span>, ErrInvalidPhase)
+	}
+	<span class="hljs-keyword">if</span> _, ok := r.Players[name]; ok {
+		<span class="hljs-keyword">return</span> ErrExists
+	}
+	<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(r.Players) &gt;= r.Capacity {
+		<span class="hljs-keyword">return</span> ErrRoomFull
+	}
+	x, y := r.spawnPosLocked()
+	r.Players[name] = &amp;Player{Name: name, X: x, Y: y, Ready: <span class="hljs-literal">false</span>}
+	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Room)</span></span> spawnPosLocked() (x, y <span class="hljs-type">int</span>) {
+	x = <span class="hljs-number">40</span> + (r.spawnN%<span class="hljs-number">4</span>)*<span class="hljs-number">80</span>
+	y = <span class="hljs-number">40</span> + (r.spawnN/<span class="hljs-number">4</span>)*<span class="hljs-number">50</span>
+	r.spawnN++
+	<span class="hljs-keyword">if</span> x &gt; r.Width {
+		x = r.Width / <span class="hljs-number">2</span>
+	}
+	<span class="hljs-keyword">if</span> y &gt; r.Height {
+		y = r.Height / <span class="hljs-number">2</span>
+	}
+	<span class="hljs-keyword">return</span> x, y
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Room)</span></span> Leave(name <span class="hljs-type">string</span>) {
+	r.mu.Lock()
+	<span class="hljs-keyword">defer</span> r.mu.Unlock()
+	<span class="hljs-built_in">delete</span>(r.Players, name)
+	<span class="hljs-keyword">if</span> r.Phase == PhasePlaying &amp;&amp; <span class="hljs-built_in">len</span>(r.Players) &lt; <span class="hljs-number">2</span> {
+		r.endLocked(<span class="hljs-string">&quot;forfeit&quot;</span>)
+	}
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Room)</span></span> Ready(name <span class="hljs-type">string</span>) <span class="hljs-type">error</span> {
+	r.mu.Lock()
+	<span class="hljs-keyword">defer</span> r.mu.Unlock()
+	<span class="hljs-keyword">if</span> r.Phase != PhaseLobby {
+		<span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;ready: %w&quot;</span>, ErrInvalidPhase)
+	}
+	p, ok := r.Players[name]
+	<span class="hljs-keyword">if</span> !ok {
+		<span class="hljs-keyword">return</span> ErrNotInRoom
+	}
+	p.Ready = <span class="hljs-literal">true</span>
+	r.tryStartLocked()
+	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Room)</span></span> tryStartLocked() {
+	<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(r.Players) &lt; <span class="hljs-number">2</span> {
+		<span class="hljs-keyword">return</span>
+	}
+	<span class="hljs-keyword">for</span> _, p := <span class="hljs-keyword">range</span> r.Players {
+		<span class="hljs-keyword">if</span> !p.Ready {
+			<span class="hljs-keyword">return</span>
+		}
+	}
+	r.Phase = PhasePlaying
+	r.Tick = <span class="hljs-number">0</span>
+	r.EndTicks = <span class="hljs-number">0</span>
+	r.Winner = <span class="hljs-string">&quot;&quot;</span>
+	r.inbox = r.inbox[:<span class="hljs-number">0</span>]
+	<span class="hljs-keyword">for</span> _, p := <span class="hljs-keyword">range</span> r.Players {
+		p.Score = <span class="hljs-number">0</span>
+		p.iFrame = <span class="hljs-number">0</span>
+		p.lastDX, p.lastDY = <span class="hljs-number">0</span>, <span class="hljs-number">0</span>
+	}
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Room)</span></span> PhaseSnapshot() Phase {
+	r.mu.Lock()
+	<span class="hljs-keyword">defer</span> r.mu.Unlock()
+	<span class="hljs-keyword">return</span> r.Phase
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Room)</span></span> PlayerCount() <span class="hljs-type">int</span> {
+	r.mu.Lock()
+	<span class="hljs-keyword">defer</span> r.mu.Unlock()
+	<span class="hljs-keyword">return</span> <span class="hljs-built_in">len</span>(r.Players)
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Room)</span></span> PushInput(in Input) <span class="hljs-type">error</span> {
+	r.mu.Lock()
+	<span class="hljs-keyword">defer</span> r.mu.Unlock()
+	<span class="hljs-keyword">if</span> r.Phase != PhasePlaying {
+		<span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;input: %w&quot;</span>, ErrInvalidPhase)
+	}
+	<span class="hljs-keyword">if</span> abs(in.DX) &gt; <span class="hljs-number">1</span> || abs(in.DY) &gt; <span class="hljs-number">1</span> {
+		<span class="hljs-keyword">return</span> fmt.Errorf(<span class="hljs-string">&quot;%w: dx,dy in -1..1&quot;</span>, ErrBadInput)
+	}
+	<span class="hljs-keyword">if</span> _, ok := r.Players[in.Player]; !ok {
+		<span class="hljs-keyword">return</span> ErrNotInRoom
+	}
+	r.inbox = <span class="hljs-built_in">append</span>(r.inbox, in)
+	<span class="hljs-keyword">return</span> <span class="hljs-literal">nil</span>
+}
+
+<span class="hljs-comment">// TickOnce advances simulation. Safe in Lobby (no-op), Playing, or Ended (countdown→Lobby).</span>
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Room)</span></span> TickOnce() {
+	r.mu.Lock()
+	<span class="hljs-keyword">defer</span> r.mu.Unlock()
+
+	<span class="hljs-keyword">switch</span> r.Phase {
+	<span class="hljs-keyword">case</span> PhaseLobby:
+		<span class="hljs-keyword">return</span>
+	<span class="hljs-keyword">case</span> PhaseEnded:
+		r.EndTicks++
+		<span class="hljs-keyword">if</span> r.EndTicks &gt;= r.EndHoldTicks {
+			r.resetLobbyLocked()
+		}
+		<span class="hljs-keyword">return</span>
+	<span class="hljs-keyword">case</span> PhasePlaying:
+		<span class="hljs-comment">// continue below</span>
+	<span class="hljs-keyword">default</span>:
+		<span class="hljs-keyword">return</span>
+	}
+
+	r.Tick++
+	<span class="hljs-comment">// decay i-frames</span>
+	<span class="hljs-keyword">for</span> _, p := <span class="hljs-keyword">range</span> r.Players {
+		<span class="hljs-keyword">if</span> p.iFrame &gt; <span class="hljs-number">0</span> {
+			p.iFrame--
+		}
+		p.lastDX, p.lastDY = <span class="hljs-number">0</span>, <span class="hljs-number">0</span>
+	}
+
+	last := <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]Input{}
+	<span class="hljs-keyword">for</span> _, in := <span class="hljs-keyword">range</span> r.inbox {
+		last[in.Player] = in
+	}
+	r.inbox = r.inbox[:<span class="hljs-number">0</span>]
+	<span class="hljs-keyword">for</span> name, in := <span class="hljs-keyword">range</span> last {
+		p := r.Players[name]
+		p.lastDX, p.lastDY = in.DX, in.DY
+		p.X = clamp(p.X+in.DX*r.Speed, <span class="hljs-number">0</span>, r.Width)
+		p.Y = clamp(p.Y+in.DY*r.Speed, <span class="hljs-number">0</span>, r.Height)
+	}
+
+	r.resolveCollisionsLocked()
+	r.checkWinLocked()
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Room)</span></span> resolveCollisionsLocked() {
+	names := <span class="hljs-built_in">make</span>([]<span class="hljs-type">string</span>, <span class="hljs-number">0</span>, <span class="hljs-built_in">len</span>(r.Players))
+	<span class="hljs-keyword">for</span> n := <span class="hljs-keyword">range</span> r.Players {
+		names = <span class="hljs-built_in">append</span>(names, n)
+	}
+	hr2 := r.HitRadius * r.HitRadius
+	<span class="hljs-keyword">for</span> i := <span class="hljs-number">0</span>; i &lt; <span class="hljs-built_in">len</span>(names); i++ {
+		<span class="hljs-keyword">for</span> j := i + <span class="hljs-number">1</span>; j &lt; <span class="hljs-built_in">len</span>(names); j++ {
+			a := r.Players[names[i]]
+			b := r.Players[names[j]]
+			<span class="hljs-keyword">if</span> a.iFrame &gt; <span class="hljs-number">0</span> || b.iFrame &gt; <span class="hljs-number">0</span> {
+				<span class="hljs-keyword">continue</span>
+			}
+			dx := a.X - b.X
+			dy := a.Y - b.Y
+			<span class="hljs-keyword">if</span> dx*dx+dy*dy &gt; hr2 {
+				<span class="hljs-keyword">continue</span>
+			}
+			<span class="hljs-comment">// Award point to the more &quot;active&quot; bumper this tick; tie-break by name.</span>
+			am := abs(a.lastDX) + abs(a.lastDY)
+			bm := abs(b.lastDX) + abs(b.lastDY)
+			<span class="hljs-keyword">if</span> am &gt; bm || (am == bm &amp;&amp; a.Name &lt; b.Name) {
+				a.Score++
+			} <span class="hljs-keyword">else</span> {
+				b.Score++
+			}
+			a.iFrame = r.HitCooldown
+			b.iFrame = r.HitCooldown
+			<span class="hljs-comment">// small separation so they don&#x27;t stick</span>
+			<span class="hljs-keyword">if</span> a.X &lt;= b.X {
+				a.X = clamp(a.X<span class="hljs-number">-4</span>, <span class="hljs-number">0</span>, r.Width)
+				b.X = clamp(b.X+<span class="hljs-number">4</span>, <span class="hljs-number">0</span>, r.Width)
+			} <span class="hljs-keyword">else</span> {
+				a.X = clamp(a.X+<span class="hljs-number">4</span>, <span class="hljs-number">0</span>, r.Width)
+				b.X = clamp(b.X<span class="hljs-number">-4</span>, <span class="hljs-number">0</span>, r.Width)
+			}
+		}
+	}
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Room)</span></span> checkWinLocked() {
+	<span class="hljs-keyword">for</span> _, p := <span class="hljs-keyword">range</span> r.Players {
+		<span class="hljs-keyword">if</span> p.Score &gt;= r.ScoreToWin {
+			r.endLocked(p.Name)
+			<span class="hljs-keyword">return</span>
+		}
+	}
+	<span class="hljs-keyword">if</span> r.MaxTicks &gt; <span class="hljs-number">0</span> &amp;&amp; r.Tick &gt;= r.MaxTicks {
+		<span class="hljs-comment">// highest score wins; tie =&gt; empty winner</span>
+		best, bestScore := <span class="hljs-string">&quot;&quot;</span>, <span class="hljs-number">-1</span>
+		tie := <span class="hljs-literal">false</span>
+		<span class="hljs-keyword">for</span> _, p := <span class="hljs-keyword">range</span> r.Players {
+			<span class="hljs-keyword">if</span> p.Score &gt; bestScore {
+				best, bestScore = p.Name, p.Score
+				tie = <span class="hljs-literal">false</span>
+			} <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> p.Score == bestScore {
+				tie = <span class="hljs-literal">true</span>
+			}
+		}
+		<span class="hljs-keyword">if</span> tie || bestScore &lt; <span class="hljs-number">0</span> {
+			r.endLocked(<span class="hljs-string">&quot;&quot;</span>)
+		} <span class="hljs-keyword">else</span> {
+			r.endLocked(best)
+		}
+	}
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Room)</span></span> endLocked(winner <span class="hljs-type">string</span>) {
+	r.Phase = PhaseEnded
+	r.Winner = winner
+	r.EndTicks = <span class="hljs-number">0</span>
+	r.inbox = r.inbox[:<span class="hljs-number">0</span>]
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Room)</span></span> resetLobbyLocked() {
+	r.Phase = PhaseLobby
+	r.Tick = <span class="hljs-number">0</span>
+	r.EndTicks = <span class="hljs-number">0</span>
+	r.Winner = <span class="hljs-string">&quot;&quot;</span>
+	r.inbox = r.inbox[:<span class="hljs-number">0</span>]
+	r.spawnN = <span class="hljs-number">0</span>
+	<span class="hljs-keyword">for</span> _, p := <span class="hljs-keyword">range</span> r.Players {
+		p.Ready = <span class="hljs-literal">false</span>
+		p.Score = <span class="hljs-number">0</span>
+		p.iFrame = <span class="hljs-number">0</span>
+		p.lastDX, p.lastDY = <span class="hljs-number">0</span>, <span class="hljs-number">0</span>
+		p.X, p.Y = r.spawnPosLocked()
+	}
+}
+
+<span class="hljs-keyword">type</span> Snapshot <span class="hljs-keyword">struct</span> {
+	Room       <span class="hljs-type">string</span>         <span class="hljs-string">`json:&quot;room&quot;`</span>
+	Phase      <span class="hljs-type">string</span>         <span class="hljs-string">`json:&quot;phase&quot;`</span>
+	Tick       <span class="hljs-type">int</span>            <span class="hljs-string">`json:&quot;tick&quot;`</span>
+	Width      <span class="hljs-type">int</span>            <span class="hljs-string">`json:&quot;width&quot;`</span>
+	Height     <span class="hljs-type">int</span>            <span class="hljs-string">`json:&quot;height&quot;`</span>
+	HitRadius  <span class="hljs-type">int</span>            <span class="hljs-string">`json:&quot;hit_radius&quot;`</span>
+	ScoreToWin <span class="hljs-type">int</span>            <span class="hljs-string">`json:&quot;score_to_win&quot;`</span>
+	Winner     <span class="hljs-type">string</span>         <span class="hljs-string">`json:&quot;winner,omitempty&quot;`</span>
+	Players    []PlayerPublic <span class="hljs-string">`json:&quot;players&quot;`</span>
+}
+
+<span class="hljs-keyword">type</span> PlayerPublic <span class="hljs-keyword">struct</span> {
+	Name  <span class="hljs-type">string</span> <span class="hljs-string">`json:&quot;name&quot;`</span>
+	X     <span class="hljs-type">int</span>    <span class="hljs-string">`json:&quot;x&quot;`</span>
+	Y     <span class="hljs-type">int</span>    <span class="hljs-string">`json:&quot;y&quot;`</span>
+	Ready <span class="hljs-type">bool</span>   <span class="hljs-string">`json:&quot;ready&quot;`</span>
+	Score <span class="hljs-type">int</span>    <span class="hljs-string">`json:&quot;score&quot;`</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Room)</span></span> Snapshot() Snapshot {
+	r.mu.Lock()
+	<span class="hljs-keyword">defer</span> r.mu.Unlock()
+	players := <span class="hljs-built_in">make</span>([]PlayerPublic, <span class="hljs-number">0</span>, <span class="hljs-built_in">len</span>(r.Players))
+	<span class="hljs-keyword">for</span> _, p := <span class="hljs-keyword">range</span> r.Players {
+		players = <span class="hljs-built_in">append</span>(players, PlayerPublic{
+			Name: p.Name, X: p.X, Y: p.Y, Ready: p.Ready, Score: p.Score,
+		})
+	}
+	<span class="hljs-keyword">return</span> Snapshot{
+		Room:       r.ID,
+		Phase:      r.Phase.String(),
+		Tick:       r.Tick,
+		Width:      r.Width,
+		Height:     r.Height,
+		HitRadius:  r.HitRadius,
+		ScoreToWin: r.ScoreToWin,
+		Winner:     r.Winner,
+		Players:    players,
+	}
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(r *Room)</span></span> SnapshotJSON() <span class="hljs-type">string</span> {
+	b, _ := json.Marshal(r.Snapshot())
+	<span class="hljs-keyword">return</span> <span class="hljs-type">string</span>(b)
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">abs</span><span class="hljs-params">(v <span class="hljs-type">int</span>)</span></span> <span class="hljs-type">int</span> {
+	<span class="hljs-keyword">if</span> v &lt; <span class="hljs-number">0</span> {
+		<span class="hljs-keyword">return</span> -v
+	}
+	<span class="hljs-keyword">return</span> v
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">clamp</span><span class="hljs-params">(v, lo, hi <span class="hljs-type">int</span>)</span></span> <span class="hljs-type">int</span> {
+	<span class="hljs-keyword">if</span> v &lt; lo {
+		<span class="hljs-keyword">return</span> lo
+	}
+	<span class="hljs-keyword">if</span> v &gt; hi {
+		<span class="hljs-keyword">return</span> hi
+	}
+	<span class="hljs-keyword">return</span> v
+}
+</code></pre></div><div><div class="mb-2 flex items-center gap-2"><span class="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs text-slate-300">server/internal/hub/hub.go</span></div><pre class="hljs overflow-x-auto rounded-xl border border-slate-800 bg-[#0d1117] p-4 text-sm leading-relaxed"><code class="language-go"><span class="hljs-keyword">package</span> hub
+
+<span class="hljs-keyword">import</span> (
+	<span class="hljs-string">&quot;encoding/json&quot;</span>
+	<span class="hljs-string">&quot;log/slog&quot;</span>
+	<span class="hljs-string">&quot;net/http&quot;</span>
+	<span class="hljs-string">&quot;strconv&quot;</span>
+	<span class="hljs-string">&quot;strings&quot;</span>
+	<span class="hljs-string">&quot;sync&quot;</span>
+	<span class="hljs-string">&quot;sync/atomic&quot;</span>
+	<span class="hljs-string">&quot;time&quot;</span>
+
+	<span class="hljs-string">&quot;github.com/willyliao/golearning/demo/arena-mini/internal/game&quot;</span>
+	<span class="hljs-string">&quot;github.com/willyliao/golearning/demo/arena-mini/internal/metrics&quot;</span>
+	<span class="hljs-string">&quot;golang.org/x/net/websocket&quot;</span>
+)
+
+<span class="hljs-keyword">const</span> tickInterval = <span class="hljs-number">50</span> * time.Millisecond <span class="hljs-comment">// 20 Hz</span>
+
+<span class="hljs-comment">// Hub manages rooms and websocket sessions.</span>
+<span class="hljs-keyword">type</span> Hub <span class="hljs-keyword">struct</span> {
+	mu      sync.RWMutex
+	rooms   <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*roomRuntime
+	metrics *metrics.Metrics
+	log     *slog.Logger
+	closed  atomic.Bool
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">New</span><span class="hljs-params">(m *metrics.Metrics, log *slog.Logger)</span></span> *Hub {
+	<span class="hljs-keyword">if</span> log == <span class="hljs-literal">nil</span> {
+		log = slog.Default()
+	}
+	<span class="hljs-keyword">if</span> m == <span class="hljs-literal">nil</span> {
+		m = metrics.New()
+	}
+	<span class="hljs-keyword">return</span> &amp;Hub{
+		rooms:   <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]*roomRuntime),
+		metrics: m,
+		log:     log,
+	}
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *Hub)</span></span> Metrics() *metrics.Metrics { <span class="hljs-keyword">return</span> h.metrics }
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *Hub)</span></span> RoomCount() <span class="hljs-type">int</span> {
+	h.mu.RLock()
+	<span class="hljs-keyword">defer</span> h.mu.RUnlock()
+	<span class="hljs-keyword">return</span> <span class="hljs-built_in">len</span>(h.rooms)
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *Hub)</span></span> RoomStats() <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]any {
+	h.mu.RLock()
+	<span class="hljs-keyword">defer</span> h.mu.RUnlock()
+	out := <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]any, <span class="hljs-built_in">len</span>(h.rooms))
+	<span class="hljs-keyword">for</span> id, rt := <span class="hljs-keyword">range</span> h.rooms {
+		out[id] = <span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]any{
+			<span class="hljs-string">&quot;players&quot;</span>: rt.game.PlayerCount(),
+			<span class="hljs-string">&quot;phase&quot;</span>:   rt.game.PhaseSnapshot().String(),
+		}
+	}
+	<span class="hljs-keyword">return</span> out
+}
+
+<span class="hljs-comment">// Close stops all room tickers (call during graceful shutdown).</span>
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *Hub)</span></span> Close() {
+	h.closed.Store(<span class="hljs-literal">true</span>)
+	h.mu.Lock()
+	<span class="hljs-keyword">defer</span> h.mu.Unlock()
+	<span class="hljs-keyword">for</span> id, rt := <span class="hljs-keyword">range</span> h.rooms {
+		rt.stop()
+		<span class="hljs-built_in">delete</span>(h.rooms, id)
+	}
+	h.metrics.Rooms.Store(<span class="hljs-number">0</span>)
+	h.log.Info(<span class="hljs-string">&quot;hub closed&quot;</span>)
+}
+
+<span class="hljs-keyword">type</span> roomRuntime <span class="hljs-keyword">struct</span> {
+	game *game.Room
+	hub  *Hub
+
+	mu      sync.Mutex
+	members <span class="hljs-keyword">map</span>[*websocket.Conn]<span class="hljs-type">string</span>
+
+	tickOnce sync.Once
+	stopTick <span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>{}
+	stopped  atomic.Bool
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *Hub)</span></span> getOrCreate(id <span class="hljs-type">string</span>) *roomRuntime {
+	h.mu.Lock()
+	<span class="hljs-keyword">defer</span> h.mu.Unlock()
+	<span class="hljs-keyword">if</span> r, ok := h.rooms[id]; ok {
+		<span class="hljs-keyword">return</span> r
+	}
+	r := &amp;roomRuntime{
+		game:     game.NewRoom(game.Config{ID: id}),
+		hub:      h,
+		members:  <span class="hljs-built_in">make</span>(<span class="hljs-keyword">map</span>[*websocket.Conn]<span class="hljs-type">string</span>),
+		stopTick: <span class="hljs-built_in">make</span>(<span class="hljs-keyword">chan</span> <span class="hljs-keyword">struct</span>{}),
+	}
+	h.rooms[id] = r
+	h.metrics.Rooms.Store(<span class="hljs-type">int64</span>(<span class="hljs-built_in">len</span>(h.rooms)))
+	h.log.Info(<span class="hljs-string">&quot;room created&quot;</span>, <span class="hljs-string">&quot;room&quot;</span>, id)
+	<span class="hljs-keyword">return</span> r
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rt *roomRuntime)</span></span> stop() {
+	<span class="hljs-keyword">if</span> rt.stopped.Swap(<span class="hljs-literal">true</span>) {
+		<span class="hljs-keyword">return</span>
+	}
+	<span class="hljs-keyword">select</span> {
+	<span class="hljs-keyword">case</span> &lt;-rt.stopTick:
+	<span class="hljs-keyword">default</span>:
+		<span class="hljs-built_in">close</span>(rt.stopTick)
+	}
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *Hub)</span></span> HandleWS(w http.ResponseWriter, r *http.Request) {
+	<span class="hljs-keyword">if</span> h.closed.Load() {
+		http.Error(w, <span class="hljs-string">&quot;shutting down&quot;</span>, http.StatusServiceUnavailable)
+		<span class="hljs-keyword">return</span>
+	}
+	roomID := r.URL.Query().Get(<span class="hljs-string">&quot;room&quot;</span>)
+	<span class="hljs-keyword">if</span> roomID == <span class="hljs-string">&quot;&quot;</span> {
+		roomID = <span class="hljs-string">&quot;lobby&quot;</span>
+	}
+	name := r.URL.Query().Get(<span class="hljs-string">&quot;name&quot;</span>)
+	<span class="hljs-keyword">if</span> name == <span class="hljs-string">&quot;&quot;</span> {
+		name = <span class="hljs-string">&quot;anon&quot;</span>
+	}
+	server := websocket.Server{
+		Handler: <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(conn *websocket.Conn)</span></span> {
+			h.serveConn(roomID, name, conn)
+		},
+	}
+	server.ServeHTTP(w, r)
+}
+
+<span class="hljs-keyword">type</span> Envelope <span class="hljs-keyword">struct</span> {
+	V       <span class="hljs-type">int</span>    <span class="hljs-string">`json:&quot;v&quot;`</span>
+	Type    <span class="hljs-type">string</span> <span class="hljs-string">`json:&quot;type&quot;`</span>
+	From    <span class="hljs-type">string</span> <span class="hljs-string">`json:&quot;from,omitempty&quot;`</span>
+	Room    <span class="hljs-type">string</span> <span class="hljs-string">`json:&quot;room,omitempty&quot;`</span>
+	Payload <span class="hljs-type">string</span> <span class="hljs-string">`json:&quot;payload,omitempty&quot;`</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *Hub)</span></span> serveConn(roomID, name <span class="hljs-type">string</span>, conn *websocket.Conn) {
+	<span class="hljs-keyword">if</span> h.closed.Load() {
+		_ = conn.Close()
+		<span class="hljs-keyword">return</span>
+	}
+	rt := h.getOrCreate(roomID)
+	h.metrics.Connections.Add(<span class="hljs-number">1</span>)
+	<span class="hljs-keyword">defer</span> h.metrics.Connections.Add(<span class="hljs-number">-1</span>)
+
+	<span class="hljs-keyword">if</span> err := rt.game.Join(name); err != <span class="hljs-literal">nil</span> {
+		h.metrics.Errors.Add(<span class="hljs-number">1</span>)
+		_ = websocket.Message.Send(conn, mustJSON(Envelope{
+			V: <span class="hljs-number">1</span>, Type: <span class="hljs-string">&quot;error&quot;</span>, Room: roomID, Payload: err.Error(),
+		}))
+		_ = conn.Close()
+		<span class="hljs-keyword">return</span>
+	}
+
+	rt.mu.Lock()
+	<span class="hljs-keyword">for</span> c, n := <span class="hljs-keyword">range</span> rt.members {
+		<span class="hljs-keyword">if</span> n == name {
+			<span class="hljs-built_in">delete</span>(rt.members, c)
+			_ = c.Close()
+		}
+	}
+	rt.members[conn] = name
+	rt.mu.Unlock()
+
+	h.log.Info(<span class="hljs-string">&quot;join&quot;</span>, <span class="hljs-string">&quot;room&quot;</span>, roomID, <span class="hljs-string">&quot;player&quot;</span>, name)
+	rt.broadcast(Envelope{V: <span class="hljs-number">1</span>, Type: <span class="hljs-string">&quot;system&quot;</span>, Room: roomID, Payload: name + <span class="hljs-string">&quot; joined&quot;</span>})
+	rt.broadcastState()
+
+	<span class="hljs-keyword">defer</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> {
+		rt.game.Leave(name)
+		rt.mu.Lock()
+		<span class="hljs-built_in">delete</span>(rt.members, conn)
+		empty := <span class="hljs-built_in">len</span>(rt.members) == <span class="hljs-number">0</span>
+		rt.mu.Unlock()
+		_ = conn.Close()
+		rt.broadcast(Envelope{V: <span class="hljs-number">1</span>, Type: <span class="hljs-string">&quot;system&quot;</span>, Room: roomID, Payload: name + <span class="hljs-string">&quot; left&quot;</span>})
+		rt.broadcastState()
+		<span class="hljs-keyword">if</span> empty {
+			h.removeRoom(roomID, rt)
+		}
+		h.log.Info(<span class="hljs-string">&quot;leave&quot;</span>, <span class="hljs-string">&quot;room&quot;</span>, roomID, <span class="hljs-string">&quot;player&quot;</span>, name)
+	}()
+
+	<span class="hljs-keyword">for</span> {
+		<span class="hljs-keyword">if</span> h.closed.Load() {
+			rt.send(conn, Envelope{V: <span class="hljs-number">1</span>, Type: <span class="hljs-string">&quot;system&quot;</span>, Payload: <span class="hljs-string">&quot;server_closing&quot;</span>, Room: roomID})
+			<span class="hljs-keyword">return</span>
+		}
+		<span class="hljs-keyword">var</span> raw <span class="hljs-type">string</span>
+		<span class="hljs-keyword">if</span> err := websocket.Message.Receive(conn, &amp;raw); err != <span class="hljs-literal">nil</span> {
+			<span class="hljs-keyword">return</span>
+		}
+		h.metrics.MessagesIn.Add(<span class="hljs-number">1</span>)
+
+		<span class="hljs-keyword">var</span> msg Envelope
+		<span class="hljs-keyword">if</span> err := json.Unmarshal([]<span class="hljs-type">byte</span>(raw), &amp;msg); err != <span class="hljs-literal">nil</span> {
+			h.metrics.Errors.Add(<span class="hljs-number">1</span>)
+			rt.send(conn, Envelope{V: <span class="hljs-number">1</span>, Type: <span class="hljs-string">&quot;error&quot;</span>, Payload: <span class="hljs-string">&quot;bad json&quot;</span>, Room: roomID})
+			<span class="hljs-keyword">continue</span>
+		}
+		<span class="hljs-keyword">if</span> msg.V == <span class="hljs-number">0</span> {
+			msg.V = <span class="hljs-number">1</span>
+		}
+		<span class="hljs-keyword">if</span> msg.V != <span class="hljs-number">1</span> {
+			h.metrics.Errors.Add(<span class="hljs-number">1</span>)
+			rt.send(conn, Envelope{V: <span class="hljs-number">1</span>, Type: <span class="hljs-string">&quot;error&quot;</span>, Payload: <span class="hljs-string">&quot;unsupported version&quot;</span>, Room: roomID})
+			<span class="hljs-keyword">continue</span>
+		}
+
+		<span class="hljs-keyword">switch</span> msg.Type {
+		<span class="hljs-keyword">case</span> <span class="hljs-string">&quot;ping&quot;</span>:
+			rt.send(conn, Envelope{V: <span class="hljs-number">1</span>, Type: <span class="hljs-string">&quot;pong&quot;</span>, Payload: time.Now().UTC().Format(time.RFC3339), Room: roomID})
+		<span class="hljs-keyword">case</span> <span class="hljs-string">&quot;chat&quot;</span>:
+			msg.From = name
+			msg.Room = roomID
+			rt.broadcast(msg)
+		<span class="hljs-keyword">case</span> <span class="hljs-string">&quot;ready&quot;</span>:
+			<span class="hljs-keyword">if</span> err := rt.game.Ready(name); err != <span class="hljs-literal">nil</span> {
+				h.metrics.Errors.Add(<span class="hljs-number">1</span>)
+				rt.send(conn, Envelope{V: <span class="hljs-number">1</span>, Type: <span class="hljs-string">&quot;error&quot;</span>, Payload: err.Error(), Room: roomID})
+				<span class="hljs-keyword">continue</span>
+			}
+			rt.broadcast(Envelope{V: <span class="hljs-number">1</span>, Type: <span class="hljs-string">&quot;system&quot;</span>, From: name, Room: roomID, Payload: <span class="hljs-string">&quot;ready&quot;</span>})
+			rt.broadcastState()
+			<span class="hljs-keyword">if</span> rt.game.PhaseSnapshot() == game.PhasePlaying {
+				rt.ensureTicker()
+			}
+		<span class="hljs-keyword">case</span> <span class="hljs-string">&quot;input&quot;</span>:
+			dx, dy, err := parseInput(msg.Payload)
+			<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> {
+				h.metrics.Errors.Add(<span class="hljs-number">1</span>)
+				rt.send(conn, Envelope{V: <span class="hljs-number">1</span>, Type: <span class="hljs-string">&quot;error&quot;</span>, Payload: err.Error(), Room: roomID})
+				<span class="hljs-keyword">continue</span>
+			}
+			<span class="hljs-keyword">if</span> err := rt.game.PushInput(game.Input{Player: name, DX: dx, DY: dy}); err != <span class="hljs-literal">nil</span> {
+				h.metrics.Errors.Add(<span class="hljs-number">1</span>)
+				rt.send(conn, Envelope{V: <span class="hljs-number">1</span>, Type: <span class="hljs-string">&quot;error&quot;</span>, Payload: err.Error(), Room: roomID})
+			}
+		<span class="hljs-keyword">case</span> <span class="hljs-string">&quot;pos&quot;</span>:
+			h.metrics.Errors.Add(<span class="hljs-number">1</span>)
+			rt.send(conn, Envelope{V: <span class="hljs-number">1</span>, Type: <span class="hljs-string">&quot;error&quot;</span>, Payload: <span class="hljs-string">&quot;use type=input (authoritative); pos is disabled&quot;</span>, Room: roomID})
+		<span class="hljs-keyword">default</span>:
+			h.metrics.Errors.Add(<span class="hljs-number">1</span>)
+			rt.send(conn, Envelope{V: <span class="hljs-number">1</span>, Type: <span class="hljs-string">&quot;error&quot;</span>, Payload: <span class="hljs-string">&quot;unknown type &quot;</span> + msg.Type, Room: roomID})
+		}
+	}
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(h *Hub)</span></span> removeRoom(id <span class="hljs-type">string</span>, rt *roomRuntime) {
+	h.mu.Lock()
+	<span class="hljs-keyword">defer</span> h.mu.Unlock()
+	cur, ok := h.rooms[id]
+	<span class="hljs-keyword">if</span> !ok || cur != rt {
+		<span class="hljs-keyword">return</span>
+	}
+	rt.stop()
+	<span class="hljs-built_in">delete</span>(h.rooms, id)
+	h.metrics.Rooms.Store(<span class="hljs-type">int64</span>(<span class="hljs-built_in">len</span>(h.rooms)))
+	h.log.Info(<span class="hljs-string">&quot;room removed&quot;</span>, <span class="hljs-string">&quot;room&quot;</span>, id)
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rt *roomRuntime)</span></span> ensureTicker() {
+	rt.tickOnce.Do(<span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">()</span></span> {
+		<span class="hljs-keyword">go</span> rt.tickLoop()
+	})
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rt *roomRuntime)</span></span> tickLoop() {
+	t := time.NewTicker(tickInterval)
+	<span class="hljs-keyword">defer</span> t.Stop()
+	<span class="hljs-keyword">for</span> {
+		<span class="hljs-keyword">select</span> {
+		<span class="hljs-keyword">case</span> &lt;-rt.stopTick:
+			<span class="hljs-keyword">return</span>
+		<span class="hljs-keyword">case</span> &lt;-t.C:
+			<span class="hljs-keyword">if</span> rt.hub.closed.Load() {
+				<span class="hljs-keyword">return</span>
+			}
+			phase := rt.game.PhaseSnapshot()
+			<span class="hljs-comment">// Lobby: idle. Playing: simulate. Ended: countdown → Lobby.</span>
+			<span class="hljs-keyword">if</span> phase == game.PhaseLobby {
+				<span class="hljs-keyword">continue</span>
+			}
+			rt.game.TickOnce()
+			<span class="hljs-keyword">if</span> phase == game.PhasePlaying {
+				rt.hub.metrics.InputsApplied.Add(<span class="hljs-number">1</span>)
+			}
+			rt.broadcastState()
+		}
+	}
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rt *roomRuntime)</span></span> broadcastState() {
+	rt.broadcast(Envelope{
+		V:       <span class="hljs-number">1</span>,
+		Type:    <span class="hljs-string">&quot;state&quot;</span>,
+		Room:    rt.game.ID,
+		Payload: rt.game.SnapshotJSON(),
+	})
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rt *roomRuntime)</span></span> broadcast(msg Envelope) {
+	data := mustJSON(msg)
+	rt.mu.Lock()
+	<span class="hljs-keyword">defer</span> rt.mu.Unlock()
+	<span class="hljs-keyword">for</span> c := <span class="hljs-keyword">range</span> rt.members {
+		<span class="hljs-keyword">if</span> err := websocket.Message.Send(c, data); err != <span class="hljs-literal">nil</span> {
+			rt.hub.log.Debug(<span class="hljs-string">&quot;send error&quot;</span>, <span class="hljs-string">&quot;err&quot;</span>, err)
+		} <span class="hljs-keyword">else</span> {
+			rt.hub.metrics.MessagesOut.Add(<span class="hljs-number">1</span>)
+		}
+	}
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(rt *roomRuntime)</span></span> send(conn *websocket.Conn, msg Envelope) {
+	<span class="hljs-keyword">if</span> err := websocket.Message.Send(conn, mustJSON(msg)); err == <span class="hljs-literal">nil</span> {
+		rt.hub.metrics.MessagesOut.Add(<span class="hljs-number">1</span>)
+	}
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">parseInput</span><span class="hljs-params">(payload <span class="hljs-type">string</span>)</span></span> (dx, dy <span class="hljs-type">int</span>, err <span class="hljs-type">error</span>) {
+	payload = strings.TrimSpace(payload)
+	<span class="hljs-keyword">if</span> strings.Contains(payload, <span class="hljs-string">&quot;=&quot;</span>) {
+		parts := strings.Split(payload, <span class="hljs-string">&quot;,&quot;</span>)
+		<span class="hljs-keyword">for</span> _, p := <span class="hljs-keyword">range</span> parts {
+			kv := strings.SplitN(strings.TrimSpace(p), <span class="hljs-string">&quot;=&quot;</span>, <span class="hljs-number">2</span>)
+			<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(kv) != <span class="hljs-number">2</span> {
+				<span class="hljs-keyword">continue</span>
+			}
+			v, e := strconv.Atoi(strings.TrimSpace(kv[<span class="hljs-number">1</span>]))
+			<span class="hljs-keyword">if</span> e != <span class="hljs-literal">nil</span> {
+				<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>, <span class="hljs-number">0</span>, e
+			}
+			<span class="hljs-keyword">switch</span> strings.TrimSpace(kv[<span class="hljs-number">0</span>]) {
+			<span class="hljs-keyword">case</span> <span class="hljs-string">&quot;dx&quot;</span>:
+				dx = v
+			<span class="hljs-keyword">case</span> <span class="hljs-string">&quot;dy&quot;</span>:
+				dy = v
+			}
+		}
+		<span class="hljs-keyword">return</span> dx, dy, <span class="hljs-literal">nil</span>
+	}
+	parts := strings.Split(payload, <span class="hljs-string">&quot;,&quot;</span>)
+	<span class="hljs-keyword">if</span> <span class="hljs-built_in">len</span>(parts) != <span class="hljs-number">2</span> {
+		<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>, <span class="hljs-number">0</span>, errBad(<span class="hljs-string">&quot;want dx,dy&quot;</span>)
+	}
+	dx, err = strconv.Atoi(strings.TrimSpace(parts[<span class="hljs-number">0</span>]))
+	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> {
+		<span class="hljs-keyword">return</span> <span class="hljs-number">0</span>, <span class="hljs-number">0</span>, err
+	}
+	dy, err = strconv.Atoi(strings.TrimSpace(parts[<span class="hljs-number">1</span>]))
+	<span class="hljs-keyword">return</span> dx, dy, err
+}
+
+<span class="hljs-keyword">type</span> simpleError <span class="hljs-type">string</span>
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(e simpleError)</span></span> Error() <span class="hljs-type">string</span> { <span class="hljs-keyword">return</span> <span class="hljs-type">string</span>(e) }
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">errBad</span><span class="hljs-params">(s <span class="hljs-type">string</span>)</span></span> <span class="hljs-type">error</span> { <span class="hljs-keyword">return</span> simpleError(s) }
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">mustJSON</span><span class="hljs-params">(v any)</span></span> <span class="hljs-type">string</span> {
+	b, err := json.Marshal(v)
+	<span class="hljs-keyword">if</span> err != <span class="hljs-literal">nil</span> {
+		<span class="hljs-keyword">return</span> <span class="hljs-string">&quot;{}&quot;</span>
+	}
+	<span class="hljs-keyword">return</span> <span class="hljs-type">string</span>(b)
+}
+</code></pre></div><div><div class="mb-2 flex items-center gap-2"><span class="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs text-slate-300">server/internal/metrics/metrics.go</span></div><pre class="hljs overflow-x-auto rounded-xl border border-slate-800 bg-[#0d1117] p-4 text-sm leading-relaxed"><code class="language-go"><span class="hljs-keyword">package</span> metrics
+
+<span class="hljs-keyword">import</span> (
+	<span class="hljs-string">&quot;encoding/json&quot;</span>
+	<span class="hljs-string">&quot;net/http&quot;</span>
+	<span class="hljs-string">&quot;sync/atomic&quot;</span>
+	<span class="hljs-string">&quot;time&quot;</span>
+)
+
+<span class="hljs-comment">// Snapshot is process-level gauges/counters for teaching (/metrics JSON).</span>
+<span class="hljs-keyword">type</span> Metrics <span class="hljs-keyword">struct</span> {
+	StartedAt time.Time
+
+	Connections   atomic.Int64
+	Rooms         atomic.Int64
+	MessagesIn    atomic.Int64
+	MessagesOut   atomic.Int64
+	InputsApplied atomic.Int64
+	Errors        atomic.Int64
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-title">New</span><span class="hljs-params">()</span></span> *Metrics {
+	<span class="hljs-keyword">return</span> &amp;Metrics{StartedAt: time.Now().UTC()}
+}
+
+<span class="hljs-function"><span class="hljs-keyword">func</span> <span class="hljs-params">(m *Metrics)</span></span> Handler() http.HandlerFunc {
+	<span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">func</span><span class="hljs-params">(w http.ResponseWriter, r *http.Request)</span></span> {
+		w.Header().Set(<span class="hljs-string">&quot;Content-Type&quot;</span>, <span class="hljs-string">&quot;application/json&quot;</span>)
+		_ = json.NewEncoder(w).Encode(<span class="hljs-keyword">map</span>[<span class="hljs-type">string</span>]any{
+			<span class="hljs-string">&quot;service&quot;</span>:         <span class="hljs-string">&quot;arena-mini&quot;</span>,
+			<span class="hljs-string">&quot;version&quot;</span>:         <span class="hljs-string">&quot;m5.1&quot;</span>,
+			<span class="hljs-string">&quot;uptime_sec&quot;</span>:      <span class="hljs-type">int</span>(time.Since(m.StartedAt).Seconds()),
+			<span class="hljs-string">&quot;connections&quot;</span>:     m.Connections.Load(),
+			<span class="hljs-string">&quot;rooms&quot;</span>:           m.Rooms.Load(),
+			<span class="hljs-string">&quot;messages_in&quot;</span>:     m.MessagesIn.Load(),
+			<span class="hljs-string">&quot;messages_out&quot;</span>:    m.MessagesOut.Load(),
+			<span class="hljs-string">&quot;inputs_applied&quot;</span>:  m.InputsApplied.Load(),
+			<span class="hljs-string">&quot;errors&quot;</span>:          m.Errors.Load(),
+		})
+	}
+}
+</code></pre></div><div><div class="mb-2 flex items-center gap-2"><span class="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs text-slate-300">server/go.mod</span></div><pre class="hljs overflow-x-auto rounded-xl border border-slate-800 bg-[#0d1117] p-4 text-sm leading-relaxed"><code class="language-go">module github.com/willyliao/golearning/demo/arena-mini
+
+<span class="hljs-keyword">go</span> <span class="hljs-number">1.22</span>
+
+require golang.org/x/net v0<span class="hljs-number">.34</span><span class="hljs-number">.0</span>
+</code></pre></div><div><div class="mb-2 flex items-center gap-2"><span class="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs text-slate-300">README.md</span></div><pre class="hljs overflow-x-auto rounded-xl border border-slate-800 bg-[#0d1117] p-4 text-sm leading-relaxed"><code class="language-markdown"><span class="hljs-section"># Arena Mini</span>
+
+GoLearning Capstone — 權威即時對戰教學 demo。
+
+<span class="hljs-section">## 玩法</span>
+
+<span class="hljs-bullet">1.</span> 兩人同 <span class="hljs-code">`room`</span>、不同 <span class="hljs-code">`name`</span>
+<span class="hljs-bullet">2.</span> 雙方 <span class="hljs-strong">**Ready**</span> → <span class="hljs-code">`playing`</span>（20Hz tick）
+<span class="hljs-bullet">3.</span> WASD / 方向鍵移動（<span class="hljs-code">`input`</span>）
+<span class="hljs-bullet">4.</span> <span class="hljs-strong">**碰撞得分**</span>：距離 <span class="hljs-literal">&amp;lt;</span> hit radius 時，較積極移動的一方 +1  
+<span class="hljs-bullet">5.</span> 先到 <span class="hljs-strong">**3 分**</span> 獲勝 → <span class="hljs-code">`ended`</span>（約 3 秒）→ 自動回 <span class="hljs-strong">**lobby**</span> 可再 Ready  
+<span class="hljs-bullet">6.</span> 或 <span class="hljs-strong">**60 秒**</span>超時，分數高者勝
+
+座標只由 Server 計算（權威狀態）。
+
+<span class="hljs-section">## 為什麼有這個遊戲？</span>
+
+見課程 <span class="hljs-strong">**P0.0**</span>：它是 Go 主路徑的應用錨點（長連線、共享狀態、tick、權威、觀測），不是美術課。
+
+<span class="hljs-section">## 架構</span>
+
+<span class="hljs-code">```text
+cmd/server           HTTP + 優雅關閉
+internal/hub         WS、廣播、tick loop
+internal/game        純規則（可 go test）
+internal/metrics     /metrics 計數
+```</span>
+
+<span class="hljs-section">## 執行</span>
+
+<span class="hljs-code">```powershell
+cd F:\GoLearning\demo\arena-mini\server
+go mod tidy
+go test ./...
+go run ./cmd/server
+```</span>
+
+<span class="hljs-bullet">-</span> 遊戲：<span class="language-xml">&lt;http://localhost:8080/&gt;</span>
+<span class="hljs-bullet">-</span> 指標：<span class="language-xml">&lt;http://localhost:8080/metrics&gt;</span>
+
+<span class="hljs-section">### 壓測</span>
+
+<span class="hljs-code">```powershell
+cd F:\GoLearning\examples\j04-load-client
+go run . -addr http://127.0.0.1:8080 -n 30 -seconds 15 -room load
+```</span>
+
+<span class="hljs-section">## 協定 v1</span>
+
+| type | 說明 |
+|------|------|
+| <span class="hljs-code">`ready`</span> | 大廳準備 |
+| <span class="hljs-code">`input`</span> | <span class="hljs-code">`&quot;dx,dy&quot;`</span> ∈ -1..1 |
+| <span class="hljs-code">`state`</span> | 權威快照（含 score、winner、phase） |
+| <span class="hljs-code">`ping`</span>/<span class="hljs-code">`pong`</span> | 心跳 |
+| <span class="hljs-code">`chat`</span> / <span class="hljs-code">`system`</span> / <span class="hljs-code">`error`</span> | 其他 |
+
+<span class="hljs-section">## state 摘要</span>
+
+<span class="hljs-code">```json
+{
+  &quot;phase&quot;: &quot;playing&quot;,
+  &quot;tick&quot;: 42,
+  &quot;score_to_win&quot;: 3,
+  &quot;winner&quot;: &quot;&quot;,
+  &quot;players&quot;: [{&quot;name&quot;:&quot;a&quot;,&quot;x&quot;:10,&quot;y&quot;:20,&quot;ready&quot;:true,&quot;score&quot;:1}]
+}
+```</span>
+</code></pre></div><div><div class="mb-2 flex items-center gap-2"><span class="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs text-slate-300">web/index.html</span></div><pre class="hljs overflow-x-auto rounded-xl border border-slate-800 bg-[#0d1117] p-4 text-sm leading-relaxed"><code class="language-xml"><span class="hljs-meta">&lt;!DOCTYPE <span class="hljs-keyword">html</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">html</span> <span class="hljs-attr">lang</span>=<span class="hljs-string">&quot;zh-Hant&quot;</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">head</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">meta</span> <span class="hljs-attr">charset</span>=<span class="hljs-string">&quot;UTF-8&quot;</span> /&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">meta</span> <span class="hljs-attr">name</span>=<span class="hljs-string">&quot;viewport&quot;</span> <span class="hljs-attr">content</span>=<span class="hljs-string">&quot;width=device-width, initial-scale=1&quot;</span> /&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">title</span>&gt;</span>Arena Mini · M5+<span class="hljs-tag">&lt;/<span class="hljs-name">title</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">style</span>&gt;</span>
+    :root { font-family: system-ui, sans-serif; color: #e7ecf3; background: #0f1419; }
+    body { max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+    h1 { font-size: 1.35rem; margin-bottom: .25rem; }
+    .hint { color: #8aa; font-size: .9rem; margin: .25rem 0 1rem; }
+    .row { display: flex; gap: .5rem; flex-wrap: wrap; margin: .45rem 0; align-items: center; }
+    input, button { padding: .5rem .75rem; border-radius: 8px; border: 1px solid #334; background: #1a2332; color: inherit; }
+    button { cursor: pointer; background: #2b6cb0; border-color: #2b6cb0; }
+    button.secondary { background: #243044; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+    #stage {
+      width: 100%; max-width: 400px; height: 240px; background: #0a0e14;
+      border: 1px solid #243; border-radius: 8px; position: relative; overflow: hidden;
+      touch-action: none;
+    }
+    .dot {
+      position: absolute; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
+      background: #34d399; color: #042; font-size: 10px; line-height: 18px; text-align: center;
+      transform: translate(-50%, -50%); white-space: nowrap; font-weight: 600;
+    }
+    #status { font-family: ui-monospace, monospace; font-size: 12px; color: #9ab; }
+    #scores { font-family: ui-monospace, monospace; font-size: 13px; color: #cbd5e1; margin: .35rem 0; }
+    #banner {
+      display: none; margin: .5rem 0; padding: .6rem .8rem; border-radius: 8px;
+      background: #14532d; color: #bbf7d0; font-weight: 600;
+    }
+    #banner.show { display: block; }
+    #log {
+      background: #0a0e14; border: 1px solid #243; border-radius: 8px; min-height: 120px;
+      max-height: 200px; overflow: auto; padding: .75rem; white-space: pre-wrap;
+      font-family: ui-monospace, monospace; font-size: 12px;
+    }
+    kbd { background: #243; padding: 2px 6px; border-radius: 4px; font-size: 12px; }
+  <span class="hljs-tag">&lt;/<span class="hljs-name">style</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">head</span>&gt;</span>
+<span class="hljs-tag">&lt;<span class="hljs-name">body</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;course-banner&quot;</span> <span class="hljs-attr">style</span>=<span class="hljs-string">&quot;margin:0 0 1rem;padding:.85rem 1rem;border-radius:10px;background:#1e3a5f;border:1px solid #3b82f6;line-height:1.5&quot;</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">strong</span> <span class="hljs-attr">style</span>=<span class="hljs-string">&quot;color:#93c5fd&quot;</span>&gt;</span>這裡只有 Capstone 遊戲（Arena Mini），不是完整教學站。<span class="hljs-tag">&lt;/<span class="hljs-name">strong</span>&gt;</span><span class="hljs-tag">&lt;<span class="hljs-name">br</span>/&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">span</span> <span class="hljs-attr">style</span>=<span class="hljs-string">&quot;color:#cbd5e1;font-size:.95rem&quot;</span>&gt;</span>完整課程（P0～K、學習路徑、搜尋）請開啟：<span class="hljs-tag">&lt;/<span class="hljs-name">span</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">a</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;course-link&quot;</span> <span class="hljs-attr">href</span>=<span class="hljs-string">&quot;http://localhost:8088/&quot;</span> <span class="hljs-attr">style</span>=<span class="hljs-string">&quot;color:#fde68a;font-weight:700;font-size:1.05rem&quot;</span>&gt;</span>http://localhost:8088<span class="hljs-tag">&lt;/<span class="hljs-name">a</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">span</span> <span class="hljs-attr">style</span>=<span class="hljs-string">&quot;color:#94a3b8;font-size:.85rem&quot;</span>&gt;</span>（Docker 預設埠）<span class="hljs-tag">&lt;/<span class="hljs-name">span</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">h1</span>&gt;</span>Arena Mini <span class="hljs-tag">&lt;<span class="hljs-name">span</span> <span class="hljs-attr">style</span>=<span class="hljs-string">&quot;color:#6ee7b7&quot;</span>&gt;</span>碰撞得分<span class="hljs-tag">&lt;/<span class="hljs-name">span</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">h1</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">p</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;hint&quot;</span>&gt;</span>
+    兩人 Ready → 移動碰撞得分（先到 <span class="hljs-tag">&lt;<span class="hljs-name">strong</span>&gt;</span>3<span class="hljs-tag">&lt;/<span class="hljs-name">strong</span>&gt;</span> 分勝）→ Ended 約 3 秒回 Lobby。<span class="hljs-tag">&lt;<span class="hljs-name">br</span>/&gt;</span>
+    權威 Server · 20Hz · <span class="hljs-tag">&lt;<span class="hljs-name">code</span>&gt;</span>input<span class="hljs-tag">&lt;/<span class="hljs-name">code</span>&gt;</span> only · <span class="hljs-tag">&lt;<span class="hljs-name">a</span> <span class="hljs-attr">href</span>=<span class="hljs-string">&quot;/metrics&quot;</span> <span class="hljs-attr">style</span>=<span class="hljs-string">&quot;color:#7dd3fc&quot;</span>&gt;</span>/metrics<span class="hljs-tag">&lt;/<span class="hljs-name">a</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">script</span>&gt;</span><span class="language-javascript">
+    (<span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) {
+      <span class="hljs-keyword">var</span> a = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;course-link&#x27;</span>);
+      <span class="hljs-keyword">if</span> (!a) <span class="hljs-keyword">return</span>;
+      <span class="hljs-keyword">var</span> host = location.<span class="hljs-property">hostname</span> || <span class="hljs-string">&#x27;localhost&#x27;</span>;
+      <span class="hljs-comment">// Same host, course site on 8088 (docker-compose default WEB_PORT)</span>
+      a.<span class="hljs-property">href</span> = location.<span class="hljs-property">protocol</span> + <span class="hljs-string">&#x27;//&#x27;</span> + host + <span class="hljs-string">&#x27;:8088/&#x27;</span>;
+      a.<span class="hljs-property">textContent</span> = a.<span class="hljs-property">href</span>;
+    })();
+  </span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
+
+  <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;row&quot;</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">input</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;room&quot;</span> <span class="hljs-attr">value</span>=<span class="hljs-string">&quot;lobby&quot;</span> <span class="hljs-attr">placeholder</span>=<span class="hljs-string">&quot;room&quot;</span> /&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">input</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;name&quot;</span> <span class="hljs-attr">value</span>=<span class="hljs-string">&quot;player1&quot;</span> <span class="hljs-attr">placeholder</span>=<span class="hljs-string">&quot;name&quot;</span> /&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;connect&quot;</span>&gt;</span>連線<span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;disconnect&quot;</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;secondary&quot;</span> <span class="hljs-attr">disabled</span>&gt;</span>斷線<span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;ready&quot;</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;secondary&quot;</span> <span class="hljs-attr">disabled</span>&gt;</span>Ready<span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;rooms&quot;</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;secondary&quot;</span>&gt;</span>/rooms<span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+
+  <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;row&quot;</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;stage&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">div</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;row&quot;</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;secondary pad&quot;</span> <span class="hljs-attr">data-dx</span>=<span class="hljs-string">&quot;0&quot;</span> <span class="hljs-attr">data-dy</span>=<span class="hljs-string">&quot;-1&quot;</span> <span class="hljs-attr">disabled</span>&gt;</span>↑<span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span>
+      <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;row&quot;</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;secondary pad&quot;</span> <span class="hljs-attr">data-dx</span>=<span class="hljs-string">&quot;-1&quot;</span> <span class="hljs-attr">data-dy</span>=<span class="hljs-string">&quot;0&quot;</span> <span class="hljs-attr">disabled</span>&gt;</span>←<span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;secondary pad&quot;</span> <span class="hljs-attr">data-dx</span>=<span class="hljs-string">&quot;0&quot;</span> <span class="hljs-attr">data-dy</span>=<span class="hljs-string">&quot;0&quot;</span> <span class="hljs-attr">disabled</span>&gt;</span>·<span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;secondary pad&quot;</span> <span class="hljs-attr">data-dx</span>=<span class="hljs-string">&quot;1&quot;</span> <span class="hljs-attr">data-dy</span>=<span class="hljs-string">&quot;0&quot;</span> <span class="hljs-attr">disabled</span>&gt;</span>→<span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span>
+      <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;row&quot;</span>&gt;</span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">button</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;secondary pad&quot;</span> <span class="hljs-attr">data-dx</span>=<span class="hljs-string">&quot;0&quot;</span> <span class="hljs-attr">data-dy</span>=<span class="hljs-string">&quot;1&quot;</span> <span class="hljs-attr">disabled</span>&gt;</span>↓<span class="hljs-tag">&lt;/<span class="hljs-name">button</span>&gt;</span>
+      <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+      <span class="hljs-tag">&lt;<span class="hljs-name">p</span> <span class="hljs-attr">class</span>=<span class="hljs-string">&quot;hint&quot;</span>&gt;</span>鍵盤：<span class="hljs-tag">&lt;<span class="hljs-name">kbd</span>&gt;</span>WASD<span class="hljs-tag">&lt;/<span class="hljs-name">kbd</span>&gt;</span> / <span class="hljs-tag">&lt;<span class="hljs-name">kbd</span>&gt;</span>方向鍵<span class="hljs-tag">&lt;/<span class="hljs-name">kbd</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">p</span>&gt;</span>
+    <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+
+  <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;banner&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;scores&quot;</span>&gt;</span>scores: —<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;status&quot;</span>&gt;</span>phase=— tick=—<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">id</span>=<span class="hljs-string">&quot;log&quot;</span>&gt;</span><span class="hljs-tag">&lt;/<span class="hljs-name">div</span>&gt;</span>
+
+  <span class="hljs-tag">&lt;<span class="hljs-name">script</span>&gt;</span><span class="language-javascript">
+    <span class="hljs-keyword">let</span> ws;
+    <span class="hljs-keyword">let</span> held = { <span class="hljs-attr">dx</span>: <span class="hljs-number">0</span>, <span class="hljs-attr">dy</span>: <span class="hljs-number">0</span> };
+    <span class="hljs-keyword">const</span> logEl = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;log&#x27;</span>);
+    <span class="hljs-keyword">const</span> stage = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;stage&#x27;</span>);
+    <span class="hljs-keyword">const</span> statusEl = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;status&#x27;</span>);
+    <span class="hljs-keyword">const</span> scoresEl = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;scores&#x27;</span>);
+    <span class="hljs-keyword">const</span> banner = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;banner&#x27;</span>);
+    <span class="hljs-keyword">const</span> dots = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Map</span>();
+    <span class="hljs-keyword">const</span> colors = [<span class="hljs-string">&#x27;#34d399&#x27;</span>, <span class="hljs-string">&#x27;#60a5fa&#x27;</span>, <span class="hljs-string">&#x27;#f472b6&#x27;</span>, <span class="hljs-string">&#x27;#fbbf24&#x27;</span>];
+    <span class="hljs-keyword">const</span> <span class="hljs-title function_">log</span> = (<span class="hljs-params">t</span>) =&gt; { logEl.<span class="hljs-property">textContent</span> += t + <span class="hljs-string">&#x27;\n&#x27;</span>; logEl.<span class="hljs-property">scrollTop</span> = logEl.<span class="hljs-property">scrollHeight</span>; };
+
+    <span class="hljs-keyword">function</span> <span class="hljs-title function_">setUI</span>(<span class="hljs-params">on</span>) {
+      [<span class="hljs-string">&#x27;disconnect&#x27;</span>, <span class="hljs-string">&#x27;ready&#x27;</span>].<span class="hljs-title function_">forEach</span>(<span class="hljs-function">(<span class="hljs-params">id</span>) =&gt;</span> <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(id).<span class="hljs-property">disabled</span> = !on);
+      <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">querySelectorAll</span>(<span class="hljs-string">&#x27;.pad&#x27;</span>).<span class="hljs-title function_">forEach</span>(<span class="hljs-function">(<span class="hljs-params">b</span>) =&gt;</span> b.<span class="hljs-property">disabled</span> = !on);
+    }
+
+    <span class="hljs-keyword">function</span> <span class="hljs-title function_">send</span>(<span class="hljs-params">type, payload = <span class="hljs-string">&#x27;&#x27;</span></span>) {
+      <span class="hljs-keyword">if</span> (!ws || ws.<span class="hljs-property">readyState</span> !== <span class="hljs-number">1</span>) <span class="hljs-keyword">return</span>;
+      <span class="hljs-keyword">const</span> msg = <span class="hljs-title class_">JSON</span>.<span class="hljs-title function_">stringify</span>({ <span class="hljs-attr">v</span>: <span class="hljs-number">1</span>, type, payload });
+      ws.<span class="hljs-title function_">send</span>(msg);
+      <span class="hljs-keyword">if</span> (type !== <span class="hljs-string">&#x27;input&#x27;</span>) <span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;[send] &#x27;</span> + msg);
+    }
+
+    <span class="hljs-keyword">function</span> <span class="hljs-title function_">ensureDot</span>(<span class="hljs-params">name, idx</span>) {
+      <span class="hljs-keyword">if</span> (dots.<span class="hljs-title function_">has</span>(name)) <span class="hljs-keyword">return</span> dots.<span class="hljs-title function_">get</span>(name);
+      <span class="hljs-keyword">const</span> el = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">createElement</span>(<span class="hljs-string">&#x27;div&#x27;</span>);
+      el.<span class="hljs-property">className</span> = <span class="hljs-string">&#x27;dot&#x27;</span>;
+      el.<span class="hljs-property">style</span>.<span class="hljs-property">background</span> = colors[idx % colors.<span class="hljs-property">length</span>];
+      stage.<span class="hljs-title function_">appendChild</span>(el);
+      dots.<span class="hljs-title function_">set</span>(name, el);
+      <span class="hljs-keyword">return</span> el;
+    }
+
+    <span class="hljs-keyword">function</span> <span class="hljs-title function_">renderState</span>(<span class="hljs-params">payload</span>) {
+      <span class="hljs-keyword">let</span> s;
+      <span class="hljs-keyword">try</span> { s = <span class="hljs-title class_">JSON</span>.<span class="hljs-title function_">parse</span>(payload); } <span class="hljs-keyword">catch</span> { <span class="hljs-keyword">return</span>; }
+      <span class="hljs-keyword">const</span> win = s.<span class="hljs-property">winner</span> ? <span class="hljs-string">` winner=<span class="hljs-subst">${s.winner}</span>`</span> : <span class="hljs-string">&#x27;&#x27;</span>;
+      statusEl.<span class="hljs-property">textContent</span> = <span class="hljs-string">`phase=<span class="hljs-subst">${s.phase}</span> tick=<span class="hljs-subst">${s.tick}</span> to_win=<span class="hljs-subst">${s.score_to_win || <span class="hljs-number">3</span>}</span><span class="hljs-subst">${win}</span>`</span>;
+      scoresEl.<span class="hljs-property">textContent</span> = <span class="hljs-string">&#x27;scores: &#x27;</span> + (s.<span class="hljs-property">players</span> || []).<span class="hljs-title function_">map</span>(<span class="hljs-function">(<span class="hljs-params">p</span>) =&gt;</span> <span class="hljs-string">`<span class="hljs-subst">${p.name}</span>=<span class="hljs-subst">${p.score || <span class="hljs-number">0</span>}</span>`</span>).<span class="hljs-title function_">join</span>(<span class="hljs-string">&#x27; · &#x27;</span>);
+
+      <span class="hljs-keyword">if</span> (s.<span class="hljs-property">phase</span> === <span class="hljs-string">&#x27;ended&#x27;</span>) {
+        banner.<span class="hljs-property">classList</span>.<span class="hljs-title function_">add</span>(<span class="hljs-string">&#x27;show&#x27;</span>);
+        banner.<span class="hljs-property">textContent</span> = s.<span class="hljs-property">winner</span>
+          ? <span class="hljs-string">`結束！勝者 <span class="hljs-subst">${s.winner}</span>（即將回大廳）`</span>
+          : <span class="hljs-string">&#x27;結束！平手（即將回大廳）&#x27;</span>;
+      } <span class="hljs-keyword">else</span> {
+        banner.<span class="hljs-property">classList</span>.<span class="hljs-title function_">remove</span>(<span class="hljs-string">&#x27;show&#x27;</span>);
+      }
+
+      <span class="hljs-keyword">const</span> seen = <span class="hljs-keyword">new</span> <span class="hljs-title class_">Set</span>();
+      (s.<span class="hljs-property">players</span> || []).<span class="hljs-title function_">forEach</span>(<span class="hljs-function">(<span class="hljs-params">p, i</span>) =&gt;</span> {
+        seen.<span class="hljs-title function_">add</span>(p.<span class="hljs-property">name</span>);
+        <span class="hljs-keyword">const</span> el = <span class="hljs-title function_">ensureDot</span>(p.<span class="hljs-property">name</span>, i);
+        el.<span class="hljs-property">style</span>.<span class="hljs-property">left</span> = p.<span class="hljs-property">x</span> + <span class="hljs-string">&#x27;px&#x27;</span>;
+        el.<span class="hljs-property">style</span>.<span class="hljs-property">top</span> = p.<span class="hljs-property">y</span> + <span class="hljs-string">&#x27;px&#x27;</span>;
+        el.<span class="hljs-property">textContent</span> = <span class="hljs-string">`<span class="hljs-subst">${p.name.slice(<span class="hljs-number">0</span>, <span class="hljs-number">3</span>)}</span>:<span class="hljs-subst">${p.score || <span class="hljs-number">0</span>}</span>`</span>;
+        el.<span class="hljs-property">title</span> = <span class="hljs-string">`<span class="hljs-subst">${p.name}</span> score=<span class="hljs-subst">${p.score}</span> ready=<span class="hljs-subst">${p.ready}</span>`</span>;
+        <span class="hljs-keyword">if</span> (!p.<span class="hljs-property">ready</span> &amp;&amp; s.<span class="hljs-property">phase</span> === <span class="hljs-string">&#x27;lobby&#x27;</span>) el.<span class="hljs-property">style</span>.<span class="hljs-property">opacity</span> = <span class="hljs-string">&#x27;0.7&#x27;</span>;
+        <span class="hljs-keyword">else</span> el.<span class="hljs-property">style</span>.<span class="hljs-property">opacity</span> = <span class="hljs-string">&#x27;1&#x27;</span>;
+      });
+      <span class="hljs-keyword">for</span> (<span class="hljs-keyword">const</span> [name, el] <span class="hljs-keyword">of</span> dots) {
+        <span class="hljs-keyword">if</span> (!seen.<span class="hljs-title function_">has</span>(name)) { el.<span class="hljs-title function_">remove</span>(); dots.<span class="hljs-title function_">delete</span>(name); }
+      }
+    }
+
+    <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;connect&#x27;</span>).<span class="hljs-property">onclick</span> = <span class="hljs-function">() =&gt;</span> {
+      <span class="hljs-keyword">const</span> room = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;room&#x27;</span>).<span class="hljs-property">value</span> || <span class="hljs-string">&#x27;lobby&#x27;</span>;
+      <span class="hljs-keyword">const</span> name = <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;name&#x27;</span>).<span class="hljs-property">value</span> || <span class="hljs-string">&#x27;anon&#x27;</span>;
+      <span class="hljs-keyword">const</span> proto = location.<span class="hljs-property">protocol</span> === <span class="hljs-string">&#x27;https:&#x27;</span> ? <span class="hljs-string">&#x27;wss&#x27;</span> : <span class="hljs-string">&#x27;ws&#x27;</span>;
+      ws = <span class="hljs-keyword">new</span> <span class="hljs-title class_">WebSocket</span>(<span class="hljs-string">`<span class="hljs-subst">${proto}</span>://<span class="hljs-subst">${location.host}</span>/ws?room=<span class="hljs-subst">${<span class="hljs-built_in">encodeURIComponent</span>(room)}</span>&amp;name=<span class="hljs-subst">${<span class="hljs-built_in">encodeURIComponent</span>(name)}</span>`</span>);
+      ws.<span class="hljs-property">onopen</span> = <span class="hljs-function">() =&gt;</span> { <span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;[open] &#x27;</span> + room + <span class="hljs-string">&#x27; as &#x27;</span> + name); <span class="hljs-title function_">setUI</span>(<span class="hljs-literal">true</span>); };
+      ws.<span class="hljs-property">onclose</span> = <span class="hljs-function">() =&gt;</span> { <span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;[close]&#x27;</span>); <span class="hljs-title function_">setUI</span>(<span class="hljs-literal">false</span>); };
+      ws.<span class="hljs-property">onerror</span> = <span class="hljs-function">() =&gt;</span> <span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;[error]&#x27;</span>);
+      ws.<span class="hljs-property">onmessage</span> = <span class="hljs-function">(<span class="hljs-params">e</span>) =&gt;</span> {
+        <span class="hljs-keyword">let</span> m;
+        <span class="hljs-keyword">try</span> { m = <span class="hljs-title class_">JSON</span>.<span class="hljs-title function_">parse</span>(e.<span class="hljs-property">data</span>); } <span class="hljs-keyword">catch</span> { <span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;[recv] &#x27;</span> + e.<span class="hljs-property">data</span>); <span class="hljs-keyword">return</span>; }
+        <span class="hljs-keyword">if</span> (m.<span class="hljs-property">type</span> === <span class="hljs-string">&#x27;state&#x27;</span>) {
+          <span class="hljs-title function_">renderState</span>(m.<span class="hljs-property">payload</span>);
+          <span class="hljs-keyword">return</span>;
+        }
+        <span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;[recv] &#x27;</span> + e.<span class="hljs-property">data</span>);
+      };
+    };
+
+    <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;disconnect&#x27;</span>).<span class="hljs-property">onclick</span> = <span class="hljs-function">() =&gt;</span> ws?.<span class="hljs-title function_">close</span>();
+    <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;ready&#x27;</span>).<span class="hljs-property">onclick</span> = <span class="hljs-function">() =&gt;</span> <span class="hljs-title function_">send</span>(<span class="hljs-string">&#x27;ready&#x27;</span>, <span class="hljs-string">&#x27;1&#x27;</span>);
+    <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">getElementById</span>(<span class="hljs-string">&#x27;rooms&#x27;</span>).<span class="hljs-property">onclick</span> = <span class="hljs-title function_">async</span> () =&gt; {
+      <span class="hljs-title function_">log</span>(<span class="hljs-string">&#x27;[http] &#x27;</span> + <span class="hljs-keyword">await</span> (<span class="hljs-keyword">await</span> <span class="hljs-title function_">fetch</span>(<span class="hljs-string">&#x27;/rooms&#x27;</span>)).<span class="hljs-title function_">text</span>());
+    };
+
+    <span class="hljs-keyword">function</span> <span class="hljs-title function_">setHeld</span>(<span class="hljs-params">dx, dy</span>) {
+      held = { dx, dy };
+      <span class="hljs-title function_">send</span>(<span class="hljs-string">&#x27;input&#x27;</span>, dx + <span class="hljs-string">&#x27;,&#x27;</span> + dy);
+    }
+
+    <span class="hljs-variable language_">document</span>.<span class="hljs-title function_">querySelectorAll</span>(<span class="hljs-string">&#x27;.pad&#x27;</span>).<span class="hljs-title function_">forEach</span>(<span class="hljs-function">(<span class="hljs-params">b</span>) =&gt;</span> {
+      <span class="hljs-keyword">const</span> <span class="hljs-title function_">fire</span> = (<span class="hljs-params"></span>) =&gt; <span class="hljs-title function_">setHeld</span>(+b.<span class="hljs-property">dataset</span>.<span class="hljs-property">dx</span>, +b.<span class="hljs-property">dataset</span>.<span class="hljs-property">dy</span>);
+      b.<span class="hljs-title function_">addEventListener</span>(<span class="hljs-string">&#x27;mousedown&#x27;</span>, fire);
+      b.<span class="hljs-title function_">addEventListener</span>(<span class="hljs-string">&#x27;touchstart&#x27;</span>, <span class="hljs-function">(<span class="hljs-params">e</span>) =&gt;</span> { e.<span class="hljs-title function_">preventDefault</span>(); <span class="hljs-title function_">fire</span>(); });
+    });
+
+    <span class="hljs-built_in">setInterval</span>(<span class="hljs-function">() =&gt;</span> {
+      <span class="hljs-keyword">if</span> (ws?.<span class="hljs-property">readyState</span> === <span class="hljs-number">1</span> &amp;&amp; (held.<span class="hljs-property">dx</span> !== <span class="hljs-number">0</span> || held.<span class="hljs-property">dy</span> !== <span class="hljs-number">0</span>)) {
+        <span class="hljs-title function_">send</span>(<span class="hljs-string">&#x27;input&#x27;</span>, held.<span class="hljs-property">dx</span> + <span class="hljs-string">&#x27;,&#x27;</span> + held.<span class="hljs-property">dy</span>);
+      }
+    }, <span class="hljs-number">50</span>);
+
+    <span class="hljs-keyword">const</span> keyMap = {
+      <span class="hljs-title class_">ArrowUp</span>: [<span class="hljs-number">0</span>, -<span class="hljs-number">1</span>], <span class="hljs-title class_">ArrowDown</span>: [<span class="hljs-number">0</span>, <span class="hljs-number">1</span>], <span class="hljs-title class_">ArrowLeft</span>: [-<span class="hljs-number">1</span>, <span class="hljs-number">0</span>], <span class="hljs-title class_">ArrowRight</span>: [<span class="hljs-number">1</span>, <span class="hljs-number">0</span>],
+      <span class="hljs-attr">w</span>: [<span class="hljs-number">0</span>, -<span class="hljs-number">1</span>], <span class="hljs-attr">s</span>: [<span class="hljs-number">0</span>, <span class="hljs-number">1</span>], <span class="hljs-attr">a</span>: [-<span class="hljs-number">1</span>, <span class="hljs-number">0</span>], <span class="hljs-attr">d</span>: [<span class="hljs-number">1</span>, <span class="hljs-number">0</span>],
+      <span class="hljs-attr">W</span>: [<span class="hljs-number">0</span>, -<span class="hljs-number">1</span>], <span class="hljs-attr">S</span>: [<span class="hljs-number">0</span>, <span class="hljs-number">1</span>], <span class="hljs-attr">A</span>: [-<span class="hljs-number">1</span>, <span class="hljs-number">0</span>], <span class="hljs-attr">D</span>: [<span class="hljs-number">1</span>, <span class="hljs-number">0</span>],
+    };
+    <span class="hljs-variable language_">window</span>.<span class="hljs-title function_">addEventListener</span>(<span class="hljs-string">&#x27;keydown&#x27;</span>, <span class="hljs-function">(<span class="hljs-params">e</span>) =&gt;</span> {
+      <span class="hljs-keyword">const</span> v = keyMap[e.<span class="hljs-property">key</span>];
+      <span class="hljs-keyword">if</span> (!v || e.<span class="hljs-property">repeat</span>) <span class="hljs-keyword">return</span>;
+      e.<span class="hljs-title function_">preventDefault</span>();
+      <span class="hljs-title function_">setHeld</span>(v[<span class="hljs-number">0</span>], v[<span class="hljs-number">1</span>]);
+    });
+    <span class="hljs-variable language_">window</span>.<span class="hljs-title function_">addEventListener</span>(<span class="hljs-string">&#x27;keyup&#x27;</span>, <span class="hljs-function">(<span class="hljs-params">e</span>) =&gt;</span> {
+      <span class="hljs-keyword">if</span> (!keyMap[e.<span class="hljs-property">key</span>]) <span class="hljs-keyword">return</span>;
+      held = { <span class="hljs-attr">dx</span>: <span class="hljs-number">0</span>, <span class="hljs-attr">dy</span>: <span class="hljs-number">0</span> };
+      <span class="hljs-title function_">send</span>(<span class="hljs-string">&#x27;input&#x27;</span>, <span class="hljs-string">&#x27;0,0&#x27;</span>);
+    });
+  </span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">body</span>&gt;</span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">html</span>&gt;</span>
+</code></pre></div></div></section><nav class="mt-10 flex flex-wrap items-stretch justify-between gap-4 border-t border-slate-800 pt-8"><a href="/lessons/h-game-server/h9-rules-io/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 hover:border-emerald-800"><div class="text-xs text-slate-500">上一章</div><div class="text-sm font-medium text-slate-200">H9 規則與 I/O 分離：game 不該 import websocket</div></a><a href="/lessons/i-data/i0-index/" class="max-w-[45%] rounded-xl border border-slate-800 px-4 py-3 text-right hover:border-emerald-800 ml-auto"><div class="text-xs text-slate-500">下一章</div><div class="text-sm font-medium text-slate-200">I0 I 卷導讀：資料放哪裡，比怎麼寫 SQL 更重要</div></a></nav></main><footer class="border-t border-slate-800/80 py-8 text-center text-xs text-slate-500">GoLearning · Python → Go · 遊戲 Server · 內容見 <code class="text-slate-400">docs/規劃書.md</code></footer></body></html>

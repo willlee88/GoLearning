@@ -1,0 +1,72 @@
+---
+import hljs from 'highlight.js/lib/core';
+import go from 'highlight.js/lib/languages/go';
+import bash from 'highlight.js/lib/languages/bash';
+import json from 'highlight.js/lib/languages/json';
+import plaintext from 'highlight.js/lib/languages/plaintext';
+import xml from 'highlight.js/lib/languages/xml';
+import yaml from 'highlight.js/lib/languages/yaml';
+import markdown from 'highlight.js/lib/languages/markdown';
+import typescript from 'highlight.js/lib/languages/typescript';
+import javascript from 'highlight.js/lib/languages/javascript';
+import type { ExampleFile } from '../lib/examples';
+
+hljs.registerLanguage('go', go);
+hljs.registerLanguage('bash', bash);
+hljs.registerLanguage('json', json);
+hljs.registerLanguage('plaintext', plaintext);
+hljs.registerLanguage('xml', xml);
+hljs.registerLanguage('html', xml);
+hljs.registerLanguage('yaml', yaml);
+hljs.registerLanguage('markdown', markdown);
+hljs.registerLanguage('typescript', typescript);
+hljs.registerLanguage('javascript', javascript);
+
+interface Props {
+  examplePath: string;
+  files: ExampleFile[];
+}
+
+const { examplePath, files } = Astro.props;
+
+function highlight(code: string, language: string): string {
+  if (hljs.getLanguage(language)) {
+    return hljs.highlight(code, { language }).value;
+  }
+  return hljs.highlightAuto(code).value;
+}
+---
+{files.length > 0 && (
+  <section class="mt-10 rounded-2xl border border-emerald-900/50 bg-slate-900/50 p-5 sm:p-6">
+    <div class="flex flex-wrap items-start justify-between gap-3">
+      <div>
+        <h2 class="text-lg font-semibold text-emerald-300">專案裡的完整範例</h2>
+        <p class="mt-1 text-sm text-slate-400">
+          上面課文可能是精簡示意；這裡才是 repo 裡可跑的檔案（建置時直接讀進來，不會跟專案脫節）。
+        </p>
+      </div>
+      <code class="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-emerald-300">{examplePath}</code>
+    </div>
+
+    <p class="mt-3 text-sm text-slate-500">
+      本機可跑：
+      <code class="text-slate-300">cd {examplePath}</code>
+      {examplePath.startsWith('examples/') && (
+        <>
+          {' '}→ <code class="text-slate-300">go run .</code> 或 <code class="text-slate-300">go test ./...</code>
+        </>
+      )}
+    </p>
+
+    <div class="mt-5 space-y-5">
+      {files.map((f) => (
+        <div>
+          <div class="mb-2 flex items-center gap-2">
+            <span class="rounded bg-slate-800 px-2 py-0.5 font-mono text-xs text-slate-300">{f.relPath}</span>
+          </div>
+          <pre class="hljs overflow-x-auto rounded-xl border border-slate-800 bg-[#0d1117] p-4 text-sm leading-relaxed"><code class={`language-${f.language}`} set:html={highlight(f.content, f.language)} /></pre>
+        </div>
+      ))}
+    </div>
+  </section>
+)}
