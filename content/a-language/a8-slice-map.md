@@ -1,7 +1,7 @@
 ---
 lessonId: "A8"
-title: "slice 與 map"
-description: "len/cap、底層陣列共享、append 陷阱；map 語意與非併發安全。"
+title: "slice 與 map（本卷超重要檢查點）"
+description: "slice 是底層陣列的視圖；map 是雜湊表引用。共享、append、併發寫入，都是實戰雷區。"
 volume: "a"
 order: 8
 level: "l2"
@@ -13,21 +13,24 @@ prev: "A7"
 next: "A9"
 ---
 
+## 這章你會搞懂什麼
 
-## 本章你會建立的心智模型
+**slice（切片）** 是指向底層陣列的小描述符：指標、長度（len）、容量（cap）。  
+**map** 比較像「雜湊表的引用」。
 
-**slice** 是指向底層陣列的描述符（指標、len、cap）；**map** 是雜湊表引用。兩者都是 Go 日常資料結構，也是 bug 熱區：誤判共享、append 重分配、並發寫 map。這一章要「深刻」到你能畫出記憶體關係。
+兩者是 Go 日常資料結構，也是 bug 熱區：誤判有沒有共享、`append` 何時重分配、多 goroutine 一起寫 map。  
+這章要深刻到你能**在紙上畫出記憶體關係**——這是 A 卷檢查點。
 
 ## Python 對照
 
 | Python | Go |
 |--------|-----|
-| `list` | slice（更貼近「陣列視圖」） |
+| `list` | slice（更像「陣列視圖」） |
 | `dict` | map |
-| list 賦值共享 + 可變 | slice 頭拷貝但可共享底層陣列 |
-| dict 非執行緒安全（GIL 掩蓋） | map **明確**非併發安全 |
+| 切片賦值／可變共享 | slice 頭會拷貝，但常共享底層陣列 |
+| dict 非執行緒安全（有時被 GIL 掩蓋） | map **明確**非併發安全 |
 
-## L1 能用
+## 怎麼寫
 
 ```go
 s := []int{1, 2, 3}
@@ -36,73 +39,77 @@ fmt.Println(len(s), cap(s))
 
 m := map[string]int{"a": 1}
 m["b"] = 2
-v, ok := m["c"] // ok == false
+v, ok := m["c"] // ok == false，表示沒這個 key
 delete(m, "a")
 ```
 
 ```go
-// 正確建立
+// 正確建立可寫的 map
 m := make(map[PlayerID]*Player)
-// var m map[PlayerID]*Player // nil map，讀 OK、寫 panic
+// var m map[PlayerID]*Player // nil map：讀通常 OK，寫會 panic
 ```
 
-範例（檢查點）：`examples/a08-player-registry`。
+檢查點範例：`examples/a08-player-registry`。
 
-## L2 機制
+## 細節
 
 ### slice 三元組
 
 | 欄位 | 意義 |
 |------|------|
-| ptr | 底層陣列起點 |
-| len | 可見長度 |
-| cap | 從起點到陣列末的容量 |
+| ptr | 底層陣列從哪裡開始看 |
+| len | 你看得到多長 |
+| cap | 從起點算，底層還能長到哪 |
 
 ```go
 a := []int{1, 2, 3, 4}
-b := a[1:3] // 共享底層；改 b[0] 影響 a[1]
+b := a[1:3] // 共享底層；改 b[0] 會動到 a[1]
 ```
 
-### append
+所以 `b := a[1:3]` **不是深拷貝**。若要獨立副本，請 `copy` 到新 slice。
 
-容量不足時**分配新陣列**並拷貝；可能切斷與舊底層的共享。規則：
+### `append` 何時「切斷共享」
 
-- 若你需要獨立拷貝：`copy` 到新 slice。  
-- 預分配：`make([]T, 0, n)` 減少分配。  
+容量不夠時，`append` 會**配新陣列並拷貝**，之後就可能不再跟舊底層共享。  
+規則實用版：
 
-### map
+- 要獨立：自己 `make` + `copy`  
+- 知道大概長度：`make([]T, 0, n)` 預留 cap，少配幾次記憶體  
 
-- 迭代順序**隨機**（刻意）。  
-- 鍵必須可比較。  
-- **併發讀寫 = data race / panic**：加鎖或分片，或改由單一 goroutine 擁有。  
+### map 必記三件事
 
-## L3 深潛（可選）
+1. 迭代順序**刻意隨機**——別依賴「插入順序」。  
+2. 鍵必須可比較（comparable）。  
+3. **併發讀寫 = data race，甚至直接 panic**：加鎖、分片，或讓單一 goroutine 擁有那份 map。
 
-- slice grow 策略與記憶體浪費。  
-- map 在刪除與增長時的桶行為（概念級）。  
-- `slices` / `maps` 標準庫輔助套件（Go 1.21+）。
+### 進階可先略過
 
-## 請丟掉的 Python 習慣
+- slice 成長策略與短暫浪費的容量。  
+- `slices`／`maps` 標準庫輔助（Go 1.21+）。
 
-1. 以為 `b = a[1:3]` 是深拷貝。  
-2. 在多執行緒／多 goroutine 無鎖共用一個 dict/map。  
-3. 用 `list` 線性掃當唯一索引——房間查找需要 map。
+## 遊戲 Server 會用在哪
 
-## 遊戲 Server 連結
-
-典型結構：
+典型玩家登記：
 
 ```go
 type Registry struct {
-	mu      sync.RWMutex
-	byID    map[PlayerID]*Player
-	order   []PlayerID // 若需要穩定順序
+	mu    sync.RWMutex
+	byID  map[PlayerID]*Player
+	order []PlayerID // 若你需要穩定順序
 }
 ```
 
-廣播時：先在鎖內複製 id 列表或 snapshot，再鎖外寫網路，避免持鎖做 I/O。
+廣播時常見手法：鎖內先複製 ID 列表或做 snapshot，**鎖外**再寫網路。持鎖做 I/O 會把延遲與死鎖風險一起拉高。
 
-## 練習
+`Snapshot()` 為什麼常要拷貝？——避免呼叫端還在讀，你房間邏輯又在改同一塊底層資料。
+
+## 請丟掉的舊習慣
+
+1. 以為 `b = a[1:3]` 是深拷貝。  
+2. 多執行緒／多 goroutine 無鎖共用一個 dict／map。  
+3. 只用 list 線性掃當唯一索引——房間查人請用 map。
+
+## 動手練習
 
 ### 必做（A 卷檢查點）
 
@@ -110,20 +117,16 @@ type Registry struct {
    - `go test .`  
    - `go run ./cmd/demo`  
    - 新增／刪除玩家、依 ID 查詢、JSON 快照  
-2. 書面或註解說明：為何 `Snapshot()` 要拷貝。  
+2. 用註解或筆記說明：為什麼 `Snapshot()` 要拷貝。  
 
 ### 選做
 
-1. 寫出一個「append 共享踩坑」的最小重現，再修掉。  
-2. 用 `-race` 跑一個**故意錯誤**的並發 map 寫入 demo（獨立檔，勿提交為正確範例）。  
+1. 寫一個「append 共享踩坑」最小重現，再修掉。  
+2. 單獨做一個故意錯的並發 map 寫入，用 `-race` 看它爆炸（別當成正確範例提交）。  
 
-## 常見坑與如何看見
+## 常見坑
 
-- **nil map 寫入 panic**：`make` 或字面量初始化。  
-- **range 時刪 key**：允許但要懂語意。  
-- **slice 洩漏**：大陣列被小 slice 引用導致無法回收——必要時 copy。  
-
-## 延伸閱讀
-
-- <https://go.dev/blog/slices-intro>  
-- <https://go.dev/blog/maps>  
+- **nil map 寫入 panic**：記得 `make` 或用字面量初始化。  
+- **小 slice 卡住大陣列**：殘留引用可能讓 GC 收不回記憶體——必要時 copy 出來。  
+- **range 時刪 key**：語意允許但要懂在幹嘛；不熟就先收集再刪。  
+- **併發 map**：不是「偶爾怪怪的」，是明確不允許。

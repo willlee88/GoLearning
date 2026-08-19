@@ -1,24 +1,28 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { url } from '../lib/url';
 ---
-<BaseLayout title="關於" description="關於 GoLearning">
-  <h1 class="text-3xl font-bold text-white">關於 GoLearning</h1>
-  <div class="prose-like mt-6 max-w-2xl space-y-4 text-slate-300 leading-7">
+<BaseLayout title="關於" description="這個網站在幹嘛">
+  <h1 class="text-3xl font-bold text-white">這個網站在幹嘛？</h1>
+  <div class="mt-6 max-w-2xl space-y-4 text-slate-300 leading-7">
     <p>
-      這是一個本機學習專案：給<strong class="text-slate-100">學過 Python</strong>的人，用<strong class="text-slate-100">廣覆蓋</strong>目錄
-      建立對 Go 的<strong class="text-slate-100">深刻理解</strong>，並以<strong class="text-slate-100">遊戲 Server</strong>為應用收束。
+      GoLearning 是給<strong class="text-slate-100">寫過一點 Python、但 Go 還是新手</strong>的人看的教學站。
+      文字會盡量口語，專有名詞會先講人話，再補英文名稱。
     </p>
     <p>
-      課程真相來源在 repo 的 <code class="text-emerald-300">content/</code>；網站為 Astro 前端。
-      可執行範例在 <code class="text-emerald-300">examples/</code>，Capstone 在 <code class="text-emerald-300">demo/arena-mini/</code>。
-    </p>
-    <p>
-      完整規劃見 <code class="text-emerald-300">docs/規劃書.md</code>（v0.2）。
+      我們用「遊戲 Server」當貫穿例子，不是要你當遊戲企劃，而是因為即時連線、房間、狀態同步，
+      很適合練 Go 的併發與網路——細節從
+      <a class="text-emerald-400 underline" href={url('lessons/p0-python-to-go/p0-0-why-game-server/')}>P0.0</a>
+      開始講。
     </p>
     <ul class="list-disc space-y-2 pl-6">
-      <li>L1 能用 · L2 機制 · L3 深潛</li>
-      <li>每章 Python 對照與「請丟掉的習慣」</li>
-      <li>遊戲 Server 連結貫穿語言與工程章</li>
+      <li>課程正文在 <code class="text-emerald-300">content/</code></li>
+      <li>網站是 Astro 靜態頁</li>
+      <li>可跑的小程式在 <code class="text-emerald-300">examples/</code></li>
+      <li>完整小專案在 <code class="text-emerald-300">demo/arena-mini/</code>（要本機 Go 或 Docker）</li>
     </ul>
+    <p class="text-slate-400 text-sm">
+      若你只有靜態 HTML 包：可以安心讀書；線上執行 Go、Arena 遊戲要另開 Docker。
+    </p>
   </div>
 </BaseLayout>

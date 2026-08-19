@@ -11,30 +11,30 @@ const totalCount = volumes.flatMap((v) => v.lessons).length;
 <BaseLayout>
   <section class="grid gap-10 lg:grid-cols-[1.4fr_1fr]">
     <div>
-      <p class="mb-3 text-sm font-medium uppercase tracking-widest text-emerald-500/90">Python → Go → Game Server</p>
+      <p class="mb-3 text-sm font-medium uppercase tracking-widest text-emerald-500/90">Python → Go → 遊戲後端</p>
       <h1 class="text-4xl font-bold tracking-tight text-white sm:text-5xl">
-        深刻理解 Go<br />
-        <span class="text-emerald-400">廣覆蓋 · 遊戲後端主軸</span>
+        把 Go 講清楚<br />
+        <span class="text-emerald-400">給新手看的、能跟著做</span>
       </h1>
       <p class="mt-5 max-w-xl text-lg leading-8 text-slate-400">
-        給學過 Python 的人：不是語法速成，而是型別、併發、錯誤哲學與 Server 生命週期。
-        每章對照 Python 舊直覺，並連到遊戲 Server 真實問題。
+        假設你寫過一點 Python。這裡會用比較口語的方式，帶你搞懂 Go 的型別、錯誤處理、併發，
+        以及這些東西在「遊戲 Server」裡到底怎麼用——不是背單字，是真的能跟得上。
       </p>
       <div class="mt-8 flex flex-wrap gap-3">
         <a href={url('lessons/p0-python-to-go/p0-0-why-game-server/')} class="rounded-lg bg-emerald-500 px-5 py-2.5 text-sm font-semibold text-slate-950 hover:bg-emerald-400">
-          從 P0.0 開始（為什麼是遊戲 Server）
+          從頭開始（為什麼用遊戲當例子）
         </a>
         <a href={url('path/')} class="rounded-lg border border-slate-700 px-5 py-2.5 text-sm font-semibold text-slate-200 hover:border-slate-500">
-          看學習路徑
+          看建議學習順序
         </a>
         <a href={url('volumes/')} class="rounded-lg border border-slate-700 px-5 py-2.5 text-sm font-semibold text-slate-200 hover:border-slate-500">
-          全部卷冊
+          依主題翻找
         </a>
       </div>
-      <p class="mt-6 text-sm text-slate-500">內容進度：{readyCount} / {totalCount} 篇 ready</p>
+      <p class="mt-6 text-sm text-slate-500">目前有 {readyCount} / {totalCount} 篇可以讀</p>
     </div>
     <div class="rounded-2xl border border-slate-800 bg-slate-900/50 p-6">
-      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-400">主路徑精選</h2>
+      <h2 class="text-sm font-semibold uppercase tracking-wide text-slate-400">建議先看這幾篇</h2>
       <ol class="mt-4 space-y-3">
         {pathLessons.map((l, i) => (
           <li>
@@ -52,8 +52,8 @@ const totalCount = volumes.flatMap((v) => v.lessons).length;
   </section>
 
   <section class="mt-16">
-    <h2 class="text-2xl font-semibold text-white">卷冊地圖</h2>
-    <p class="mt-2 text-slate-400">廣覆蓋目錄；點進去閱讀章節。</p>
+    <h2 class="text-2xl font-semibold text-white">主題地圖</h2>
+    <p class="mt-2 text-slate-400">像目錄一樣，想查什麼點進去。每一「卷」是一大塊主題。</p>
     <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {volumes.map((v) => {
         const ready = v.lessons.filter((l) => l.status === 'ready').length;

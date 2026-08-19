@@ -23,18 +23,18 @@ export type Lesson = {
 };
 
 const volumeMeta: Record<string, { title: string; blurb: string }> = {
-  p0: { title: 'P0 · Python → Go 心智遷移', blurb: '入口必讀：用 Python 經驗當橋，建立 Go 模型。' },
-  a: { title: 'A · 語言與資料模型', blurb: '型別、slice、map、interface…' },
-  b: { title: 'B · 錯誤與 API', blurb: 'error 哲學與可維護 API。' },
-  c: { title: 'C · 併發', blurb: 'goroutine、channel、race。' },
-  d: { title: 'D · 工程化', blurb: 'modules、表驅動、fuzz、bench。' },
-  e: { title: 'E · 標準庫', blurb: 'time、io、flag、embed 地圖。' },
-  f: { title: 'F · 網路', blurb: 'TCP / HTTP / WebSocket 與房間 Lab。' },
-  g: { title: 'G · 協定', blurb: 'JSON 信封、命令/事件、版本化。' },
-  h: { title: 'H · 遊戲 Server', blurb: 'Room FSM、Tick、權威 input、Arena Lab。' },
-  i: { title: 'I · 資料', blurb: '持久化邊界、Repo、Redis、worker。' },
-  j: { title: 'J · 生產化', blurb: 'slog、metrics、shutdown、壓測。' },
-  k: { title: 'K · Capstone', blurb: '自評與延伸任務。' },
+  p0: { title: 'P0 · 從 Python 走進 Go', blurb: '先搞懂「為什麼不一樣」——用你已有的 Python 當橋。' },
+  a: { title: 'A · 語言與資料', blurb: '型別、切片、map、介面……寫 Go 天天會碰到的東西。' },
+  b: { title: 'B · 錯誤與 API', blurb: '沒有例外怎麼辦？怎樣把錯誤講清楚、好維護。' },
+  c: { title: 'C · 併發', blurb: '一次做很多事：goroutine、channel，還有 race 怎麼抓。' },
+  d: { title: 'D · 工程化', blurb: 'module、怎麼寫測試、怎麼測效能。' },
+  e: { title: 'E · 標準庫', blurb: '時間、讀寫、設定、JSON……官方工具箱怎麼用。' },
+  f: { title: 'F · 網路', blurb: 'TCP、HTTP、WebSocket，最後練一個房間 Lab。' },
+  g: { title: 'G · 協定', blurb: '客戶端跟 Server「怎麼說話」：信封、命令、版本。' },
+  h: { title: 'H · 遊戲 Server', blurb: '房間、節奏（tick）、權威狀態——局怎麼跑起來。' },
+  i: { title: 'I · 資料', blurb: '什麼進記憶體、什麼進 DB／Redis，別每幀都寫庫。' },
+  j: { title: 'J · 上線前必看', blurb: '日誌、指標、優雅關閉、壓測與基本安全。' },
+  k: { title: 'K · 收束與自評', blurb: '檢查自己學會了什麼，以及下一步可以擴什麼。' },
 };
 
 export function getVolumeMeta(volume: string) {
